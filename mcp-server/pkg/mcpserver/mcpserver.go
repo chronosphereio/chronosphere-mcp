@@ -1,0 +1,160 @@
+package mcpserver
+
+import (
+	"context"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"strings"
+
+	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/mark3labs/mcp-go/server"
+	"go.uber.org/zap"
+
+	"github.com/chronosphereio/mcp-server/mcp-server/pkg/resources"
+	logresources "github.com/chronosphereio/mcp-server/mcp-server/pkg/resources/logs"
+	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
+)
+
+type Server struct {
+	server *server.MCPServer
+	logger *zap.Logger
+	opts   Options
+}
+
+type Options struct {
+	Logger        *zap.Logger
+	DisabledTools map[string]struct{}
+	ToolGroups    []tools.MCPTools
+}
+
+func NewServer(
+	opts Options,
+	logger *zap.Logger,
+) (*Server, error) {
+	s := &Server{
+		server: server.NewMCPServer(
+			"Chronosphere MCP Server",
+			"0.0.1",
+			server.WithResourceCapabilities(true, true),
+			server.WithPromptCapabilities(true),
+			server.WithLogging(),
+		),
+		logger: logger,
+		opts:   opts,
+	}
+
+	var (
+		resources []resources.MCPResource
+	)
+
+	resources = append(resources, logresources.Resources()...)
+
+	// Register all tools.
+	for _, group := range opts.ToolGroups {
+		for _, tool := range group.MCPTools() {
+			if _, ok := opts.DisabledTools[tool.Metadata.Name]; ok {
+				continue
+			}
+
+			wrapper := &loggingTool{
+				logger: logger,
+				tool:   tool,
+			}
+			s.server.AddTool(tool.MCPGoTool(), wrapper.handle)
+		}
+	}
+
+	for _, resource := range resources {
+		s.server.AddResource(resource.Resource, resource.Handler)
+	}
+
+	return s, nil
+}
+
+func (s *Server) StdioServer() *server.StdioServer {
+	return server.NewStdioServer(s.server)
+}
+
+type sessionAPITokenKey struct{}
+
+func (s *Server) SSEServer(addr, baseURL string) *server.SSEServer {
+	return server.NewSSEServer(s.server,
+		server.WithBaseURL(baseURL),
+		server.WithSSEContextFunc(func(ctx context.Context, r *http.Request) context.Context {
+			authValue := strings.ReplaceAll(r.Header.Get("Authorization"), "Bearer ", "")
+			return context.WithValue(ctx, sessionAPITokenKey{}, authValue)
+		}))
+}
+
+var _ server.ToolHandlerFunc = (*loggingTool)(nil).handle
+
+type loggingTool struct {
+	logger *zap.Logger
+	tool   tools.MCPTool
+}
+
+func (t *loggingTool) handle(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	t.logger.Info("received request for tool",
+		zap.String("method", request.Method),
+		zap.String("tool_name", t.tool.Metadata.Name))
+	t.logger.Debug("raw request for tool",
+		zap.String("method", request.Method),
+		zap.String("tool_name", t.tool.Metadata.Name),
+		zap.Any("request", request.Request))
+
+	// Always wrap error responses in a proper MCP response
+	resp := t.mustHandle(ctx, request)
+
+	t.logger.Info("received response from tool",
+		zap.String("method", request.Method),
+		zap.String("tool_name", t.tool.Metadata.Name))
+	t.logger.Debug("raw response from tool",
+		zap.String("method", request.Method),
+		zap.String("tool_name", t.tool.Metadata.Name),
+		zap.Any("request", request),
+		zap.Any("response", resp))
+	return resp, nil
+}
+
+func (t *loggingTool) mustHandle(ctx context.Context, request mcp.CallToolRequest) *mcp.CallToolResult {
+	sessionAPIToken, ok := ctx.Value(sessionAPITokenKey{}).(string)
+	if !ok {
+		sessionAPIToken = ""
+	}
+
+	session := tools.Session{
+		APIToken: sessionAPIToken,
+		Context:  ctx,
+	}
+	resp, err := t.tool.Handler(session, request)
+	if err != nil {
+		t.logger.Info("received error from handler",
+			zap.String("method", request.Method),
+			zap.Error(err),
+			zap.Any("request", request))
+		return mcp.NewToolResultError(err.Error())
+	}
+
+	if len(resp.ImageContent) > 0 {
+		encoded := base64.StdEncoding.EncodeToString(resp.ImageContent)
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{
+				mcp.NewImageContent(encoded, "image/png"),
+			},
+		}
+	}
+
+	resultBytes, err := json.Marshal(resp.JsonContent)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Errorf("failed to serialize content: %s", err).Error())
+	}
+	result := &mcp.CallToolResult{
+		Content: []mcp.Content{mcp.NewTextContent(string(resultBytes))},
+	}
+	if resp.Meta != nil && len(resp.Meta) > 0 {
+		result.Meta = resp.Meta
+	}
+	return result
+}

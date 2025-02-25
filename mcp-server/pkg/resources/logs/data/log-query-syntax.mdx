@@ -1,0 +1,1087 @@
+---
+title: Logging query syntax
+description: Learn about the syntax for querying logs in Chronosphere Observability Platform.
+robots: noindex, nofollow
+---
+
+import { Alert, Icon } from '@/components';
+
+{/* -- dri: Adam Locke -- */}
+
+# Logging query syntax
+
+Use the logging query language within Logs Explorer to construct search queries for
+retrieving, processing, and analyzing your log data.
+
+Observability Platform provides a lightweight, flexible syntax for querying log data
+in Logs Explorer. This syntax implements predefined keys that accept a comparison
+operator, such as an equals sign `=`, and a value.
+
+```text
+KEY =|!=|=~|!~|: VALUE AND|OR (KEY =|!=|=~|!~|: VALUE) AND|OR "full-text search value"
+AND|OR KEY EXISTS
+```
+
+The query language supports full-text search using double quotes (`""`) to find logs
+that contain the filter expression anywhere in the log. Longer, more specific
+full-text searches are more optimized and return results faster.
+
+<Alert severity="info">
+
+For a quick reference of the Chronosphere logging query syntax, use this
+[cheat sheet](/doc-assets/chronosphere_logging_syntax_sheet.pdf).
+
+</Alert>
+
+## Features
+
+The query syntax for Logs Explorer supports the following features:
+
+- **Autocomplete**: Start typing a key to get autocomplete values. Press
+  <kbd>Control+Space</kbd> to display suggestions.
+- **Run shortcut**: Run a query by pressing <kbd>Control+Enter</kbd>
+  (<kbd>Command+Return</kbd> on macOS).
+- **Nested queries**: Use parentheses `()` to establish the order of operations for
+  complex queries.
+- **Field search**: Query on specific fields by entering a key/value pair such as
+  `key = "value"`.
+- **String identification**: Use either single `''` or double `""` quotes to identify
+  strings.
+- **Full-text search**: Express a single value filter expression, such as `"query
+  user token"`, to find logs that contains the filter expression anywhere in the log.
+  Full-text searches must be surrounded by double quotes.
+- **Exists**: Find logs with a specific key by entering `key.label EXISTS` to return
+  any logs containing that key and label combination. For example,
+  `kubernetes.namespace_name EXISTS` returns any logs containing
+  `kubernetes.namespace_name`.
+
+## Keys
+
+Log Explorer supports querying all user-defined keys in your data, in addition to the
+following derived keys:
+
+- `service`: Services that Observability Platform discovers in your log data.
+  Chronosphere recommends always including a filter for `service` in your query for
+  optimal performance.
+- `severity`: Severity of issues, sanitized to the following values: `DEBUG`, `INFO`,
+  `WARN`, `ERROR`, `FATAL`.
+- `message`: Human-readable description of the log, derived from your log data.
+- Custom labels you created for your logs.
+
+## Operators
+
+The querying syntax for Logs Explorer supports the following operators:
+
+- [Logical operators](#logical-operators)
+- [Mathematical operators](#mathematical-operators)
+- [Transformation operators](#transformation-operators)
+
+### Logical operators
+
+The querying syntax for Logs Explorer supports the following logical operators:
+
+| Operator | Description                                                   |
+|----------|---------------------------------------------------------------|
+| `= `     | Equals                                                        |
+| `!=`     | Does not equals                                               |
+| `AND`    | Additive operator                                             |
+| `OR`     | Subjective operator                                           |
+| `NOT`    | Returns results that don't match the value or contain the key |
+| `EXISTS` | Returns results containing the key                            |
+
+Queries with the `AND` operator take precedence. If your query doesn't use
+parentheses, Observability Platform evaluates all `AND` statements sequentially, followed by
+any `OR` statements and the next set of `AND` queries.
+
+To use `AND` plus `OR` operators in the same query, separate them with parentheses.
+For example, the following query matches any service named `gateway` where the
+`kubernetes.namespace_name` is `test-logging` or `kubernetes.cluster_name` is `test`
+and the log message contains `"insert success"`:
+
+```sql copy
+service = "gateway" AND (kubernetes.namespace_name = "test-logging" OR
+kubernetes.cluster_name = "test") AND "insert success"
+```
+
+The operators `AND` plus `OR` aren't case sensitive, so you can use `AND`, `and`,
+`OR`, and `or` interchangeably.
+
+### Mathematical operators
+
+You can also use mathematical operators for addition (`+`), subtraction (`-`),
+multiplication (`*`), and division (`/`) to complete calculations within a query.
+
+The querying syntax supports the following mathematical operators:
+
+| Operator | Description                                                   |
+|----------|---------------------------------------------------------------|
+| `+`      | Addition                                                      |
+| `-`      | Subtraction                                                   |
+| `*`      | Multiplication                                                |
+| `/`      | Division                                                      |
+
+This capability is especially useful when [creating monitors](/investigate/alerts/monitors)
+to generate alerts and receive notifications. For example, the following query
+includes a calculation for an alert that returns the ratio of logs without errors to
+total logs in the `nginx` service:
+
+```sql copy
+service = "nginx"
+| summarize 1 - countif(severity="ERROR")/countif(severity EXISTS)
+```
+
+Use parentheses to nest calculations and separate them from the remainder of the
+search query.
+
+### Transformation operators
+
+Transformation queries include operators that modify input records by adding,
+removing, or updating fields in the results set. Observability Platform supports the
+following transformation operators you can include in log queries.
+
+<Alert severity="info">
+
+All transformation operators require a pipe (`|`) character in a query.
+
+</Alert>
+
+#### `limit`
+
+The `limit` operator returns the most recent log events.
+
+**Syntax**
+
+```text copy /QUERY/ /NUMBER/
+QUERY | limit NUMBER
+```
+
+**Arguments**
+
+| Argument | Type | Description | Default |
+| -------- | ---- | ----------- | ------- |
+| `QUERY`  | `string` | The input query to return data for. | _none_ |
+| `NUMBER` | `int` | Optional. Use with `limit` to specify the number of logs to produce. Maximum value is `1000`. Minimum value is `1`. | `500` |
+
+**Example**
+
+```sql copy
+severity = "WARNING"
+| limit 500
+```
+
+#### `make-series`
+
+The `make-series` operator shapes logs to include in a time chart with an X-axis. Use
+this operator to visualize log queries containing time series data. The operator
+sorts multiple time series in descending order by the last data point value.
+
+**Syntax**
+
+```text copy /QUERY/ /AGGREGATION/ /TIME/ /EXPRESSION/
+QUERY | make-series AGGREGATION step TIME by EXPRESSION
+```
+
+**Arguments**
+
+| Argument       | Type | Description | Default |
+| -------------- | ---- | ----------- | ------- |
+| `QUERY`        | `string` | The input query to return data for. | _none_ |
+| `AGGREGATION ` | `string` | Optional. Specifies which [aggregation function](#aggregation-functions) to use. | `count()` |
+| `TIME`         | `timespan` | Optional. Specifies the difference between specified array elements, such as `2d` for two days or `15m` for 15 minutes. See the `timespan` data type in the [Microsoft Kusto documentation](https://learn.microsoft.com/en-us/kusto/query/scalar-data-types/timespan?view=microsoft-fabric) for more information. | _none_ |
+| `EXPRESSION `  | `string-array` | Optional. Specifies which fields to group. Use with `step by` to define the time step for each bucket in [Prometheus time duration format](https://prometheus.io/docs/prometheus/latest/querying/basics/#time-durations). | _none_ |
+
+**Example**
+
+```sql copy
+severity = "WARNING"
+| make-series avg(latencyInSeconds) step 15m by severity, service
+```
+
+#### `sort`
+
+The `sort` operator sorts your results by a specified column, in either ascending or
+descending order. The operator supports sorting by multiple columns, such as
+`service` and `severity`. When sorting by multiple columns, you can specify the sort
+order for each column.
+
+When sorting results that include an aggregation query, use
+[an alias](#alias-function-names) to sort by instead of the aggregation field name.
+Sorting by the alias provides better control and predictability in your queries.
+
+For example, the following query retrieves all logs that have a `severity` of
+`WARNING`, aggregates the results in a table, and returns the sum of the
+`httpRequest.responseSize` field, ordered by `service`:
+
+```sql copy
+severity = "WARNING"
+| summarize sum(httpRequest.responseSize) by service
+```
+
+To sort the results, use an alias. The following example expands on the existing
+query and uses an alias named `total`, which makes the subsequent `sort by` clause
+much simpler:
+
+```sql copy
+severity = "WARNING"
+| summarize total = sum(httpRequest.responseSize) by service
+| sort by total
+```
+
+**Syntax**
+
+```text copy /QUERY/ /COLUMN/
+QUERY | sort by COLUMN asc|desc [, COLUMN ...]
+```
+
+**Arguments**
+
+| Argument        | Type | Description | Default |
+| --------------- | ---- | ----------- | ------- |
+| `QUERY`         | `string` | The input query to return data for. | _none_ |
+| `COLUMN`        | `string` | Specifies which column to sort results by. Accepted values: `numeric`, `date`, `time`, `string`. | _none_ |
+| `asc` or `desc` | `string` | Optional. Specifies whether to sort results in ascending or descending order. | `asc` |
+| , `COLUMN` ...  | `string` | Optional. Specifies additional columns to sort by. | _none_ |
+
+**Example**
+
+```sql copy
+severity = "WARNING"
+| summarize count() by service, severity
+| sort by count_ desc, service asc
+| limit 10
+```
+
+#### `project`
+
+The `project` operator selects columns to include or compute in a logging query. Use
+this operator to return data in a table with the specified fields as table columns.
+If you want to return data in a tabular format and also complete aggregations and
+sorting, use the [`summarize`](#summarize) operator instead.
+
+You can also use the `project()` operator with the [`substring`](#substring) function
+to extract a substring from the source string based on a starting index character
+position. For example,
+
+```sql copy
+severity = "ERROR"
+| project substring(resource.type, 0, 13)
+```
+
+Use the `project()` operator to select fields and customize columns and rows before
+[downloading log data](/investigate/querying/query-logs#download-logs).
+
+**Syntax**
+
+```text copy /QUERY/ /FIELD/
+QUERY | project FIELD [, FIELD]
+```
+
+**Arguments**
+
+| Argument       | Type | Description | Default |
+| -------------- | ---- | ----------- | ------- |
+| `QUERY`        | `string` | The input query to return data for. | _none_ |
+| `FIELD`        | `string` | The field to include in the generated table. You can specify multiple fields separated by commas. | _none_ |
+
+**Example**
+
+```sql copy
+severity = "ERROR" and TraceId EXISTS
+| project service, TraceId, request.latency
+```
+
+#### `summarize`
+
+The `summarize` operator generates a table of data that aggregates the content of the
+table from the input query, grouped in descending order. By default, this operator
+uses the [`count()`](#count) function to count all permutations of the specified
+field if no `AGGREGATION` is specified.
+
+Input rows are arranged into groups that have the same expression. Use the `by`
+keyword to specify the columns you want to group your data by before applying any
+aggregations.
+
+Your query can include only one `summarize` operator. To group data and refine the
+results with subsequent clauses, use the [`top-nested`](#top-nested) operator.
+
+**Syntax**
+
+```text copy /QUERY/ /AGGREGATION/ /FIELD/ /EXPRESSION/
+QUERY | summarize AGGREGATION by FIELD EXPRESSION
+```
+
+**Arguments**
+
+| Argument       | Type | Description | Default |
+| -------------- | ---- | ----------- | ------- |
+| `QUERY`        | `string` | The input query to return data for. | _none_ |
+| `AGGREGATION ` | `string` | Optional. Specifies which [aggregation function](#aggregation-functions) to use. | `count()` |
+| `FIELD`        | `string` | The field to compute the average value for. | _none_ |
+| `EXPRESSION`   | `string-array` | Optional. Specifies which fields to group. | _none_ |
+
+**Example**
+
+```sql copy
+severity = "ERROR"
+| summarize sum(production) by severity, service
+| limit 100
+```
+
+#### `top-nested`
+
+The `top-nested` operator completes aggregation and value selection in a hierarchical
+manner. The operator partitions data based on criteria from the first `top-nested`
+clause, and then selects the top records in each partition using an aggregation, if
+specified.
+
+Unlike the [`summarize`](#summarize) operator, you can include multiple `top-nested`
+clauses in a single query. Using a single pipe (`|`) separator, specify a "root"
+`top-nested` clause, and then nest additional `top-nested` clauses separated by a
+comma. Each of these clauses refine the partitions from the previous clause, creating
+a hierarchy of more precise groupings.
+
+For example, using the `summarize` operator, the following query returns the count of
+logs from each endpoint from the `nginx-requests` service in descending order:
+
+```sql copy
+service = "nginx-requests"
+| summarize by http.response.endpoints
+```
+
+The `summarize` operator can use additional aggregation functions, but on its own
+returns a two-column table containing a count of the specified field. The
+`top-nested` operator is similar, but provides additional options to partition and
+display results.
+
+The `top-nested` operator creates a table with two columns _for each clause_. One
+column contains unique values from the filter `EXPRESSION`, and the other column
+shows the results obtained from the `AGGREGATION` calculation.
+
+Using the `top-nested` operator, the following query refines the results from the
+`nginx-requests` service to the top 80 endpoints, and further partitions the data by
+the top nine HTTP response status codes:
+
+```sql copy
+service = "nginx-requests"
+| top-nested 80 of http.response.endpoints,
+top-nested 9 of http.response.status_code
+```
+
+This query returns a four-column table with a row for each entry that includes:
+
+- The name of the endpoint from `http.response.endpoints`.
+- The aggregated value for the endpoint.
+- The HTTP status code from `http.response.status_code`.
+- The aggregated status code for the endpoint.
+
+The number of rows returned by this query is calculated by multiplying the number of
+values returned for `http.response.endpoints` times the number of values returned for
+`http.response.status_code`.
+
+**Syntax**
+
+```text copy /QUERY/ /NUMBER/ /AGGREGATION/ /EXPRESSION/
+QUERY | top-nested NUMBER of EXPRESSION by AGGREGATION asc|desc [, top-nested ...]
+```
+
+**Arguments**
+
+| Argument        | Type | Description | Default |
+| --------------- | ---- | ----------- | ------- |
+| `QUERY`         | `string` | The input query to return data for. | _none_ |
+| `NUMBER`        | `int` | Optional. Specifies the number of top, distinct values to return for this hierarchy level. If omitted, returns all distinct values. | _none_ |
+| `EXPRESSION`    | `string` | A filter expression that operates on the input record to specify which value to return. Typically refers to a column from a `query`, or includes a calculation on a column. | _none_ |
+| `AGGREGATION`   | `string` | Optional. Specifies which [aggregation function](#aggregation-functions) to apply to records matching the filter `EXPRESSION`. The result determines which top records to display. | _none_ |
+| `asc` or `desc` | `string` | Optional. Specifies whether to sort results in ascending or descending order. | `desc` |
+| , `top-nested` ...  | `string` | Optional. Specifies additional `top-nested` clauses to refine the returned data. | _none_ |
+
+**Example**
+
+```sql copy
+severity = "ERROR" AND cluster_name = "production"
+| top-nested 10 of service by avg(duration)
+```
+
+```sql copy
+severity = "ERROR" AND cluster_name = "production"
+| top-nested 5 of service, top-nested of kubernetes_namespace
+```
+
+## Regular expressions
+
+Logs Explorer uses [re2](https://github.com/google/re2/wiki/syntax) regular
+expression syntax. The following regular expressions are supported, and can be used
+between fields and values:
+
+| Operator | Description                                                   |
+|----------|---------------------------------------------------------------|
+| `=~`     | Matches regular expression                                    |
+| `!~`     | Doesn't match regular expression                              |
+| `:`      | Contains literal string only                                  |
+
+<Alert severity="info">
+
+Queries that use regular expression operators match only on the first 1,024
+characters of a string. These operators won't match any characters in a string that
+exceed 1,024 characters. To change this match limit, contact
+[Chronosphere Support](/support).
+
+</Alert>
+
+In the following example, consider that a field name `kubernetes.cluster_name`
+contains the following values: `production-1`, `production-2`, `production-3`,
+`productionNEW`, `old_production`.
+
+The following query matches the word `production` anywhere in the
+`kubernetes.cluster_name` field, so it matches all values in the field:
+
+```sql copy
+kubernetes.cluster_name =~ "production"
+```
+
+The following regular expression query includes a period and wildcard (`.*`), which
+matches the word `production`, followed by zero or more characters anywhere in the
+phrase. This query also matches all values in the field:
+
+```sql copy
+kubernetes.cluster_name =~ "production.*"
+```
+
+Using a dash and wildcard (`-*`) matches the word `production`, followed by zero or
+more dash characters anywhere in the phrase. This query also matches all values in
+the field, including `productionNEW` and `old_production`, which might not be
+immediately apparent:
+
+```sql copy
+kubernetes.cluster_name =~ "production-*"
+```
+
+To match only the fields containing `production-`, combine the dash and period
+characters with a wildcard and add a dollar sign (`$`). The following query matches
+only `production-1`, `production-2`, `production-3`, but does not match either
+`productionNEW` or `old_production`:
+
+```sql copy
+kubernetes.cluster_name =~ "production-.*$"
+```
+
+To match a substring only, use a colon (`:`). The following query matches any logs
+where the `kubernetes.cluster_name` field contains only `production-us-east`:
+
+```sql copy
+kubernetes.cluster_name: "production-us-east"
+```
+
+## Arrays
+
+You can query array values up to the first level. During ingestion Observability
+Platform flattens multiple level arrays to one level to preserve order. If a key
+precedes the array index, the index must always be at the end.
+
+For example, consider the following array of objects belonging to the `nginx` service
+as they display in Logs Explorer:
+
+```json copy
+tags:
+    0:
+	      application: a
+	      events: b
+	      ingestion: c
+    1:
+	      application: d
+	      events: e
+	      ingestion: f
+```
+
+To return results in the second array position (`1`) that match `events = e`, use the
+following query:
+
+```sql copy
+service = "nginx"
+tags.events[1] = "e"
+```
+
+## Query examples
+
+This syntax supports nesting using parentheses so you can create complex queries. For
+example, the following query matches on two severity values, or where the message
+contains `“database connection”` and the `mysql.table_name` label starts with
+`production`:
+
+```sql copy
+service = "gateway" AND severity =~ "WARN|ERROR" OR (message : "database connection"
+AND mysql.table_name =~ "^production.*")
+```
+
+The following query matches on a service named `gateway` where the
+`kubernetes.pod_id` equals `3bf26945-b817-4e72-b22c-662c318af2f1` anywhere in the log
+payload:
+
+```sql copy
+service = "gateway" AND kubernetes.pod_id = "3bf26945-b817-4e72-b22c-662c318af2f1"
+```
+
+The following query returns all logs for a service named `gateway` that have a
+`logger` other than `deleter`, or have no `logger` set:
+
+```sql copy
+SERVICE = "gateway" AND NOT logger = "deleter"
+```
+
+## Aggregation functions
+
+Aggregation queries include functions that can combine their input into a new
+structure, or emit new events into the output stream. You can use all aggregation
+functions with [`summarize`](#summarize) and [`make-series`](#make-series) operators,
+with the exception of [`arg_max()`](#arg_max), which can be used only with the
+`summarize` operator.
+
+Observability Platform supports the following aggregation functions you can include
+in log queries.
+
+### Group results
+
+To group results in queries that include an aggregation function, use the `by`
+operator. This operator lets you group results by a specified field, which is
+different than the [`sort`](#sort) operator, which lets you sort results by a
+specified column.
+
+For example, the following query includes the [`summarize`](#summarize)
+transformation operator to return the average for the `httpRequest.responseSize`
+field, and then groups the results by `service`:
+
+```sql copy
+service = "nginx"
+| summarize avg(httpRequest.responseSize) by service
+```
+
+### Alias function names
+
+When running a query containing a transformation operator and an aggregation
+function, you can add an alias for the function name that displays in the generated
+visualization. This capability applies to all
+[transformation](#transformation-operators) operators and aggregation functions.
+
+For example, the following query creates a table of data that aggregates the content
+of the table from the input query, and displays the count by `service`. The column
+header that contains the total count is named `_count`.
+
+```sql copy
+severity = "ERROR"
+| summarize count() by service
+```
+
+The following query returns the same data, but uses an alias named `total` for the
+`count()` function. The column header containing the total count is named `total`.
+
+```sql copy
+severity = "ERROR"
+| summarize total = count() by service
+```
+
+Similarly, you can create an alias using the `make-series` operator:
+
+```sql copy
+severity = "WARN"
+| make-series total = count() by service
+```
+
+### `arg_max()`
+
+The `arg_max` function returns the value of an expression for the row with the
+largest `_timestamp`. The expression determines which column values to return, from
+the row with the largest `_timestamp` values.
+
+By default, the function creates a row header named `arg_max_EXPRESSION`, where
+`_EXPRESSION_` is the expression included as the argument. For example, if your
+function call is `arg_max(service)`, the resulting column name is `arg_max_service`.
+To specify a more human-readable and intuitive column name, use
+[an alias](#alias-function-names).
+
+**Syntax**
+
+```text copy /QUERY/ /OPERATOR/ /EXPRESSION/
+QUERY | OPERATOR arg_max(EXPRESSION)
+```
+
+**Arguments**
+
+| Argument     | Type | Description | Default |
+| ------------ | ---- | ----------- | ------- |
+| `QUERY`      | `string` | Optional. The input query to return data for. | _none_ |
+| `OPERATOR`   | `string` | Specifies which [transformation operator](#transformation-operators) to apply to records matching the filter `EXPRESSION` This function accepts the `summarize` operator only. | `summarize` |
+| `EXPRESSION` | `string` | The filter expression used for the aggregation calculation. | _none_ |
+
+**Example**
+
+The following example returns values for `service` with the largest `_timestamp`,
+ordered by `severity`:
+
+```sql copy
+cluster =~ "production-*"
+| summarize largest_service = arg_max(service) by severity
+```
+
+The following example doesn't include a query, and instead uses the `summarize`
+operator with the `arg_max` function. The example also uses an alias named
+`service_with_largest_message`, which becomes the column header in the generated
+table.
+
+```sql copy
+| summarize service_with_largest_message = arg_max(message, service) by severity
+```
+
+### `avg()`
+
+The `avg` function computes the average of values of a filter `EXPRESSION` over
+events passing through the function. This function only works with fields containing
+numeric values.
+
+**Syntax**
+
+```text copy /QUERY/ /OPERATOR/ /EXPRESSION/
+QUERY | OPERATOR avg(EXPRESSION)
+```
+
+**Arguments**
+
+| Argument     | Type | Description | Default |
+| ------------ | ---- | ----------- | ------- |
+| `QUERY`      | `string` | The input query to return data for. | _none_ |
+| `OPERATOR`   | `string` | Specifies which [transformation operator](#transformation-operators) to apply to records matching the filter `EXPRESSION`. | _none_ |
+| `EXPRESSION` | `string` | The filter expression used for the aggregation calculation. | _none_ |
+
+**Example**
+
+```sql copy
+service = "nginx"
+| summarize avg(httpRequest.responseSize) by service
+```
+
+### `avgif()`
+
+The `avgif` function computes the average of values of a field where the specified
+filter `EXPRESSION` evaluates to `true`. This function works only with fields
+containing numeric values.
+
+**Syntax**
+
+```text copy /QUERY/ /OPERATOR/ /FIELD/ /EXPRESSION/
+QUERY | OPERATOR avgif(FIELD, EXPRESSION)
+```
+
+**Arguments**
+
+| Argument     | Type | Description | Default |
+| ------------ | ---- | ----------- | ------- |
+| `QUERY`      | `string` | The input query to return data for. | _none_ |
+| `OPERATOR`   | `string` | Specifies which [transformation operator](#transformation-operators) to apply to records matching the filter `EXPRESSION`. | _none_ |
+| `FIELD`      | `string` | The field to compute the average value for. | _none_ |
+| `EXPRESSION` | `string` | The filter expression to apply before running the aggregation calculation. | _none_ |
+
+**Example**
+
+```sql copy
+service = "nginx"
+| summarize avgif(httpRequest.responseSize, httpRequest.responseSize > 2000) by service
+```
+
+### `count()`
+
+The `count` function returns a count of the number of events passing through the
+function.
+
+**Syntax**
+
+```text copy /QUERY/ /OPERATOR/
+QUERY | OPERATOR count()
+```
+
+**Arguments**
+
+| Argument   | Type | Description | Default |
+| ---------- | ---- | ----------- | ------- |
+| `QUERY`    | `string` | The input query to return data for. | _none_ |
+| `OPERATOR` | `string` | Specifies which [transformation operator](#transformation-operators) to apply to records matching the filter `EXPRESSION`. | _none_ |
+
+**Example**
+
+```sql copy
+service = "checkout-service"
+| make-series count() by severity
+| limit 100
+```
+
+### `countif()`
+
+The `countif` function returns a count of rows where the specified filter
+`EXPRESSION` evaluates to `true`. This function ignores null values.
+
+**Syntax**
+
+```text copy /QUERY/ /OPERATOR/ /EXPRESSION/
+QUERY | OPERATOR countif(EXPRESSION)
+```
+
+**Arguments**
+
+| Argument     | Type | Description | Default |
+| ------------ | ---- | ----------- | ------- |
+| `QUERY`      | `string` | The input query to return data for. | _none_ |
+| `OPERATOR`   | `string` | Specifies which [transformation operator](#transformation-operators) to apply to records matching the filter `EXPRESSION`. | _none_ |
+| `EXPRESSION` | `string` | The filter expression to apply before running the aggregation calculation. | _none_ |
+
+**Example**
+
+```sql copy
+service = "nginx"
+| summarize countif(kubernetes.pod_name =~ "nginx-*") by severity
+```
+
+### `dcount()`
+
+The `dcount` function calculates an estimated number of distinct values of a `FIELD`
+in events passing through the function.
+
+**Syntax**
+
+```text copy /QUERY/ /OPERATOR/ /FIELD/
+QUERY | OPERATOR dcount(FIELD)
+```
+
+**Arguments**
+
+| Argument     | Type | Description | Default |
+| ------------ | ---- | ----------- | ------- |
+| `QUERY`      | `string` | The input query to return data for. | _none_ |
+| `OPERATOR`   | `string` | Specifies which [transformation operator](#transformation-operators) to apply to records matching the filter `EXPRESSION`. | _none_ |
+| `FIELD`      | `string` | The field to count the values for. | _none_ |
+
+**Example**
+
+```sql copy
+service = "nginx"
+| make-series dcount(hostname) by severity
+```
+
+### `dcountif()`
+
+The `dcountif` function calculates an estimated number of distinct values where the
+specified `EXPRESSION` filter evaluates to `true`. Use this function to estimate the
+cardinality of large data sets.
+
+<Alert severity="info">
+
+The `dcountif` function trades accuracy for performance, and might return a result
+that varies between executions.
+
+</Alert>
+
+**Syntax**
+
+```text copy /QUERY/ /OPERATOR/ /FIELD/ /EXPRESSION/
+QUERY | OPERATOR dcountif(FIELD, EXPRESSION)
+```
+
+**Arguments**
+
+| Argument     | Type | Description | Default |
+| ------------ | ---- | ----------- | ------- |
+| `QUERY`      | `string` | The input query to return data for. | _none_ |
+| `OPERATOR`   | `string` | Specifies which [transformation operator](#transformation-operators) to apply to records matching the filter `EXPRESSION`. | _none_ |
+| `FIELD`      | `string` | The field to compute the average value for. | _none_ |
+| `EXPRESSION` | `string` | The filter expression to apply before running the aggregation calculation. | _none_ |
+
+**Example**
+
+```sql copy
+service = "nginx"
+| summarize dcountif(kubernetes.pod_name, kubernetes.pod_name =~ "nginx-*") by "severity"
+```
+
+### `min()`
+
+The `min` function returns the minimum value of the specified field.
+
+**Syntax**
+
+```text copy /QUERY/ /OPERATOR/ /FIELD/
+QUERY | OPERATOR min(FIELD)
+```
+
+**Arguments**
+
+| Argument     | Type | Description | Default |
+| ------------ | ---- | ----------- | ------- |
+| `QUERY`      | `string` | The input query to return data for. | _none_ |
+| `OPERATOR`   | `string` | Specifies which [transformation operator](#transformation-operators) to apply to records matching the filter `EXPRESSION`. | _none_ |
+| `FIELD`      | `string` | The field to return the minimum value for. | _none_ |
+
+**Example**
+
+```sql copy
+service = "nginx"
+| summarize min(httpRequest.responseSize) by kubernetes.cluster_name
+```
+
+### `minif()`
+
+The `min` function returns an estimate of the minimum value of the specified field
+where the `EXPRESSION` filter evaluates to `true`.
+
+**Syntax**
+
+```text copy /QUERY/ /OPERATOR/ /FIELD/ /EXPRESSION/
+QUERY | OPERATOR minif(FIELD, EXPRESSION)
+```
+
+**Arguments**
+
+| Argument     | Type | Description | Default |
+| ------------ | ---- | ----------- | ------- |
+| `QUERY`      | `string` | The input query to return data for. | _none_ |
+| `OPERATOR`   | `string` | Specifies which [transformation operator](#transformation-operators) to apply to records matching the filter `EXPRESSION`. | _none_ |
+| `FIELD`      | `string` | The field to return the minimum value for. | _none_ |
+| `EXPRESSION` | `string` | The filter expression to apply before running the aggregation calculation. | _none_ |
+
+**Example**
+
+```sql copy
+service = "nginx"
+| summarize minif(httpRequest.responseSize, httpRequest.responseSize > 100) by kubernetes.cluster_name
+```
+
+### `max()`
+
+The `max` function returns the maximum value of the specified field.
+
+**Syntax**
+
+```text copy /QUERY/ /OPERATOR/ /FIELD/
+QUERY | OPERATOR min(FIELD)
+```
+
+**Arguments**
+
+| Argument     | Type | Description | Default |
+| ------------ | ---- | ----------- | ------- |
+| `QUERY`      | `string` | The input query to return data for. | _none_ |
+| `OPERATOR`   | `string` | Specifies which [transformation operator](#transformation-operators) to apply to records matching the filter `EXPRESSION`. | _none_ |
+| `FIELD`      | `string` | The field to return the maximum value for. | _none_ |
+
+**Example**
+
+```sql copy
+service = "nginx"
+| summarize max(httpRequest.responseSize) by "kubernetes.cluster_name"
+```
+
+### `maxif()`
+
+The `maxif` function returns an estimate of the maximum value of the specified field
+where the `EXPRESSION` filter evaluates to `true`.
+
+**Syntax**
+
+```text copy /QUERY/ /OPERATOR/ /FIELD/ /EXPRESSION/
+QUERY | OPERATOR maxif(FIELD, EXPRESSION)
+```
+
+**Arguments**
+
+| Argument     | Type | Description | Default |
+| ------------ | ---- | ----------- | ------- |
+| `QUERY`      | `string` | The input query to return data for. | _none_ |
+| `OPERATOR`   | `string` | Specifies which [transformation operator](#transformation-operators) to apply to records matching the filter `EXPRESSION`. | _none_ |
+| `FIELD`      | `string` | The field to return the minimum value for. | _none_ |
+| `EXPRESSION` | `string` | The filter expression to apply before running the aggregation calculation. | _none_ |
+
+**Example**
+
+```sql copy
+service = "nginx"
+| summarize maxif(httpRequest.responseSize, httpRequest.responseSize > 100) by kubernetes.cluster_name
+```
+
+### `moving_average()`
+
+The `moving_average` function accepts an `AGGREGATION` containing a dynamic numeric
+array as input, and applies a
+[simple moving average (SMA)](https://en.wikipedia.org/wiki/Moving_average#Simple_moving_average)
+filter.
+
+This function requires an aggregation with an expression that operates on a specified
+time interval to calculate a moving average for. The combination of the `AGGREGATION`
+and `EXPRESSION` defines the calculation that this function operates on.
+
+**Syntax**
+
+```text copy /QUERY/ /AGGREGATION/ /EXPRESSION/ /NUMBER/ /TIME/ /FIELD/
+QUERY | moving_average(AGGREGATION(EXPRESSION), NUMBER) step TIME by FIELD
+```
+
+**Arguments**
+
+| Argument     | Type | Description | Default |
+| ------------ | ---- | ----------- | ------- |
+| `QUERY`      | `string` | The input query to return data for. | _none_ |
+| `AGGREGATION ` | `string` | Specifies which [aggregation function](#aggregation-functions) to use. | _none_ |
+| `EXPRESSION` | `string` | The filter expression used for the aggregation calculation. | _none_ |
+| `NUMBER`     | `int` | Specifies the size of the moving average window. Determines how many past data points are considered when calculating each average. | _none_ |
+| `TIME`         | `timespan` | Optional. Specifies the difference between specified array elements, such as `2d` for two days or `15m` for 15 minutes. See the `timespan` data type in the [Microsoft Kusto documentation](https://learn.microsoft.com/en-us/kusto/query/scalar-data-types/timespan?view=microsoft-fabric) for more information. | _none_ |
+| `FIELD`      | `string` | Optional. Specifies which field to group returned results by. Use with `step by` and the `TIME` argument. | _none_ |
+
+**Example**
+
+The following example calculates a series of summations for `request_size` over the
+last minute (`1m`), takes a moving average of the last five (`5`) summations, and
+then divides by `1000` to convert the results to megabytes. The results are ordered
+in a time chart with an X-axis, sorted by `severity`.
+
+```sql copy
+| make-series moving_average(sum(request_size), 5) / 1000 step 1m by severity
+```
+
+### `percentile()`
+
+The `percentile` function returns the specified percentile value of a filter
+`EXPRESSION`. This function only works with fields containing numeric values.
+
+**Syntax**
+
+```text copy /QUERY/ /OPERATOR/ /EXPRESSION/ /NUMBER/
+QUERY | OPERATOR percentile(EXPRESSION, NUMBER)
+```
+
+**Arguments**
+
+| Argument     | Type | Description | Default |
+| ------------ | ---- | ----------- | ------- |
+| `QUERY`      | `string` | The input query to return data for. | _none_ |
+| `OPERATOR`   | `string` | Specifies which [transformation operator](#transformation-operators) to apply to records matching the filter `EXPRESSION`. | _none_ |
+| `EXPRESSION` | `string` | The filter expression used for the aggregation calculation. | _none_ |
+| `NUMBER`     | `int` | Specifies the percentile to return. | _none_ |
+
+**Example**
+
+```sql copy
+key1 = 'value1'
+| make-series percentile(duration, 95) by severity
+```
+
+### `substring()`
+
+The `substring` function extracts a substring from the source string based on a
+starting index character position.
+
+**Syntax**
+
+```text copy /QUERY/ /OPERATOR/ /FIELD/ /START_INDEX/ /LENGTH/
+QUERY | OPERATOR by substring(FIELD, START_INDEX, LENGTH)
+```
+
+**Arguments**
+
+| Argument     | Type | Description | Default |
+| ------------ | ---- | ----------- | ------- |
+| `QUERY`      | `string` | The input query to return data for. | _none_ |
+| `OPERATOR`   | `string` | Specifies which [transformation operator](#transformation-operators) to apply to records matching the filter `EXPRESSION`. | _none_ |
+| `FIELD`      | `string` | The field to extract the substring from. | _none_ |
+| `START_INDEX` | `int`   | Indicates the index starting character position of the requested substring. If the value is a negative number, the substring is retrieved from the end of the source `FIELD`. | _none_ |
+| `LENGTH` | `int` | Optional. The number of characters to return from the substring. | _none_ |
+
+**Example**
+
+The following query includes a colon (`:`) to find all logs that have a
+`resource.type` field containing a `k8s` substring. Then, the query groups the logs
+by the `resource.type` field, groups the logs by the first 13 characters of the `k8s`
+substring, and returns those groups.
+
+```sql copy
+resource.type: "k8s"
+| summarize by substring(resource.type, 0, 13)
+```
+
+In the sidebar, expanding `resource.type` shows that this query matches values such
+as `k8s_container`, `k8s_resources`, and `k8s_cluster`.
+
+The following query uses the `substring()` function as a filter without any
+aggregation. This kind of query is useful when you want to ensure that a particular
+substring matches a value. In this case, the query matches any logs containing
+`writer` in the `kubernetes.pod_name` field:
+
+```sql copy
+substring(kubernetes.pod_name, 3, 6) = "writer"
+```
+
+### `sum()`
+
+The `sum` function computes the sum of values of a filter `EXPRESSION` over events
+passing through the function.
+
+**Syntax**
+
+```text copy /QUERY/ /OPERATOR/ /EXPRESSION/
+QUERY | OPERATOR sum(EXPRESSION)
+```
+
+**Arguments**
+
+| Argument     | Type | Description | Default |
+| ------------ | ---- | ----------- | ------- |
+| `QUERY`      | `string` | The input query to return data for. | _none_ |
+| `OPERATOR`   | `string` | Specifies which [transformation operator](#transformation-operators) to apply to records matching the filter `EXPRESSION`. | _none_ |
+| `EXPRESSION` | `string` | The filter expression used for the aggregation calculation. | _none_ |
+
+**Example**
+
+```sql copy
+kubernetes.cluster =~ "^production-*"
+| summarize sum(destination.bytes) by location-country
+```
+
+### `sumif()`
+
+The `sumif` function computes the sum of values for the specified field where the
+`EXPRESSION` filter evaluates to `true`.
+
+**Syntax**
+
+```text copy /QUERY/ /OPERATOR/ /FIELD/ /EXPRESSION/
+QUERY | OPERATOR sumif(FIELD, EXPRESSION)
+```
+
+**Arguments**
+
+| Argument     | Type | Description | Default |
+| ------------ | ---- | ----------- | ------- |
+| `QUERY`      | `string` | The input query to return data for. | _none_ |
+| `OPERATOR`   | `string` | Specifies which [transformation operator](#transformation-operators) to apply to records matching the filter `EXPRESSION`. | _none_ |
+| `FIELD`      | `string` | The field to return the sum calculation for. | _none_ |
+| `EXPRESSION` | `string` | The filter expression to apply before running the aggregation calculation. | _none_ |
+
+
+**Example**
+
+```sql copy
+kubernetes.cluster =~ "^production-*"
+| summarize sumif(destination.bytes, destination.bytes > 1000) by location-country
+```
+
+### `sum(_payloadSize)`
+
+The `sum(_payloadSize)` function calculates the size of the log payload in bytes.
+
+**Syntax**
+
+```text copy /QUERY/ /OPERATOR/ /FIELD/
+QUERY | OPERATOR sum(_payloadSize) by FIELD
+```
+
+**Arguments**
+
+| Argument     | Type | Description | Default |
+| ------------ | ---- | ----------- | ------- |
+| `QUERY`      | `string` | The input query to return data for. | _none_ |
+| `OPERATOR`   | `string` | The [transformation operator](#transformation-operators) to apply to records matching the function. | _none_ |
+| `FIELD`      | `string` | The field to group results by. | _none_ |

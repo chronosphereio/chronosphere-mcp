@@ -1,0 +1,68 @@
+package {{ .PkgName }}
+
+import (
+	"fmt"
+
+	"github.com/mark3labs/mcp-go/mcp"
+	"go.uber.org/zap"
+
+	"github.com/chronosphereio/mcp-server/generated/configv1/configv1/{{ .Entity.PkgName }}"
+	"github.com/chronosphereio/mcp-server/mcp-server/pkg/client"
+	"github.com/chronosphereio/mcp-server/mcp-server/pkg/ptr"
+	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
+	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/pkg/params"
+)
+
+{{ $entity := .Entity }}
+
+{{ range $idx, $toolSpec := .Entity.ToolSpecs }}
+func {{ $toolSpec.CamelName }}(clientProvider *client.Provider, logger *zap.Logger) tools.MCPTool {
+    return tools.MCPTool{
+        Metadata: tools.NewMetadata({{ printf "%q" $toolSpec.SnakeName }},
+            mcp.WithDescription({{ printf "%q" $toolSpec.Description }}),
+            {{ range $idx, $param := $toolSpec.Parameters }}
+                mcp.With{{$param.MCPType}}({{ printf "%q" $param.Name }},
+                    mcp.Description({{ printf "%q" $param.Description }}),
+                    {{ if $param.Required -}}
+                        mcp.Required(),
+                    {{ end }}
+                ),
+            {{ end }}
+        ),
+        Handler: func(session tools.Session, request mcp.CallToolRequest) (*tools.Result, error) {
+        {{ range $idx, $param := $toolSpec.Parameters }}
+            {{ $param.GoName }}, err := params.{{$param.ParseType}}(request, {{ printf "%q" $param.Name }}, {{ if $param.Required }}true{{ else }}false{{ end }}, {{ $param.DefaultValue }})
+            if err != nil {
+                return nil, err
+            }
+        {{ end }}
+
+            queryParams := &{{$entity.PkgName}}.{{$toolSpec.APIParam}}Params{
+            {{ range $idx, $param := $toolSpec.Parameters }}
+                {{ if eq $param.GoName "pageToken" -}}
+                    {{$param.SwaggerGoFieldName}}: &{{$param.GoName}},
+                {{ else if eq $param.GoName "pageMaxSize" -}}
+                    {{$param.SwaggerGoFieldName}}: ptr.To(int64({{$param.GoName}})),
+                {{ else if and (not $param.Required) $param.IsScalar -}}
+                    {{$param.SwaggerGoFieldName}}: ptr.To({{$param.GoName -}}),
+                {{ else -}}
+                    {{$param.SwaggerGoFieldName}}: {{$param.GoName -}},
+                {{end -}}
+            {{ end }}
+            }
+
+			api, err := clientProvider.ConfigV1Client(session)
+			if err != nil {
+				return nil, err
+			}
+		    resp, err := api.{{$entity.Name}}.{{$toolSpec.APIParam}}(queryParams)
+            if err != nil {
+                return nil, fmt.Errorf("failed to call {{$toolSpec.APIParam}}: %s", err)
+            }
+            return &tools.Result{
+                JsonContent: resp,
+            }, nil
+        },
+	}
+}
+{{ end }}

@@ -1,0 +1,7 @@
+# NB: "If you want to match two or more code owners with the same pattern, all the code owners must
+# be on the same line. If the code owners are not on the same line, the pattern matches only the
+# last mentioned code owner". For this reason, more general paths should be listed before more
+# specific ones.
+# docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+/**                 @chronosphereio/mcp

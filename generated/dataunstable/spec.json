@@ -1,0 +1,2866 @@
+{
+  "consumes": [
+    "application/json"
+  ],
+  "definitions": {
+    "EventBucketGroup": {
+      "description": "A single group of events within a bucket.",
+      "properties": {
+        "name": {
+          "description": "The name of this group within the bucket. Set to the value of the group_by field.\nUnset if group_by is unset.",
+          "type": "string"
+        },
+        "count": {
+          "description": "The count of events in this group within the bucket.",
+          "format": "int64",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ExecutionSummaryDashboard": {
+      "properties": {
+        "slug": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GetLogClusterExecutionsRequestExecutionType": {
+      "enum": [
+        "LOG_EXPLORER",
+        "DASHBOARD"
+      ],
+      "type": "string"
+    },
+    "GetLogClusterExecutionsResponseExecutionSummary": {
+      "properties": {
+        "count": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "query": {
+          "description": "either `query` or `dashboard` will be set, depending on the first level of grouping",
+          "type": "string"
+        },
+        "dashboard": {
+          "$ref": "#/definitions/ExecutionSummaryDashboard"
+        },
+        "executions": {
+          "items": {
+            "$ref": "#/definitions/GetLogClusterExecutionsResponseExecutionSummaryExecutions"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "GetLogClusterExecutionsResponseExecutionSummaryExecutions": {
+      "properties": {
+        "count": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "user": {
+          "description": "`dashboard` or `user` will not be set if we're not grouping by it",
+          "type": "string"
+        },
+        "dashboard": {
+          "$ref": "#/definitions/ExecutionSummaryDashboard"
+        }
+      },
+      "type": "object"
+    },
+    "GetLogClusterUsageResponseRecommendation": {
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/RecommendationRecommendationType"
+        },
+        "header_text": {
+          "type": "string"
+        },
+        "body_text": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GetLogClusterUsageResponseReferences": {
+      "properties": {
+        "dashboards": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "monitors": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "saved_searches": {
+          "format": "uint64",
+          "type": "string"
+        }
+      },
+      "title": "not used initially",
+      "type": "object"
+    },
+    "GetLogClusterUsageResponseUsageBucket": {
+      "properties": {
+        "after": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "before": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "value": {
+          "format": "uint64",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GetLoggingUsageRequestResponseOrderType": {
+      "enum": [
+        "UTILITY_ASC",
+        "UTILITY_DESC",
+        "VOLUME_ASC",
+        "VOLUME_DESC",
+        "VOLUME_24H_ASC",
+        "VOLUME_24H_DESC"
+      ],
+      "type": "string"
+    },
+    "GetLoggingUsageResponseMetadata": {
+      "properties": {
+        "total_patterns": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "total_logs": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "last_updated_at": {
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GetRangeQueryResponseRangeQueryMetadata": {
+      "properties": {
+        "limit_enforced": {
+          "description": "This field indicates whether the result is truncated by the limit requested.",
+          "type": "boolean"
+        },
+        "page": {
+          "$ref": "#/definitions/dataunstableRangeQueryPageResult"
+        }
+      },
+      "type": "object"
+    },
+    "ListEventFieldValuesRequestScope": {
+      "description": "The scope to apply to the query.",
+      "properties": {
+        "categories": {
+          "description": "The list of categories to scope event field values by.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "types": {
+          "description": "The list of types to scope event field values by.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "sources": {
+          "description": "The list of sources to scope event field values by.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "ListLogsRequestSortOrder": {
+      "enum": [
+        "ASC",
+        "DESC"
+      ],
+      "type": "string"
+    },
+    "ListTracesRequestQueryType": {
+      "enum": [
+        "TRACE_IDS",
+        "SERVICE_OPERATION"
+      ],
+      "type": "string"
+    },
+    "LogQueryTimeSeriesDataLogQueryTimeSeries": {
+      "properties": {
+        "group_by_dimension_values": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "buckets": {
+          "items": {
+            "$ref": "#/definitions/LogQueryTimeSeriesLogQueryTimeSeriesBucket"
+          },
+          "type": "array"
+        },
+        "aggregation_name": {
+          "description": "aggregation_name is by default the name of the aggregation used to calculate\nthe values.\nIn the future we may support aliasing in query grammar.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "LogQueryTimeSeriesLogQueryTimeSeriesBucket": {
+      "properties": {
+        "start_time": {
+          "description": "The start time of the time range this bucket covers.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "end_time": {
+          "description": "The end time of the time range this bucket covers.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "float_value": {
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "RecommendationRecommendationType": {
+      "enum": [
+        "DROP_LOG",
+        "ADD_METRIC",
+        "ADD_METRIC_AND_DROP"
+      ],
+      "type": "string"
+    },
+    "apiError": {
+      "properties": {
+        "code": {
+          "description": "An optional private error code whose values are undefined.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "message": {
+          "description": "An error message describing what went wrong.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "configv1PageParams": {
+      "properties": {
+        "max_size": {
+          "description": "Page size preference (i.e. how many items are returned in the next\npage). If zero, the server will use a default. Regardless of what size\nis given, clients must never assume how many items will be returned.",
+          "format": "int64",
+          "type": "integer"
+        },
+        "token": {
+          "description": "Opaque page token identifying which page to request. An empty token\nidentifies the first page.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "configv1PageResult": {
+      "properties": {
+        "next_token": {
+          "description": "Opaque page token which identifies the next page of items which the\nclient should request. An empty next_token indicates that there are no\nmore items to return.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableAutocompleteResponse": {
+      "properties": {
+        "suggestions": {
+          "items": {
+            "$ref": "#/definitions/dataunstableSuggestion"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableCancelLogQueryResponse": {
+      "type": "object"
+    },
+    "dataunstableColumnMeta": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/dataunstableColumnMetaType"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableColumnMetaType": {
+      "enum": [
+        "BOOLEAN",
+        "FLOAT",
+        "STRING"
+      ],
+      "type": "string"
+    },
+    "dataunstableCreateEventRequest": {
+      "properties": {
+        "event": {
+          "$ref": "#/definitions/dataunstableEvent"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableCreateEventResponse": {
+      "type": "object"
+    },
+    "dataunstableEvent": {
+      "properties": {
+        "title": {
+          "description": "A short description of the event that occurred, such as an email subject.\nMax length, 100 characters.",
+          "type": "string"
+        },
+        "happened_at": {
+          "description": "The time the event occurred. Must be between 24 hours in the past or 24 hours\nin the future. Defaults to `now` if not specified.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "category": {
+          "description": "The category the event belongs to. Must be one of these categories:\n`alerts`, `broadcasts`, `chronosphere`, `deploys`, `feature_flags`,\n`infrastructure`, `third_party`.",
+          "type": "string"
+        },
+        "type": {
+          "description": "The event type, used to group and differentiate events within a `category`\nor `source`.",
+          "type": "string"
+        },
+        "source": {
+          "description": "Identifies where the data originated, in cases where a change to the\ninstrumentation or integration is needed. Max length, 50 characters.",
+          "type": "string"
+        },
+        "labels": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Map of user-supplied key:value pairs associated with the event. Max 200 labels\nper event. Key max length, 200 characters. Value max length, 5,000\ncharacters.",
+          "type": "object"
+        },
+        "json_payload": {
+          "description": "A string representation of the original event JSON. Max length 100,000 characters. Only json_payload or\nraw_json_payload can be set.",
+          "type": "string"
+        },
+        "raw_json_payload": {
+          "description": "The JSON payload if the original event was in JSON format. Formatted as JSON. Max length,\n100,000 characters. Input Only. Only json_payload or raw_json_payload may be set.",
+          "type": "object"
+        },
+        "id": {
+          "description": "Unique identifier",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableEventBucket": {
+      "description": "A single histogram bucket.",
+      "properties": {
+        "groups": {
+          "description": "The grouped data in this bucket. Ordered alphabetically by group name.",
+          "items": {
+            "$ref": "#/definitions/EventBucketGroup"
+          },
+          "type": "array"
+        },
+        "start_time": {
+          "description": "The start time of the time range this bucket covers.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "end_time": {
+          "description": "The end time of the time range this bucket covers.",
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableEventDetails": {
+      "properties": {
+        "happened_at": {
+          "description": "The time the event occurred.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "category": {
+          "description": "The category the event belongs to.",
+          "type": "string"
+        },
+        "id": {
+          "description": "Unique identifier",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableEventField": {
+      "enum": [
+        "CATEGORY_EVENT_FIELD",
+        "TYPE_EVENT_FIELD",
+        "SOURCE_EVENT_FIELD",
+        "LABEL_NAME_EVENT_FIELD",
+        "LABEL_VALUE_EVENT_FIELD",
+        "LENS_SERVICE_EVENT_FIELD"
+      ],
+      "type": "string"
+    },
+    "dataunstableEventGrafanaAnnotation": {
+      "description": "EventGrafanaAnnotation represents Event as a grafana annotation.",
+      "properties": {
+        "id": {
+          "description": "Unique identifier.",
+          "type": "string"
+        },
+        "login": {
+          "description": "The email of the user that created the event if available.",
+          "type": "string"
+        },
+        "time": {
+          "description": "The happened_at of the event.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "time_end": {
+          "description": "The happened_at of the event",
+          "format": "date-time",
+          "type": "string"
+        },
+        "text": {
+          "description": "The title of the event.",
+          "type": "string"
+        },
+        "tags": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "The properties and labels of the event. Grafana expects these to be a list of string\nbut to make it easier for our plugin we return it as a map of string.",
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableEventHistogramWithDetails": {
+      "properties": {
+        "event_bucket": {
+          "$ref": "#/definitions/dataunstableEventBucket"
+        },
+        "event": {
+          "$ref": "#/definitions/dataunstableEventDetails"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableGetEventHistogramResponse": {
+      "properties": {
+        "buckets": {
+          "description": "List of histogram buckets ordered in ASC order by start_time.",
+          "items": {
+            "$ref": "#/definitions/dataunstableEventBucket"
+          },
+          "type": "array"
+        },
+        "total_events": {
+          "description": "The total number of events with this filter and time range.",
+          "format": "int64",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableGetEventResponse": {
+      "properties": {
+        "event": {
+          "$ref": "#/definitions/dataunstableEvent"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableGetEventsForMonitorResponse": {
+      "properties": {
+        "event_histogram_with_details": {
+          "description": "The buckets and individual events making up a time range",
+          "items": {
+            "$ref": "#/definitions/dataunstableEventHistogramWithDetails"
+          },
+          "type": "array"
+        },
+        "total_events": {
+          "description": "The total number of events in the time range",
+          "format": "int64",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableGetInstantQueryResponse": {
+      "properties": {
+        "groups": {
+          "description": "The grouped data at this instant. Ordered alphabetically by group name.",
+          "items": {
+            "$ref": "#/definitions/dataunstableGroupByOutput"
+          },
+          "type": "array"
+        },
+        "grouped_by": {
+          "description": "The names of the labels by which the results are grouped by.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "limit_enforced": {
+          "description": "This field indicates whether the result is truncated by the limit requested.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableGetLogClusterExecutionsResponse": {
+      "properties": {
+        "summaries": {
+          "items": {
+            "$ref": "#/definitions/GetLogClusterExecutionsResponseExecutionSummary"
+          },
+          "type": "array"
+        },
+        "page": {
+          "$ref": "#/definitions/configv1PageResult"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableGetLogClusterUsageResponse": {
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "cluster_id": {
+          "format": "int64",
+          "type": "string"
+        },
+        "pattern": {
+          "type": "string"
+        },
+        "utility_score": {
+          "format": "float",
+          "type": "number"
+        },
+        "utility_score_previous": {
+          "format": "float",
+          "type": "number"
+        },
+        "volume_bytes": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "volume_bytes_previous": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "volume_bytes_24h": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "volume_bytes_24h_previous": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "executions": {
+          "$ref": "#/definitions/dataunstableGetLogClusterUsageResponseExecutions"
+        },
+        "volume_bytes_buckets": {
+          "items": {
+            "$ref": "#/definitions/GetLogClusterUsageResponseUsageBucket"
+          },
+          "type": "array"
+        },
+        "references": {
+          "$ref": "#/definitions/GetLogClusterUsageResponseReferences"
+        },
+        "recommendation": {
+          "$ref": "#/definitions/GetLogClusterUsageResponseRecommendation"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableGetLogClusterUsageResponseExecutions": {
+      "properties": {
+        "dashboards": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "explorer": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "unique_users": {
+          "format": "uint64",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableGetLogHistogramResponse": {
+      "properties": {
+        "buckets": {
+          "description": "List of histogram buckets ordered in ASC order by start_time.",
+          "items": {
+            "$ref": "#/definitions/dataunstableLogBucket"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableGetLogQueryResponse": {
+      "properties": {
+        "query": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableGetLoggingUsageResponse": {
+      "properties": {
+        "clusters": {
+          "items": {
+            "$ref": "#/definitions/dataunstableGetLoggingUsageResponseLogCluster"
+          },
+          "type": "array"
+        },
+        "meta": {
+          "$ref": "#/definitions/GetLoggingUsageResponseMetadata"
+        },
+        "page": {
+          "$ref": "#/definitions/configv1PageResult"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableGetLoggingUsageResponseLogCluster": {
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "cluster_id": {
+          "format": "int64",
+          "type": "string"
+        },
+        "pattern": {
+          "type": "string"
+        },
+        "utility_score": {
+          "format": "float",
+          "type": "number"
+        },
+        "utility_score_previous": {
+          "format": "float",
+          "type": "number"
+        },
+        "volume_bytes": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "volume_bytes_previous": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "volume_bytes_24h": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "volume_bytes_24h_previous": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "last_updated_at": {
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableGetRangeQueryResponse": {
+      "properties": {
+        "metadata": {
+          "$ref": "#/definitions/GetRangeQueryResponseRangeQueryMetadata"
+        },
+        "time_series_data": {
+          "$ref": "#/definitions/dataunstableLogQueryTimeSeriesData"
+        },
+        "grid_data": {
+          "$ref": "#/definitions/dataunstableLogQueryGridData"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableGetTenantConfigurationResponse": {
+      "properties": {
+        "data_retention_days": {
+          "description": "Number of days the tenant is configured to",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableGroupByInput": {
+      "properties": {
+        "field_names": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableGroupByOutput": {
+      "description": "A single group of logs within a bucket.",
+      "properties": {
+        "field_values": {
+          "description": "The name of this group within the bucket. Set to the value of the group_by field.\nUnset if group_by is unset.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "value": {
+          "description": "The value of the aggregation in this group within the bucket.",
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableListEventFieldValuesResponse": {
+      "properties": {
+        "values": {
+          "description": "Field values are ordered by frequency of occurrence and then alphabetical order is used\nas the tiebreaker.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableListEventGrafanaAnnotationsResponse": {
+      "properties": {
+        "events": {
+          "items": {
+            "$ref": "#/definitions/dataunstableEventGrafanaAnnotation"
+          },
+          "type": "array"
+        },
+        "page": {
+          "$ref": "#/definitions/configv1PageResult"
+        },
+        "query": {
+          "description": "Returns the query that was used to generate the request.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableListEventsResponse": {
+      "properties": {
+        "events": {
+          "items": {
+            "$ref": "#/definitions/dataunstableEvent"
+          },
+          "type": "array"
+        },
+        "page": {
+          "$ref": "#/definitions/configv1PageResult"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableListLogFieldNamesResponse": {
+      "properties": {
+        "suggestions": {
+          "items": {
+            "$ref": "#/definitions/dataunstableSuggestion"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableListLogFieldValuesResponse": {
+      "properties": {
+        "suggestions": {
+          "items": {
+            "$ref": "#/definitions/dataunstableSuggestion"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableListLogsResponse": {
+      "properties": {
+        "logs": {
+          "items": {
+            "$ref": "#/definitions/dataunstableLog"
+          },
+          "type": "array"
+        },
+        "page": {
+          "$ref": "#/definitions/configv1PageResult"
+        },
+        "clusters": {
+          "description": "Clusters for the listed logs.",
+          "items": {
+            "$ref": "#/definitions/dataunstableLogCluster"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableLog": {
+      "properties": {
+        "timestamp": {
+          "description": "Timestamp recorded on the log message.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "data": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Data contains all the data for the log.",
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableLogBucket": {
+      "description": "A single histogram bucket.",
+      "properties": {
+        "groups": {
+          "description": "The grouped data in this bucket. Ordered alphabetically by group name.",
+          "items": {
+            "$ref": "#/definitions/dataunstableGroupByOutput"
+          },
+          "type": "array"
+        },
+        "start_time": {
+          "description": "The start time of the time range this bucket covers.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "end_time": {
+          "description": "The end time of the time range this bucket covers.",
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableLogCluster": {
+      "properties": {
+        "pattern": {
+          "description": "The pattern that represents this cluster.",
+          "type": "string"
+        },
+        "num_logs": {
+          "description": "Number of logs present in this cluster.",
+          "format": "int64",
+          "type": "integer"
+        },
+        "filter": {
+          "description": "Filter expression that can be used to select logs matching the cluster.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableLogClusterId": {
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "cluster_id": {
+          "format": "int64",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableLogFilter": {
+      "properties": {
+        "happened_after": {
+          "description": "Only log messages with a timestamp after this time will be returned.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "happened_before": {
+          "description": "Only log messages with a timestamp before this time will be returned.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "query": {
+          "description": "Specifies the query to run to filter logs. Query defined using logql.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableLogQueryGridData": {
+      "properties": {
+        "columns": {
+          "items": {
+            "$ref": "#/definitions/dataunstableColumnMeta"
+          },
+          "type": "array"
+        },
+        "rows": {
+          "items": {
+            "$ref": "#/definitions/dataunstableRow"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableLogQueryListData": {
+      "properties": {
+        "logs": {
+          "items": {
+            "$ref": "#/definitions/dataunstableLog"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableLogQueryTimeSeriesData": {
+      "properties": {
+        "series": {
+          "items": {
+            "$ref": "#/definitions/LogQueryTimeSeriesDataLogQueryTimeSeries"
+          },
+          "type": "array"
+        },
+        "group_by_dimension_names": {
+          "description": "The names of the dimensions by which the results are grouped by.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstablePassThroughQueryResponse": {
+      "type": "object"
+    },
+    "dataunstablePollListLogFieldNamesResponse": {
+      "properties": {
+        "query_id": {
+          "type": "string"
+        },
+        "is_finished": {
+          "type": "boolean"
+        },
+        "progress": {
+          "format": "float",
+          "type": "number"
+        },
+        "suggestions": {
+          "items": {
+            "$ref": "#/definitions/dataunstableSuggestion"
+          },
+          "type": "array"
+        },
+        "refresh_interval_ms": {
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstablePollListLogFieldValuesResponse": {
+      "properties": {
+        "query_id": {
+          "type": "string"
+        },
+        "is_finished": {
+          "type": "boolean"
+        },
+        "progress": {
+          "format": "float",
+          "type": "number"
+        },
+        "suggestions": {
+          "items": {
+            "$ref": "#/definitions/dataunstableSuggestion"
+          },
+          "type": "array"
+        },
+        "refresh_interval_ms": {
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstablePollListLogsResponse": {
+      "properties": {
+        "query_id": {
+          "type": "string"
+        },
+        "is_finished": {
+          "type": "boolean"
+        },
+        "progress": {
+          "format": "float",
+          "type": "number"
+        },
+        "logs": {
+          "items": {
+            "$ref": "#/definitions/dataunstableLog"
+          },
+          "type": "array"
+        },
+        "page": {
+          "$ref": "#/definitions/configv1PageResult"
+        },
+        "refresh_interval_ms": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "clusters": {
+          "description": "Clusters for the listed logs.",
+          "items": {
+            "$ref": "#/definitions/dataunstableLogCluster"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstablePollLogHistogramResponse": {
+      "properties": {
+        "query_id": {
+          "type": "string"
+        },
+        "is_finished": {
+          "type": "boolean"
+        },
+        "progress": {
+          "format": "float",
+          "type": "number"
+        },
+        "buckets": {
+          "description": "List of histogram buckets ordered in ASC order by start_time.",
+          "items": {
+            "$ref": "#/definitions/dataunstableLogBucket"
+          },
+          "type": "array"
+        },
+        "refresh_interval_ms": {
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstablePollRangeQueryResponse": {
+      "properties": {
+        "query_id": {
+          "type": "string"
+        },
+        "is_finished": {
+          "type": "boolean"
+        },
+        "progress": {
+          "format": "float",
+          "type": "number"
+        },
+        "refresh_interval_ms": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "metadata": {
+          "$ref": "#/definitions/GetRangeQueryResponseRangeQueryMetadata"
+        },
+        "time_series_data": {
+          "$ref": "#/definitions/dataunstableLogQueryTimeSeriesData"
+        },
+        "list_data": {
+          "$ref": "#/definitions/dataunstableLogQueryListData"
+        },
+        "grid_data": {
+          "$ref": "#/definitions/dataunstableLogQueryGridData"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableRangeQueryPageParams": {
+      "properties": {
+        "token": {
+          "description": "Opaque page token identifying which page to request. An empty token\nidentifies the first page.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableRangeQueryPageResult": {
+      "properties": {
+        "next_token": {
+          "description": "Opaque page token which identifies the next page of items which the\nclient should request. An empty next_token indicates that there are no\nmore items to return.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableRow": {
+      "properties": {
+        "values": {
+          "items": {
+            "$ref": "#/definitions/dataunstableValue"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableStartListLogFieldNamesResponse": {
+      "properties": {
+        "query_id": {
+          "type": "string"
+        },
+        "refresh_interval_ms": {
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableStartListLogFieldValuesResponse": {
+      "properties": {
+        "query_id": {
+          "type": "string"
+        },
+        "refresh_interval_ms": {
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableStartListLogsResponse": {
+      "properties": {
+        "query_id": {
+          "type": "string"
+        },
+        "refresh_interval_ms": {
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableStartLogHistogramResponse": {
+      "properties": {
+        "query_id": {
+          "type": "string"
+        },
+        "refresh_interval_ms": {
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableStartRangeQueryResponse": {
+      "properties": {
+        "query_id": {
+          "type": "string"
+        },
+        "refresh_interval_ms": {
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableSuggestion": {
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "count": {
+          "description": "The number of times this suggested value is seen in the query result.\nThe value could be approximate and not complete.",
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableTimestampFilter": {
+      "properties": {
+        "happened_after": {
+          "description": "Only log messages with a timestamp after this time will be returned.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "happened_before": {
+          "description": "Only log messages with a timestamp before this time will be returned.",
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "dataunstableValue": {
+      "properties": {
+        "bool_value": {
+          "type": "boolean"
+        },
+        "float_value": {
+          "format": "double",
+          "type": "number"
+        },
+        "string_value": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "datav1ListTracesResponse": {
+      "properties": {
+        "traces": {
+          "description": "List of opentelemetry.proto.trace.v1.TracesData",
+          "items": {
+            "format": "byte",
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "genericError": {
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "protobufAny": {
+      "additionalProperties": {},
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "protobufNullValue": {
+      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\nThe JSON representation for `NullValue` is JSON `null`.",
+      "type": "string"
+    }
+  },
+  "info": {
+    "description": "\n\u003cb\u003eWARNING: This API is unstable and is meant for experimentation only. Do not\nuse this API in production. The endpoints and schemas referenced in this\ndocumentation will be changed or removed without notice and without any\nbackwards compatibility guarantee. Note that even though this API is unstable,\nit is still connected to production data, so use with caution.\u003c/b\u003e",
+    "title": "Data Unstable API",
+    "version": "v1"
+  },
+  "paths": {
+    "/api/unstable/data/events": {
+      "get": {
+        "operationId": "ListEvents",
+        "parameters": [
+          {
+            "description": "Only events which happened_at after this time will be returned. If set, happened_before must also be set.\nIf no time range is set, defaults to 1 hour ago.",
+            "format": "date-time",
+            "in": "query",
+            "name": "happened_after",
+            "type": "string"
+          },
+          {
+            "description": "Only events which happened_at before this will be returned. If set, happened_after must also be set.\nIf no time range is set, defaults to now.",
+            "format": "date-time",
+            "in": "query",
+            "name": "happened_before",
+            "type": "string"
+          },
+          {
+            "description": "A query string specifying the query.",
+            "in": "query",
+            "name": "query",
+            "type": "string"
+          },
+          {
+            "description": "Page size preference (i.e. how many items are returned in the next\npage). If zero, the server will use a default. Regardless of what size\nis given, clients must never assume how many items will be returned.",
+            "format": "int64",
+            "in": "query",
+            "name": "page.max_size",
+            "type": "integer"
+          },
+          {
+            "description": "Opaque page token identifying which page to request. An empty token\nidentifies the first page.",
+            "in": "query",
+            "name": "page.token",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstableListEventsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      },
+      "post": {
+        "operationId": "CreateEvent",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/dataunstableCreateEventRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstableCreateEventResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    },
+    "/api/unstable/data/events/{id}": {
+      "get": {
+        "operationId": "GetEvent",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstableGetEventResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    },
+    "/api/unstable/data/events:field-values": {
+      "get": {
+        "operationId": "ListEventFieldValues",
+        "parameters": [
+          {
+            "description": "The field for which to look up possible values for.",
+            "enum": [
+              "CATEGORY_EVENT_FIELD",
+              "TYPE_EVENT_FIELD",
+              "SOURCE_EVENT_FIELD",
+              "LABEL_NAME_EVENT_FIELD",
+              "LABEL_VALUE_EVENT_FIELD",
+              "LENS_SERVICE_EVENT_FIELD"
+            ],
+            "in": "query",
+            "name": "field",
+            "type": "string"
+          },
+          {
+            "description": "Required if field is set to label name, otherwise should not be set.",
+            "in": "query",
+            "name": "label_name",
+            "type": "string"
+          },
+          {
+            "description": "The current query subject to autocompletion. The query will be parsed, and current filters applied to limit the\nresults returned based on context. If the query cannot be parsed, all values for the field are returned.\nOnly one of `query` or `scope` can be set.",
+            "in": "query",
+            "name": "query",
+            "type": "string"
+          },
+          {
+            "description": "The index of the incomplete field in the query to generate values for. Ignored if no query is set.",
+            "format": "int64",
+            "in": "query",
+            "name": "autocomplete_index",
+            "type": "string"
+          },
+          {
+            "collectionFormat": "multi",
+            "description": "The list of categories to scope event field values by.",
+            "in": "query",
+            "items": {
+              "type": "string"
+            },
+            "name": "scope.categories",
+            "type": "array"
+          },
+          {
+            "collectionFormat": "multi",
+            "description": "The list of types to scope event field values by.",
+            "in": "query",
+            "items": {
+              "type": "string"
+            },
+            "name": "scope.types",
+            "type": "array"
+          },
+          {
+            "collectionFormat": "multi",
+            "description": "The list of sources to scope event field values by.",
+            "in": "query",
+            "items": {
+              "type": "string"
+            },
+            "name": "scope.sources",
+            "type": "array"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstableListEventFieldValuesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    },
+    "/api/unstable/data/events:grafana-annotations": {
+      "get": {
+        "operationId": "ListEventGrafanaAnnotations",
+        "parameters": [
+          {
+            "description": "Only events which happened_at after this time will be returned. If set, happened_before must also be set.\nIf no time range is set, defaults to 1 hour ago.",
+            "format": "date-time",
+            "in": "query",
+            "name": "happened_after",
+            "type": "string"
+          },
+          {
+            "description": "Only events which happened_at before this will be returned. If set, happened_after must also be set.\nIf no time range is set, defaults to now.",
+            "format": "date-time",
+            "in": "query",
+            "name": "happened_before",
+            "type": "string"
+          },
+          {
+            "description": "A query string specifying the query.",
+            "in": "query",
+            "name": "query",
+            "type": "string"
+          },
+          {
+            "description": "Page size preference (i.e. how many items are returned in the next\npage). If zero, the server will use a default. Regardless of what size\nis given, clients must never assume how many items will be returned.",
+            "format": "int64",
+            "in": "query",
+            "name": "page.max_size",
+            "type": "integer"
+          },
+          {
+            "description": "Opaque page token identifying which page to request. An empty token\nidentifies the first page.",
+            "in": "query",
+            "name": "page.token",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstableListEventGrafanaAnnotationsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    },
+    "/api/unstable/data/events:histogram": {
+      "get": {
+        "operationId": "GetEventHistogram",
+        "parameters": [
+          {
+            "description": "Only events which happened_at after this time will be included. If set, happened_before must also be set.\nIf no time range is set, defaults to 1 hour ago.",
+            "format": "date-time",
+            "in": "query",
+            "name": "happened_after",
+            "type": "string"
+          },
+          {
+            "description": "Only events which happened_at will be included. If set, happened_after must also be set.\nIf no time range is set, defaults to now.",
+            "format": "date-time",
+            "in": "query",
+            "name": "happened_before",
+            "type": "string"
+          },
+          {
+            "description": "Duration each bucket in histogram should have. Must be greater than 10 seconds.",
+            "in": "query",
+            "name": "step_size",
+            "type": "string"
+          },
+          {
+            "description": "A query string specifying the query.",
+            "in": "query",
+            "name": "query",
+            "type": "string"
+          },
+          {
+            "description": "Optional event field to group results within each bucket.\nMay be “category”, “type”, or unset to have one group per bucket.",
+            "in": "query",
+            "name": "group_by",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstableGetEventHistogramResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    },
+    "/api/unstable/data/events:histogram-with-details": {
+      "get": {
+        "operationId": "GetEventsForMonitor",
+        "parameters": [
+          {
+            "description": "Only events which happened_at after this time will be included. If set, happened_before must also be set.\nIf no time range is set, defaults to 1 hour ago.",
+            "format": "date-time",
+            "in": "query",
+            "name": "happened_after",
+            "type": "string"
+          },
+          {
+            "description": "Only events which happened_at will be included. If set, happened_after must also be set.\nIf no time range is set, defaults to now.",
+            "format": "date-time",
+            "in": "query",
+            "name": "happened_before",
+            "type": "string"
+          },
+          {
+            "description": "Duration each bucket in histogram should have. Must be greater than 10 seconds.",
+            "in": "query",
+            "name": "step_size",
+            "type": "string"
+          },
+          {
+            "description": "A query string specifying the query.",
+            "in": "query",
+            "name": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstableGetEventsForMonitorResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    },
+    "/api/unstable/data/logs": {
+      "get": {
+        "description": "Logging.",
+        "operationId": "ListLogs",
+        "parameters": [
+          {
+            "description": "Page size preference (i.e. how many items are returned in the next\npage). If zero, the server will use a default. Regardless of what size\nis given, clients must never assume how many items will be returned.",
+            "format": "int64",
+            "in": "query",
+            "name": "page.max_size",
+            "type": "integer"
+          },
+          {
+            "description": "Opaque page token identifying which page to request. An empty token\nidentifies the first page.",
+            "in": "query",
+            "name": "page.token",
+            "type": "string"
+          },
+          {
+            "description": "Only log messages with a timestamp after this time will be returned.",
+            "format": "date-time",
+            "in": "query",
+            "name": "log_filter.happened_after",
+            "type": "string"
+          },
+          {
+            "description": "Only log messages with a timestamp before this time will be returned.",
+            "format": "date-time",
+            "in": "query",
+            "name": "log_filter.happened_before",
+            "type": "string"
+          },
+          {
+            "description": "Specifies the query to run to filter logs. Query defined using logql.",
+            "in": "query",
+            "name": "log_filter.query",
+            "type": "string"
+          },
+          {
+            "description": "The ID of the log to be pinned.",
+            "in": "query",
+            "name": "pinned_log_id",
+            "type": "string"
+          },
+          {
+            "description": "Specifies sort order for returned logs. We only support sorting logs by timestamp.\nDefault value is DESC (most recent logs first).",
+            "enum": [
+              "ASC",
+              "DESC"
+            ],
+            "in": "query",
+            "name": "timestamp_sort",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstableListLogsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    },
+    "/api/unstable/data/logs:autocomplete": {
+      "get": {
+        "operationId": "Autocomplete",
+        "parameters": [
+          {
+            "description": "Only log messages with a timestamp after this time will be returned.",
+            "format": "date-time",
+            "in": "query",
+            "name": "log_filter.happened_after",
+            "type": "string"
+          },
+          {
+            "description": "Only log messages with a timestamp before this time will be returned.",
+            "format": "date-time",
+            "in": "query",
+            "name": "log_filter.happened_before",
+            "type": "string"
+          },
+          {
+            "description": "Specifies the query to run to filter logs. Query defined using logql.",
+            "in": "query",
+            "name": "log_filter.query",
+            "type": "string"
+          },
+          {
+            "format": "int64",
+            "in": "query",
+            "name": "index",
+            "type": "integer"
+          },
+          {
+            "format": "int64",
+            "in": "query",
+            "name": "limit",
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstableAutocompleteResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    },
+    "/api/unstable/data/logs:cancel-query": {
+      "get": {
+        "operationId": "CancelLogQuery",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "query_id",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstableCancelLogQueryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    },
+    "/api/unstable/data/logs:get-instant-query": {
+      "get": {
+        "description": "GetInstantQuery returns an instant query aggregated query.",
+        "operationId": "GetInstantQuery",
+        "parameters": [
+          {
+            "description": "Specifies the query to run to filter logs. Query defined using logql.",
+            "in": "query",
+            "name": "query",
+            "type": "string"
+          },
+          {
+            "description": "The timestamp with which to evaluate the query.",
+            "format": "date-time",
+            "in": "query",
+            "name": "timestamp_nanos",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstableGetInstantQueryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    },
+    "/api/unstable/data/logs:get-log-cluster-executions": {
+      "get": {
+        "operationId": "GetLogClusterExecutions",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "id.key",
+            "type": "string"
+          },
+          {
+            "format": "int64",
+            "in": "query",
+            "name": "id.cluster_id",
+            "type": "string"
+          },
+          {
+            "format": "date-time",
+            "in": "query",
+            "name": "after",
+            "type": "string"
+          },
+          {
+            "format": "date-time",
+            "in": "query",
+            "name": "before",
+            "type": "string"
+          },
+          {
+            "enum": [
+              "LOG_EXPLORER",
+              "DASHBOARD"
+            ],
+            "in": "query",
+            "name": "execution_type",
+            "type": "string"
+          },
+          {
+            "description": "Page size preference (i.e. how many items are returned in the next\npage). If zero, the server will use a default. Regardless of what size\nis given, clients must never assume how many items will be returned.",
+            "format": "int64",
+            "in": "query",
+            "name": "page.max_size",
+            "type": "integer"
+          },
+          {
+            "description": "Opaque page token identifying which page to request. An empty token\nidentifies the first page.",
+            "in": "query",
+            "name": "page.token",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstableGetLogClusterExecutionsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    },
+    "/api/unstable/data/logs:get-log-cluster-usage": {
+      "get": {
+        "operationId": "GetLogClusterUsage",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "id.key",
+            "type": "string"
+          },
+          {
+            "format": "int64",
+            "in": "query",
+            "name": "id.cluster_id",
+            "type": "string"
+          },
+          {
+            "format": "date-time",
+            "in": "query",
+            "name": "after",
+            "type": "string"
+          },
+          {
+            "format": "date-time",
+            "in": "query",
+            "name": "before",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstableGetLogClusterUsageResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    },
+    "/api/unstable/data/logs:get-log-query": {
+      "get": {
+        "operationId": "GetLogQuery",
+        "parameters": [
+          {
+            "description": "The query provided by the user. This field is always required.",
+            "in": "query",
+            "name": "query",
+            "type": "string"
+          },
+          {
+            "description": "Optional argument for providing the full prompt that is used for generating the user query.\nIf not specified, the backend service constructs the prompt based on the provided query.",
+            "in": "query",
+            "name": "prompt",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstableGetLogQueryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    },
+    "/api/unstable/data/logs:get-logging-usage": {
+      "get": {
+        "description": "Logging Usage",
+        "operationId": "GetLoggingUsage",
+        "parameters": [
+          {
+            "collectionFormat": "multi",
+            "description": "Optional list of keys for which to return clusters for. If not set, all clusters are returned.",
+            "in": "query",
+            "items": {
+              "type": "string"
+            },
+            "name": "keys",
+            "type": "array"
+          },
+          {
+            "format": "date-time",
+            "in": "query",
+            "name": "after",
+            "type": "string"
+          },
+          {
+            "format": "date-time",
+            "in": "query",
+            "name": "before",
+            "type": "string"
+          },
+          {
+            "enum": [
+              "UTILITY_ASC",
+              "UTILITY_DESC",
+              "VOLUME_ASC",
+              "VOLUME_DESC",
+              "VOLUME_24H_ASC",
+              "VOLUME_24H_DESC"
+            ],
+            "in": "query",
+            "name": "order",
+            "type": "string"
+          },
+          {
+            "description": "Page size preference (i.e. how many items are returned in the next\npage). If zero, the server will use a default. Regardless of what size\nis given, clients must never assume how many items will be returned.",
+            "format": "int64",
+            "in": "query",
+            "name": "page.max_size",
+            "type": "integer"
+          },
+          {
+            "description": "Opaque page token identifying which page to request. An empty token\nidentifies the first page.",
+            "in": "query",
+            "name": "page.token",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstableGetLoggingUsageResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    },
+    "/api/unstable/data/logs:get-range-query": {
+      "get": {
+        "description": "GetInstantQuery returns an instant query aggregated query.",
+        "operationId": "GetRangeQuery",
+        "parameters": [
+          {
+            "description": "Specifies the query to run to filter logs. Query defined using logql.",
+            "in": "query",
+            "name": "query",
+            "type": "string"
+          },
+          {
+            "description": "Only log messages with a timestamp after this time will be returned.",
+            "format": "date-time",
+            "in": "query",
+            "name": "timestamp_filter.happened_after",
+            "type": "string"
+          },
+          {
+            "description": "Only log messages with a timestamp before this time will be returned.",
+            "format": "date-time",
+            "in": "query",
+            "name": "timestamp_filter.happened_before",
+            "type": "string"
+          },
+          {
+            "description": "Opaque page token identifying which page to request. An empty token\nidentifies the first page.",
+            "in": "query",
+            "name": "page.token",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstableGetRangeQueryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    },
+    "/api/unstable/data/logs:get-range-query-poll": {
+      "get": {
+        "operationId": "PollRangeQuery",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "query_id",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstablePollRangeQueryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    },
+    "/api/unstable/data/logs:get-range-query-start": {
+      "get": {
+        "operationId": "StartRangeQuery",
+        "parameters": [
+          {
+            "description": "Specifies the query to run to filter logs. Query defined using logql.",
+            "in": "query",
+            "name": "query",
+            "type": "string"
+          },
+          {
+            "description": "Only log messages with a timestamp after this time will be returned.",
+            "format": "date-time",
+            "in": "query",
+            "name": "timestamp_filter.happened_after",
+            "type": "string"
+          },
+          {
+            "description": "Only log messages with a timestamp before this time will be returned.",
+            "format": "date-time",
+            "in": "query",
+            "name": "timestamp_filter.happened_before",
+            "type": "string"
+          },
+          {
+            "description": "Opaque page token identifying which page to request. An empty token\nidentifies the first page.",
+            "in": "query",
+            "name": "page.token",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstableStartRangeQueryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    },
+    "/api/unstable/data/logs:get-tenant-configuration": {
+      "get": {
+        "operationId": "GetTenantConfiguration",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstableGetTenantConfigurationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    },
+    "/api/unstable/data/logs:histogram": {
+      "get": {
+        "operationId": "GetLogHistogram",
+        "parameters": [
+          {
+            "description": "Only log messages with a timestamp after this time will be returned.",
+            "format": "date-time",
+            "in": "query",
+            "name": "log_filter.happened_after",
+            "type": "string"
+          },
+          {
+            "description": "Only log messages with a timestamp before this time will be returned.",
+            "format": "date-time",
+            "in": "query",
+            "name": "log_filter.happened_before",
+            "type": "string"
+          },
+          {
+            "description": "Specifies the query to run to filter logs. Query defined using logql.",
+            "in": "query",
+            "name": "log_filter.query",
+            "type": "string"
+          },
+          {
+            "description": "Duration each bucket in histogram should have. Must be greater than 10 seconds.",
+            "in": "query",
+            "name": "step_size",
+            "type": "string"
+          },
+          {
+            "collectionFormat": "multi",
+            "in": "query",
+            "items": {
+              "type": "string"
+            },
+            "name": "group_by.field_names",
+            "type": "array"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstableGetLogHistogramResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    },
+    "/api/unstable/data/logs:histogram-poll": {
+      "get": {
+        "operationId": "PollLogHistogramQuery",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "query_id",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstablePollLogHistogramResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    },
+    "/api/unstable/data/logs:histogram-start": {
+      "get": {
+        "operationId": "StartLogHistogram",
+        "parameters": [
+          {
+            "description": "Only log messages with a timestamp after this time will be returned.",
+            "format": "date-time",
+            "in": "query",
+            "name": "log_filter.happened_after",
+            "type": "string"
+          },
+          {
+            "description": "Only log messages with a timestamp before this time will be returned.",
+            "format": "date-time",
+            "in": "query",
+            "name": "log_filter.happened_before",
+            "type": "string"
+          },
+          {
+            "description": "Specifies the query to run to filter logs. Query defined using logql.",
+            "in": "query",
+            "name": "log_filter.query",
+            "type": "string"
+          },
+          {
+            "description": "Duration each bucket in histogram should have. Must be greater than 10 seconds.",
+            "in": "query",
+            "name": "step_size",
+            "type": "string"
+          },
+          {
+            "collectionFormat": "multi",
+            "in": "query",
+            "items": {
+              "type": "string"
+            },
+            "name": "group_by.field_names",
+            "type": "array"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstableStartLogHistogramResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    },
+    "/api/unstable/data/logs:list-log-field-names": {
+      "get": {
+        "operationId": "ListLogFieldNames",
+        "parameters": [
+          {
+            "description": "Only log messages with a timestamp after this time will be returned.",
+            "format": "date-time",
+            "in": "query",
+            "name": "log_filter.happened_after",
+            "type": "string"
+          },
+          {
+            "description": "Only log messages with a timestamp before this time will be returned.",
+            "format": "date-time",
+            "in": "query",
+            "name": "log_filter.happened_before",
+            "type": "string"
+          },
+          {
+            "description": "Specifies the query to run to filter logs. Query defined using logql.",
+            "in": "query",
+            "name": "log_filter.query",
+            "type": "string"
+          },
+          {
+            "format": "int64",
+            "in": "query",
+            "name": "limit",
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstableListLogFieldNamesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    },
+    "/api/unstable/data/logs:list-log-field-names-poll": {
+      "get": {
+        "operationId": "PollListLogFieldNames",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "query_id",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstablePollListLogFieldNamesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    },
+    "/api/unstable/data/logs:list-log-field-names-start": {
+      "get": {
+        "operationId": "StartListLogFieldNames",
+        "parameters": [
+          {
+            "description": "Only log messages with a timestamp after this time will be returned.",
+            "format": "date-time",
+            "in": "query",
+            "name": "log_filter.happened_after",
+            "type": "string"
+          },
+          {
+            "description": "Only log messages with a timestamp before this time will be returned.",
+            "format": "date-time",
+            "in": "query",
+            "name": "log_filter.happened_before",
+            "type": "string"
+          },
+          {
+            "description": "Specifies the query to run to filter logs. Query defined using logql.",
+            "in": "query",
+            "name": "log_filter.query",
+            "type": "string"
+          },
+          {
+            "format": "int64",
+            "in": "query",
+            "name": "limit",
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstableStartListLogFieldNamesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    },
+    "/api/unstable/data/logs:list-log-field-values": {
+      "get": {
+        "operationId": "ListLogFieldValues",
+        "parameters": [
+          {
+            "description": "Only log messages with a timestamp after this time will be returned.",
+            "format": "date-time",
+            "in": "query",
+            "name": "log_filter.happened_after",
+            "type": "string"
+          },
+          {
+            "description": "Only log messages with a timestamp before this time will be returned.",
+            "format": "date-time",
+            "in": "query",
+            "name": "log_filter.happened_before",
+            "type": "string"
+          },
+          {
+            "description": "Specifies the query to run to filter logs. Query defined using logql.",
+            "in": "query",
+            "name": "log_filter.query",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "field_name",
+            "type": "string"
+          },
+          {
+            "format": "int64",
+            "in": "query",
+            "name": "limit",
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstableListLogFieldValuesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    },
+    "/api/unstable/data/logs:list-log-field-values-poll": {
+      "get": {
+        "operationId": "PollListLogFieldValues",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "query_id",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstablePollListLogFieldValuesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    },
+    "/api/unstable/data/logs:list-log-field-values-start": {
+      "get": {
+        "operationId": "StartListLogFieldValues",
+        "parameters": [
+          {
+            "description": "Only log messages with a timestamp after this time will be returned.",
+            "format": "date-time",
+            "in": "query",
+            "name": "log_filter.happened_after",
+            "type": "string"
+          },
+          {
+            "description": "Only log messages with a timestamp before this time will be returned.",
+            "format": "date-time",
+            "in": "query",
+            "name": "log_filter.happened_before",
+            "type": "string"
+          },
+          {
+            "description": "Specifies the query to run to filter logs. Query defined using logql.",
+            "in": "query",
+            "name": "log_filter.query",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "field_name",
+            "type": "string"
+          },
+          {
+            "format": "int64",
+            "in": "query",
+            "name": "limit",
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstableStartListLogFieldValuesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    },
+    "/api/unstable/data/logs:list-poll": {
+      "get": {
+        "operationId": "PollListLogsQuery",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "query_id",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstablePollListLogsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    },
+    "/api/unstable/data/logs:list-start": {
+      "get": {
+        "operationId": "StartListLogsQuery",
+        "parameters": [
+          {
+            "description": "Page size preference (i.e. how many items are returned in the next\npage). If zero, the server will use a default. Regardless of what size\nis given, clients must never assume how many items will be returned.",
+            "format": "int64",
+            "in": "query",
+            "name": "page.max_size",
+            "type": "integer"
+          },
+          {
+            "description": "Opaque page token identifying which page to request. An empty token\nidentifies the first page.",
+            "in": "query",
+            "name": "page.token",
+            "type": "string"
+          },
+          {
+            "description": "Only log messages with a timestamp after this time will be returned.",
+            "format": "date-time",
+            "in": "query",
+            "name": "log_filter.happened_after",
+            "type": "string"
+          },
+          {
+            "description": "Only log messages with a timestamp before this time will be returned.",
+            "format": "date-time",
+            "in": "query",
+            "name": "log_filter.happened_before",
+            "type": "string"
+          },
+          {
+            "description": "Specifies the query to run to filter logs. Query defined using logql.",
+            "in": "query",
+            "name": "log_filter.query",
+            "type": "string"
+          },
+          {
+            "description": "The ID of the log to be pinned.",
+            "in": "query",
+            "name": "pinned_log_id",
+            "type": "string"
+          },
+          {
+            "description": "Specifies sort order for returned logs. We only support sorting logs by timestamp.\nDefault value is DESC (most recent logs first).",
+            "enum": [
+              "ASC",
+              "DESC"
+            ],
+            "in": "query",
+            "name": "timestamp_sort",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstableStartListLogsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    },
+    "/api/unstable/data/logs:pass-through-query": {
+      "get": {
+        "operationId": "PassThroughQuery",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstablePassThroughQueryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    },
+    "/api/unstable/data/traces": {
+      "get": {
+        "description": "Tracing",
+        "operationId": "ListTraces",
+        "parameters": [
+          {
+            "description": "Type of query to perform.\nTRACE_IDS: Search for specific trace IDs.\nSERVICE_OPERATION: Search for traces with a specific service and operation, over a specific time frame.",
+            "enum": [
+              "TRACE_IDS",
+              "SERVICE_OPERATION"
+            ],
+            "in": "query",
+            "name": "query_type",
+            "type": "string"
+          },
+          {
+            "collectionFormat": "multi",
+            "description": "Trace IDs to search for.",
+            "in": "query",
+            "items": {
+              "type": "string"
+            },
+            "name": "trace_ids",
+            "type": "array"
+          },
+          {
+            "description": "Start time for the search.",
+            "format": "date-time",
+            "in": "query",
+            "name": "start_time",
+            "type": "string"
+          },
+          {
+            "description": "End time for the search.",
+            "format": "date-time",
+            "in": "query",
+            "name": "end_time",
+            "type": "string"
+          },
+          {
+            "description": "Service to filter on. Empty means no filter.",
+            "in": "query",
+            "name": "service",
+            "type": "string"
+          },
+          {
+            "description": "Operation to filter on. Empty means no filter.",
+            "in": "query",
+            "name": "operation",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/datav1ListTracesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    }
+  },
+  "produces": [
+    "application/json"
+  ],
+  "swagger": "2.0",
+  "tags": [
+    {
+      "name": "DataUnstable"
+    }
+  ]
+}

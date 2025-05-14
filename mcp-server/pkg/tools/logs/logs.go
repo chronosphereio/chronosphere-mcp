@@ -71,7 +71,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				if err != nil {
 					return nil, err
 				}
-				resp, err := logsAPI.ListLogs(queryParams)
+				resp, err := logsAPI.DataUnstable.ListLogs(queryParams)
 				if err != nil {
 					return nil, fmt.Errorf("failed to list logs: %s", err)
 				}
@@ -102,7 +102,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				if err != nil {
 					return nil, err
 				}
-				resp, err := logsAPI.ListLogs(queryParams)
+				resp, err := logsAPI.DataUnstable.ListLogs(queryParams)
 				if err != nil {
 					return nil, fmt.Errorf("failed to query log by ID: %s", err)
 				}
@@ -153,7 +153,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				if err != nil {
 					return nil, err
 				}
-				resp, err := logsAPI.GetLogHistogram(queryParams)
+				resp, err := logsAPI.DataUnstable.GetLogHistogram(queryParams)
 				if err != nil {
 					return nil, fmt.Errorf("failed to get log histogram: %s", err)
 				}
@@ -203,7 +203,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				if err != nil {
 					return nil, err
 				}
-				resp, err := logsAPI.ListLogFieldNames(queryParams)
+				resp, err := logsAPI.DataUnstable.ListLogFieldNames(queryParams)
 				if err != nil {
 					return nil, fmt.Errorf("failed to list log field names: %s", err)
 				}
@@ -262,7 +262,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				if err != nil {
 					return nil, err
 				}
-				resp, err := logsAPI.ListLogFieldValues(queryParams)
+				resp, err := logsAPI.DataUnstable.ListLogFieldValues(queryParams)
 				if err != nil {
 					return nil, fmt.Errorf("failed to list log field values: %s", err)
 				}

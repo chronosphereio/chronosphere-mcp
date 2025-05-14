@@ -13,7 +13,7 @@ import (
 	"github.com/prometheus/client_golang/api"
 
 	"github.com/chronosphereio/mcp-server/generated/configv1/configv1"
-	"github.com/chronosphereio/mcp-server/generated/dataunstable/dataunstable/data_unstable"
+	"github.com/chronosphereio/mcp-server/generated/dataunstable/dataunstable"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
 )
 
@@ -48,12 +48,12 @@ func (c *Provider) PrometheusPromClient(session tools.Session) (api.Client, erro
 	return c.prometheusClientForBasePath(session, "/app/prom")
 }
 
-func (c *Provider) DataUnstableClient(session tools.Session) (data_unstable.ClientService, error) {
-	t, err := c.transportForSession(session, "/api")
+func (c *Provider) DataUnstableClient(session tools.Session) (*dataunstable.DataUnstableAPI, error) {
+	t, err := c.transportForSession(session, "/")
 	if err != nil {
 		return nil, fmt.Errorf("could not construct Chronosphere data unstable API client: %v", err)
 	}
-	return data_unstable.New(t, strfmt.Default), nil
+	return dataunstable.New(t, strfmt.Default), nil
 }
 
 func (c *Provider) prometheusClientForBasePath(session tools.Session, basePath string) (api.Client, error) {

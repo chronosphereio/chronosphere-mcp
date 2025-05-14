@@ -95,7 +95,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				if err != nil {
 					return nil, err
 				}
-				resp, err := api.ListTraces(queryParams)
+				resp, err := api.DataUnstable.ListTraces(queryParams)
 				if err != nil {
 					return nil, fmt.Errorf("failed to list traces: %s", err)
 				}

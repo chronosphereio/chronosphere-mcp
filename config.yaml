@@ -1,7 +1,4 @@
 server:
-  prometheus:
-    # useLoopback: true
-
   transport:
     sse:
       enabled: true

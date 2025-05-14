@@ -9,10 +9,6 @@ import (
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/pkg/params"
 )
 
-type Options struct {
-	UseLoopback bool
-}
-
 var _ tools.MCPTools = (*Tools)(nil)
 
 type Tools struct {
@@ -20,22 +16,15 @@ type Tools struct {
 	renderer *Renderer
 }
 
-func NewTools(optsPtr *Options, clientProvider *client.Provider, logger *zap.Logger) (*Tools, error) {
-	opts := Options{}
-	if optsPtr != nil {
-		opts = *optsPtr
-	}
-
+func NewTools(clientProvider *client.Provider, logger *zap.Logger) (*Tools, error) {
 	renderer, err := NewRenderer(RendererOptions{
 		ClientProvider: clientProvider,
-		UseLoopback:    opts.UseLoopback,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	logger.Info("prometheus tool configured",
-		zap.Bool("useLoopback", opts.UseLoopback))
+	logger.Info("prometheus tool configured")
 
 	return &Tools{
 		logger:   logger,

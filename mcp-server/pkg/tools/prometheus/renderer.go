@@ -17,7 +17,6 @@ import (
 	"gonum.org/v1/plot/vg/vgimg"
 
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/client"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/loopback"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
 )
 
@@ -27,21 +26,12 @@ type Renderer struct {
 }
 
 type RendererOptions struct {
-	UseLoopback    bool
 	ClientProvider *client.Provider
 }
 
 func NewRenderer(
 	opts RendererOptions,
 ) (*Renderer, error) {
-	if opts.UseLoopback {
-		ls := loopback.NewPrometheusV1Server()
-		return &Renderer{
-			DataAPI: func(tools.Session) (v1.API, error) { return ls, nil },
-			PromAPI: func(tools.Session) (v1.API, error) { return ls, nil },
-		}, nil
-	}
-
 	return &Renderer{
 		DataAPI: func(session tools.Session) (v1.API, error) {
 			c, err := opts.ClientProvider.PrometheusDataClient(session)

@@ -1,20 +1,19 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 	"path"
 
 	chronoctlclient "github.com/chronosphereio/chronoctl-core/src/cmd/pkg/client"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/client"
-	pkgconfig "github.com/chronosphereio/mcp-server/mcp-server/pkg/config"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/mcpserverfx"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/prometheus"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/toolsfx"
 	"github.com/spf13/cobra"
 	"go.uber.org/config"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+
+	"github.com/chronosphereio/mcp-server/mcp-server/pkg/client"
+	pkgconfig "github.com/chronosphereio/mcp-server/mcp-server/pkg/config"
+	"github.com/chronosphereio/mcp-server/mcp-server/pkg/mcpserverfx"
+	"github.com/chronosphereio/mcp-server/mcp-server/pkg/toolsfx"
 )
 
 // New returns the root command.
@@ -42,18 +41,6 @@ func New() *cobra.Command {
 				}),
 				fx.Provide(func() (*zap.Logger, error) {
 					return provideLogger(verboseLogging)
-				}),
-				fx.Provide(func(cfg *mcpserverfx.Config) (*prometheus.Options, error) {
-					var prometheusOpts *prometheus.Options
-					var err error
-					if c := cfg.Prometheus; c != nil {
-						prometheusOpts, err = c.Options()
-						if err != nil {
-							return nil, fmt.Errorf("failed to create prometheus options: %v", err)
-						}
-					}
-
-					return prometheusOpts, nil
 				}),
 				toolsfx.Module,
 				mcpserverfx.Module,

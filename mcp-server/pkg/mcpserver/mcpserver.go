@@ -12,6 +12,7 @@ import (
 	"github.com/mark3labs/mcp-go/server"
 	"go.uber.org/zap"
 
+	"github.com/chronosphereio/mcp-server/mcp-server/pkg/authcontext"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/resources"
 	logresources "github.com/chronosphereio/mcp-server/mcp-server/pkg/resources/logs"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
@@ -77,15 +78,16 @@ func (s *Server) StdioServer() *server.StdioServer {
 	return server.NewStdioServer(s.server)
 }
 
-type sessionAPITokenKey struct{}
-
-func (s *Server) SSEServer(addr, baseURL string) *server.SSEServer {
+func (s *Server) SSEServer(baseURL string, options ...server.SSEOption) *server.SSEServer {
 	return server.NewSSEServer(s.server,
-		server.WithBaseURL(baseURL),
-		server.WithSSEContextFunc(func(ctx context.Context, r *http.Request) context.Context {
-			authValue := strings.ReplaceAll(r.Header.Get("Authorization"), "Bearer ", "")
-			return context.WithValue(ctx, sessionAPITokenKey{}, authValue)
-		}))
+		append(options,
+			[]server.SSEOption{
+				server.WithBaseURL(baseURL),
+				server.WithSSEContextFunc(func(ctx context.Context, r *http.Request) context.Context {
+					authValue := strings.ReplaceAll(r.Header.Get("Authorization"), "Bearer ", "")
+					return authcontext.SetSessionAPIToken(ctx, authValue)
+				}),
+			}...)...)
 }
 
 var _ server.ToolHandlerFunc = (*loggingTool)(nil).handle
@@ -119,10 +121,7 @@ func (t *loggingTool) handle(ctx context.Context, request mcp.CallToolRequest) (
 }
 
 func (t *loggingTool) mustHandle(ctx context.Context, request mcp.CallToolRequest) *mcp.CallToolResult {
-	sessionAPIToken, ok := ctx.Value(sessionAPITokenKey{}).(string)
-	if !ok {
-		sessionAPIToken = ""
-	}
+	sessionAPIToken := authcontext.FetchSessionAPIToken(ctx)
 
 	session := tools.Session{
 		APIToken: sessionAPIToken,

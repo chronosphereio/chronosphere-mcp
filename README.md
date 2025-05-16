@@ -19,8 +19,6 @@ The agent is currently copied from a template. It doesn't do much yet, but we pl
 
 This MCP server uses the same authentication methods as chronoctl. By default, the Makefile expects the API token to be stored in `.chronosphere_api_token`.
 
-Alternatively, set `useLoopback: true` in config.yaml to use a fake loopback Prometheus server.
-
 
 #### Run the mcp server
 ```sh

@@ -16,7 +16,6 @@ import (
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/client"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/mcpserver"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/prometheus"
 )
 
 // Module registers the server.
@@ -43,19 +42,8 @@ type ToolsConfig struct {
 }
 
 type Config struct {
-	Prometheus *PrometheusConfig `yaml:"prometheus"`
-	Transport  TransportConfig   `yaml:"transport"`
-	Tools      *ToolsConfig      `yaml:"tools"`
-}
-
-type PrometheusConfig struct {
-	UseLoopback bool `yaml:"useLoopback"`
-}
-
-func (c PrometheusConfig) Options() (*prometheus.Options, error) {
-	return &prometheus.Options{
-		UseLoopback: c.UseLoopback,
-	}, nil
+	Transport TransportConfig `yaml:"transport"`
+	Tools     *ToolsConfig    `yaml:"tools"`
 }
 
 type TransportConfig struct {
@@ -152,7 +140,7 @@ func (t *Transports) Start(ctx context.Context) error {
 		}()
 	}
 	if t.sse != nil && t.sse.Enabled {
-		t.sseServer = t.server.SSEServer(t.sse.Address, t.sse.BaseURL)
+		t.sseServer = t.server.SSEServer(t.sse.BaseURL)
 		go func() {
 			t.logger.Info("serving sse transport",
 				zap.String("address", t.sse.Address),

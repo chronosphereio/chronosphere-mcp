@@ -1,3 +1,4 @@
+// Package logs provides tools for querying Chronosphere logs.
 package logs
 
 import (
@@ -78,7 +79,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 
 				// TODO: summarize logs before returning.
 				return &tools.Result{
-					JsonContent: resp,
+					JSONContent: resp,
 				}, nil
 			},
 		},
@@ -107,7 +108,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					return nil, fmt.Errorf("failed to query log by ID: %s", err)
 				}
 				return &tools.Result{
-					JsonContent: resp,
+					JSONContent: resp,
 				}, nil
 			},
 		},
@@ -159,7 +160,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				}
 
 				return &tools.Result{
-					JsonContent: resp,
+					JSONContent: resp,
 				}, nil
 			},
 		},
@@ -209,7 +210,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				}
 
 				return &tools.Result{
-					JsonContent: resp,
+					JSONContent: resp,
 				}, nil
 			},
 		},
@@ -268,7 +269,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				}
 
 				return &tools.Result{
-					JsonContent: resp,
+					JSONContent: resp,
 				}, nil
 			},
 			// TODO: Implement autocomplete requests.

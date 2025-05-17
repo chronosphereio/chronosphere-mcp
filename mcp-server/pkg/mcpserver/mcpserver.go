@@ -1,3 +1,4 @@
+// Package mcpserver contains the http server that serves the MCP API.
 package mcpserver
 
 import (
@@ -145,14 +146,14 @@ func (t *loggingTool) mustHandle(ctx context.Context, request mcp.CallToolReques
 		}
 	}
 
-	resultBytes, err := json.Marshal(resp.JsonContent)
+	resultBytes, err := json.Marshal(resp.JSONContent)
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Errorf("failed to serialize content: %s", err).Error())
 	}
 	result := &mcp.CallToolResult{
 		Content: []mcp.Content{mcp.NewTextContent(string(resultBytes))},
 	}
-	if resp.Meta != nil && len(resp.Meta) > 0 {
+	if len(resp.Meta) > 0 {
 		result.Meta = resp.Meta
 	}
 	return result

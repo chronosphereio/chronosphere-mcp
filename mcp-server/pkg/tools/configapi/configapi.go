@@ -1,3 +1,4 @@
+// Package configapi provides tools for the Chronosphere config API.
 package configapi
 
 import (

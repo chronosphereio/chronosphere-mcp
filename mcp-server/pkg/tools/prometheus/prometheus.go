@@ -1,3 +1,4 @@
+// Package prometheus provides the tools for fetching and rendering prometheus metrics.
 package prometheus
 
 import (
@@ -5,12 +6,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mark3labs/mcp-go/mcp"
-	"github.com/prometheus/client_golang/api/prometheus/v1"
-	"github.com/prometheus/common/model"
-
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/pkg/params"
+	"github.com/mark3labs/mcp-go/mcp"
+	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	"github.com/prometheus/common/model"
 )
 
 func (t *Tools) listPrometheusSeries(session tools.Session, request mcp.CallToolRequest) (*tools.Result, error) {
@@ -218,13 +218,13 @@ func (t *Tools) listPrometheusSeriesMetadata(session tools.Session, request mcp.
 	respMetric, ok := resp[metric]
 	if !ok || len(respMetric) == 0 {
 		return &tools.Result{
-			JsonContent: map[string]any{
+			JSONContent: map[string]any{
 				"metadata": map[string]v1.Metadata{},
 			},
 		}, nil
 	}
 	return &tools.Result{
-		JsonContent: map[string]any{
+		JSONContent: map[string]any{
 			"metadata": respMetric[0],
 		},
 	}, nil
@@ -232,7 +232,7 @@ func (t *Tools) listPrometheusSeriesMetadata(session tools.Session, request mcp.
 
 func promJSONResponse(resp any, warnings []string) (*tools.Result, error) {
 	result := &tools.Result{
-		JsonContent: map[string]any{
+		JSONContent: map[string]any{
 			"result": resp,
 		},
 	}

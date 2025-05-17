@@ -1,3 +1,4 @@
+// Package mcpserverfx contains the fx module that provides the MCP server.
 package mcpserverfx
 
 import (

@@ -42,7 +42,7 @@ func GetMonitor(clientProvider *client.Provider, logger *zap.Logger) tools.MCPTo
 				return nil, fmt.Errorf("failed to call ReadMonitor: %s", err)
 			}
 			return &tools.Result{
-				JsonContent: resp,
+				JSONContent: resp,
 			}, nil
 		},
 	}
@@ -142,7 +142,7 @@ func ListMonitors(clientProvider *client.Provider, logger *zap.Logger) tools.MCP
 				return nil, fmt.Errorf("failed to call ListMonitors: %s", err)
 			}
 			return &tools.Result{
-				JsonContent: resp,
+				JSONContent: resp,
 			}, nil
 		},
 	}

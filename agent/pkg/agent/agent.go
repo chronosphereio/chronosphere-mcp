@@ -1,8 +1,10 @@
+// Package agent provides the implementation of the agent that generates PromQL queries based on natural language descriptions.
 package agent
 
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/tmc/langchaingo/agents"
@@ -135,5 +137,5 @@ type streamLogHandler struct {
 var _ callbacks.Handler = streamLogHandler{}
 
 func (streamLogHandler) HandleStreamingFunc(_ context.Context, chunk []byte) {
-	fmt.Print(string(chunk))
+	log.Print(string(chunk))
 }

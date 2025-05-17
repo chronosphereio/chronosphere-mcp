@@ -199,12 +199,14 @@ func Bool(request mcp.CallToolRequest, key string, required bool, defaultValue b
 	return parse(request, key, required, defaultValue, boolParser)
 }
 
+// Object parses an object parameter and returns the value and any tool result error
 func Object[T any](request mcp.CallToolRequest, key string, required bool, defaultValue T) (T, error) {
 	return parse[T](request, key, required, defaultValue, func(param interface{}) (T, error) {
 		return jsonRoundtripParser[T](param)
 	})
 }
 
+// ObjectArray parses an array of objects parameter and returns the value and any tool result error
 func ObjectArray[T any](request mcp.CallToolRequest, key string, required bool) ([]T, error) {
 	args := request.Params.Arguments
 	arrayRaw, ok := args[key]

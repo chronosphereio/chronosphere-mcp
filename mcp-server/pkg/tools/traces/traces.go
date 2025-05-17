@@ -1,3 +1,4 @@
+// Package traces contains tools for querying Chronosphere traces.
 package traces
 
 import (
@@ -33,6 +34,7 @@ func NewTools(
 	}, nil
 }
 
+// MCPTools returns a list of MCP tools related to traces.
 func (t *Tools) MCPTools() []tools.MCPTool {
 	return []tools.MCPTool{
 		{
@@ -100,7 +102,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					return nil, fmt.Errorf("failed to list traces: %s", err)
 				}
 				return &tools.Result{
-					JsonContent: resp,
+					JSONContent: resp,
 				}, nil
 			},
 		},

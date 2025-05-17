@@ -1,3 +1,4 @@
+// Package logs provides logs related resources for the MCP server.
 package logs
 
 import (
@@ -13,6 +14,7 @@ var (
 	_logQuerySyntaxMDX string
 )
 
+// Resources returns a list of MCP resources related to logs.
 func Resources() []resources.MCPResource {
 	querySyntaxURL := "file://chronosphere/docs/logs/syntax.md"
 	return []resources.MCPResource{
@@ -21,7 +23,7 @@ func Resources() []resources.MCPResource {
 				mcp.WithResourceDescription("Documentation for the log query syntax in mdx format. Use this to help construct or interpret log queries."),
 				mcp.WithMIMEType("text/markdown"),
 			),
-			Handler: func(ctx context.Context, request mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
+			Handler: func(_ context.Context, _ mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
 				return []mcp.ResourceContents{
 					mcp.TextResourceContents{
 						Text: _logQuerySyntaxMDX,

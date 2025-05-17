@@ -42,7 +42,7 @@ func GetDashboard(clientProvider *client.Provider, logger *zap.Logger) tools.MCP
 				return nil, fmt.Errorf("failed to call ReadDashboard: %s", err)
 			}
 			return &tools.Result{
-				JsonContent: resp,
+				JSONContent: resp,
 			}, nil
 		},
 	}
@@ -131,7 +131,7 @@ func ListDashboards(clientProvider *client.Provider, logger *zap.Logger) tools.M
 				return nil, fmt.Errorf("failed to call ListDashboards: %s", err)
 			}
 			return &tools.Result{
-				JsonContent: resp,
+				JSONContent: resp,
 			}, nil
 		},
 	}

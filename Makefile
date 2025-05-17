@@ -10,8 +10,7 @@ AGENT_INPUTS_FILE ?= agent/resources/inputs.txt
 
 .PHONY: install-tools
 install-tools: go-version-check
-	cd tools && GOBIN=$(tools_bin_path) go install \
-		github.com/go-swagger/go-swagger/cmd/swagger
+	cd tools && GOBIN=$(tools_bin_path) go install  github.com/go-swagger/go-swagger/cmd/swagger  github.com/golangci/golangci-lint/cmd/golangci-lint
 
 .PHONY: go-version-check
 go-version-check:
@@ -78,4 +77,7 @@ build-mcpgen:
 tools-gen: build-mcpgen
 	$(tools_bin_path)/mcpgen -spec ./generated/configv1/spec.json -pkg configv1 -target ./mcp-server/pkg/generated/tools/configv1 -allowed-entities \
 		monitors,dashboards,slos
-
+.PHONY: lint
+lint: install-tools
+	@echo "--- :golang: linting code"
+	GOFLAGS=$(GOFLAGS) $(tools_bin_path)/golangci-lint run

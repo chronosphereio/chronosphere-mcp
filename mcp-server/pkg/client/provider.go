@@ -1,3 +1,4 @@
+// Package client provides clients for the Chronosphere API.
 package client
 
 import (

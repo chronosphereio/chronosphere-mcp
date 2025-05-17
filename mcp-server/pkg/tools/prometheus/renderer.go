@@ -7,7 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/prometheus/client_golang/api/prometheus/v1"
+	"github.com/chronosphereio/mcp-server/mcp-server/pkg/client"
+	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
+	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"gonum.org/v1/plot"
 	"gonum.org/v1/plot/plotter"
@@ -15,9 +17,6 @@ import (
 	"gonum.org/v1/plot/vg"
 	"gonum.org/v1/plot/vg/draw"
 	"gonum.org/v1/plot/vg/vgimg"
-
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/client"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
 )
 
 type Renderer struct {
@@ -25,6 +24,7 @@ type Renderer struct {
 	PromAPI func(session tools.Session) (v1.API, error)
 }
 
+// RendererOptions contains options for the Renderer.
 type RendererOptions struct {
 	ClientProvider *client.Provider
 }
@@ -50,6 +50,7 @@ func NewRenderer(
 	}, nil
 }
 
+// RenderSeries renders a time series graph for the given series.
 func (r *Renderer) RenderSeries(w io.Writer, series model.Matrix, ws, hs int, legend bool) error {
 	plot := plot.New()
 	plot.Legend.Top = true
@@ -70,6 +71,7 @@ func (r *Renderer) RenderSeries(w io.Writer, series model.Matrix, ws, hs int, le
 	return err
 }
 
+// Render renders a time series graph for the given query and time range.
 func (r *Renderer) Render(session tools.Session, w io.Writer, query string, start, end time.Time, ws, hs int, legend bool) error {
 	plot := plot.New()
 	plot.Legend.Top = true

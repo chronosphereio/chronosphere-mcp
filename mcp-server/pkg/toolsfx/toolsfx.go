@@ -1,3 +1,4 @@
+// Package toolsfx contains the fx module that provides all tools.
 package toolsfx
 
 import (

@@ -1,3 +1,4 @@
+// Package mcp provides an adapter for the MCP API to the LangChain Go tools interface.
 package mcp
 
 // NB: this was taken largely from https://github.com/i2y/langchaingo-mcp-adapter, but augmented to support image and

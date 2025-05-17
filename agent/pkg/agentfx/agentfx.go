@@ -1,3 +1,4 @@
+// Package agentfx provides the agent module.
 package agentfx
 
 import (
@@ -34,6 +35,7 @@ type params struct {
 	Inputs         configfx.Inputs
 }
 
+// Config holds the configuration for the agent.
 type Config struct {
 	OpenAIAPIKey string `yaml:"openAIAPIKey"`
 }
@@ -62,22 +64,22 @@ func invoke(p params) error {
 
 	p.LifeCycle.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			return runAgents(ctx, p.Inputs, cfg)
+			return runAgents(ctx, logger, p.Inputs, cfg)
 		},
 	})
 	return nil
 }
 
-func runAgents(ctx context.Context, inputs []string, cfg Config) error {
+func runAgents(ctx context.Context, logger *zap.Logger, inputs []string, cfg Config) error {
 	for _, input := range inputs {
-		if err := runAgent(ctx, input, cfg); err != nil {
+		if err := runAgent(ctx, logger, input, cfg); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func runAgent(ctx context.Context, input string, cfg Config) error {
+func runAgent(ctx context.Context, logger *zap.Logger, input string, cfg Config) error {
 	llm, err := openai.New(openai.WithToken(cfg.OpenAIAPIKey))
 	if err != nil {
 		return err
@@ -89,7 +91,7 @@ func runAgent(ctx context.Context, input string, cfg Config) error {
 	if err != nil {
 		log.Fatalf("Failed to create MCP client: %v", err)
 	}
-	defer mcpClient.Close()
+	defer mcpClient.Close() // nolint:errcheck
 	if err := mcpClient.Start(ctx); err != nil {
 		return err
 	}
@@ -113,13 +115,13 @@ func runAgent(ctx context.Context, input string, cfg Config) error {
 	)
 	executor := agents.NewExecutor(agent, agents.WithMaxIterations(20))
 
-	fmt.Printf("=== Executing question ===\n")
-	fmt.Println(input)
-	fmt.Printf("\n=== Thoughts & responses ===\n")
+	logger.Debug("=== Executing question ===\n")
+	logger.Debug(input)
+	logger.Debug("\n=== Thoughts & responses ===\n")
 	answer, err := chains.Run(context.Background(), executor, input)
 	if err != nil {
 		log.Fatalf("failed to call executor: %v", err)
 	}
-	fmt.Println(answer)
+	logger.Debug(answer)
 	return nil
 }

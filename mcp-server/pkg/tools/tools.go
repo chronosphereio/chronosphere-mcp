@@ -1,3 +1,4 @@
+// Package tools provides the tools for the MCP server.
 package tools
 
 import (
@@ -10,7 +11,7 @@ import (
 type Result struct {
 	// Exactly 1 of these *Content fields should be populated if this is not an error response.
 	ImageContent []byte
-	JsonContent  any
+	JSONContent  any
 
 	// Optional.
 	Meta map[string]any

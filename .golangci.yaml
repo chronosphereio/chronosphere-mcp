@@ -1,0 +1,288 @@
+# options for analysis running
+run:
+  # default concurrency is a available CPU number
+  # concurrency: 4
+
+  # timeout for analysis, e.g. 30s, 5m, default is 1m
+  timeout: 30m
+
+  # exit code when at least one issue was found, default is 1
+  issues-exit-code: 1
+
+  # include test files or not, default is true
+  tests: true
+
+  # List of build tags, all linters use it.
+  # Default: []
+  #
+  # NB: We set this field explicitly when running via the Makefile. We set it here just
+  # to integrate with local IDEs.
+  build-tags:
+    - integration
+    - cluster_integration
+
+  # by default isn't set. If set we pass it to "go list -mod={option}". From "go help modules":
+  # If invoked with -mod=readonly, the go command is disallowed from the implicit
+  # automatic updating of go.mod described above. Instead, it fails when any changes
+  # to go.mod are needed. This setting is most useful to check that go.mod does
+  # not need updates, such as in a continuous integration and testing system.
+  # If invoked with -mod=vendor, the go command assumes that the vendor
+  # directory holds the correct copies of dependencies and ignores
+  # the dependency descriptions in go.mod.
+  # modules-download-mode: readonly|release|vendor
+  modules-download-mode: readonly
+
+  # Define the Go version limit.
+  go: "1.23"
+
+# output configuration options
+output:
+  # The formats used to render issues.
+  # Format: `colored-line-number`, `line-number`, `json`, `colored-tab`, `tab`, `checkstyle`, `code-climate`, `junit-xml`, `github-actions`, `teamcity`
+  # Output path can be either `stdout`, `stderr` or path to the file to write to.
+  #
+  # For the CLI flag (`--out-format`), multiple formats can be specified by separating them by comma.
+  # The output can be specified for each of them by separating format name and path by colon symbol.
+  # Example: "--out-format=checkstyle:report.xml,json:stdout,colored-line-number"
+  # The CLI flag (`--out-format`) override the configuration file.
+  #
+  # Default:
+  #   formats:
+  #     - format: colored-line-number
+  #       path: stdout
+
+  # print lines of code with issue, default is true
+  print-issued-lines: true
+
+  # print linter name in the end of issue text, default is true
+  print-linter-name: true
+
+# all available settings of specific linters
+linters-settings:
+  govet:
+    enable:
+      - "shadow"
+  gocyclo:
+    # minimal code complexity to report, 30 by default (but we recommend 10-20)
+    min-complexity: 10
+  godox:
+    # Report any comments starting with keywords, this is useful for TODO or
+    # FIXME comments that might be left in the code accidentally and should be
+    # resolved before merging. Default: ["TODO", "BUG", "FIXME"].
+    # We want explicitly to not include TODO here because it is widely used in a
+    # company to mark places which needs to be updated in the future. Common
+    # example is removing Temporal version checks.
+    keywords:
+      - FIXME
+  gci:
+    skip-generated: true
+    sections:
+      - standard
+      - default
+      - prefix(github.com/chronosphereio/mcp-server)
+  dupl:
+    # tokens count to trigger issue, 150 by default
+    threshold: 100
+  goconst:
+    # minimal length of string constant, 3 by default
+    min-len: 3
+    # minimal occurrences count to trigger, 3 by default
+    min-occurrences: 3
+  depguard:
+    rules:
+      main:
+        deny:
+          - pkg: "hash/fnv"
+            desc: "use github.com/cespare/xxhash/v2"
+          - pkg: "github.com/sirupsen/logrus"
+            desc: "logging is allowed only by logutils.Log"
+          - pkg: "github.com/tj/assert"
+            desc: "use github.com/stretchr/testify/assert"
+          - pkg: "github.com/golang/protobuf/jsonpb"
+            desc: "replace with github.com/gogo/protobuf/jsonpb"
+          - pkg: "golang.org/x/net/context"
+            desc: "replace with context"
+  misspell:
+    # Correct spellings using locale preferences for US or UK.
+    # Default is to use a neutral variety of English.
+    # Setting locale to US will correct the British spelling of 'colour' to
+    # 'color'.
+    locale: US
+    ignore-words:
+      - someword
+  lll:
+    # max line length, lines longer will be reported. Default is 120.
+    # '\t' is counted as 1 character by default, and can be changed with the
+    # tab-width option
+    line-length: 120
+    # tab width in spaces. Default to 1.
+    tab-width: 1
+  unparam:
+    # Inspect exported functions, default is false. Set to true if no external program/library imports your code.
+    # XXX: if you enable this setting, unparam will report a lot of false-positives in text editors:
+    # if it's called for subdir of a project it can't find external interfaces. All text editor integrations
+    # with golangci-lint call it on a directory with the changed file.
+    check-exported: false
+  nakedret:
+    # make an issue if func has more lines of code than this setting and it has naked returns; default is 30
+    max-func-lines: 30
+  prealloc:
+    # XXX: we don't recommend using this linter before doing performance profiling.
+    # For most programs usage of prealloc will be a premature optimization.
+
+    # Report preallocation suggestions only on simple loops that have no returns/breaks/continues/gotos in them.
+    # True by default.
+    simple: true
+    range-loops: true # Report preallocation suggestions on range loops, true by default
+    for-loops: false # Report preallocation suggestions on for loops, false by default
+  gocritic:
+    # Which checks should be enabled; can't be combined with 'disabled-checks';
+    # See https://go-critic.github.io/overview#checks-overview
+    # To check which checks are enabled run `GL_DEBUG=gocritic golangci-lint run`
+    # By default list of stable checks is used.
+
+    # Enable multiple checks by tags, run `GL_DEBUG=gocritic golangci-lint` run to see all tags and checks.
+    # Empty list by default. See https://github.com/go-critic/go-critic#usage -> section "Tags".
+    enabled-tags:
+      - performance
+
+    settings: # settings passed to gocritic
+      captLocal: # must be valid enabled check name
+        paramsOnly: true
+      rangeValCopy:
+        sizeThreshold: 32
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+
+  thelper:
+    # Enable all checks except tb.Name: https://github.com/kulti/thelper/issues/27
+    test:
+      first: true
+      name: true
+      begin: true
+    benchmark:
+      first: true
+      name: true
+      begin: true
+    tb:
+      first: true
+      name: false
+      begin: true
+
+  exhaustive:
+    # Indicates that switch statements are to be considered exhaustive if a
+    # 'default' case is present, even if all enum members aren't listed in the
+    # switch.
+    default-signifies-exhaustive: true
+
+  forbidigo:
+    forbid:
+      # Bans use of print statements in production code. Raw prints are almost
+      # always unintentional debugging artifacts; real code should always use a
+      # logger.
+      - ^print(ln)?$
+      - ^fmt\.Print.*$
+      - ^spew\.Dump$
+
+linters:
+  enable:
+    - copyloopvar
+    - depguard
+    - errcheck
+    - exptostd
+    - forbidigo
+    - gocheckcompilerdirectives
+    - godox
+    - goimports
+    - gosimple
+    - govet
+    - ineffassign
+    - loggercheck
+    - makezero
+    - mirror
+    - reassign
+    - revive
+    - staticcheck
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - usetesting
+    - wastedassign
+  enable-all: false
+  fast: false
+
+issues:
+  # List of regexps of issue texts to exclude, empty list by default.
+  # But independently from this option we use default exclude patterns,
+  # it can be disabled by `exclude-use-default: false`. To list all
+  # excluded by default patterns execute `golangci-lint run --help`
+  exclude:
+    # Requiring comments often lead to unhelpful and unecessary comments.
+    - "exported: exported (method|type|function|var) [A-Za-z0-9_.]+ should have comment or be unexported"
+    # Exclude table-driven tests from exportloopref (https://github.com/golangci/golangci-lint/issues/281).
+    - "Using the variable on range scope `tt` in function literal"
+    - "Using the variable on range scope `test` in function literal"
+    # It's common to shadow `err` and rarely indicates a problems. See
+    # https://github.com/golang/go/issues/19490 for further details.
+    - 'shadow: declaration of "err" shadows declaration'
+    # We commonly expose profiling information on /debug/pprof so we need to disable the gosec
+    # lint for it.
+    - "Profiling endpoint is automatically exposed on /debug/pprof"
+    # We only use md5 for non-cryptographic purposes (e.g. generating ID's where we don't assume
+    # the ID's are cryptographicly secure).
+    - "Blacklisted import `crypto/md5`: weak cryptographic primitive"
+    # The logger is often our last option to communicate that an error occurred so if it returns
+    # an error we don't have an alternative to use. Since it's already unlikely that `Log` will
+    # return an error anyway we often skip checking the error for brevity.
+    - "Error return value of `\\(github.com\\/go-kit\\/kit\\/log.Logger\\).Log` is not checked"
+    # The caller is responsible for closing the Body of an `http.Response`. However, this step
+    # is usually performed in a defer function after the response has already been processed and
+    # so errors, which are already rare, can usually be safely ignored.
+    - "Error return value of `[a-zA-Z.]+.Body.Close` is not checked"
+    # The errcheck linter already checks for unhandled errors so we can disable the equivalent
+    # lint by gosec.
+    - "G104: Errors unhandled"
+    # It's not worth renaming the package since we can always alias the package import if we
+    # need to use the delete builtin.
+    - "package name delete has same name as predeclared identifier"
+
+  # Excluding configuration per-path, per-linter, per-text and per-source
+  exclude-rules:
+    # Exclude lll issues for long lines with go:generate
+    - linters:
+        - lll
+      source: "^//go:generate "
+    # Exclude goconst in test files since so many strings are repeated for
+    # test cases.
+    - linters:
+        - goconst
+      path: _test\.go
+
+    - linters:
+        - forbidigo
+      path: _test\.go|main.go
+
+  # Which dirs to exclude: issues from them won't be reported.
+  # Can use regexp here: `generated.*`, regexp is applied on full path,
+  # including the path prefix if one is set.
+  # Default dirs are skipped independently of this option's value (see exclude-dirs-use-default).
+  # "/" will be replaced by current OS file path separator to properly work on Windows.
+  # Default: []
+  exclude-dirs:
+    - generated/.*
+
+  # Independently from option `exclude` we use default exclude patterns,
+  # it can be disabled by this option. To list all
+  # excluded by default patterns execute `golangci-lint run --help`.
+  # Default value for this option is true.
+  exclude-use-default: false
+
+  # Maximum issues count per one linter. Set to 0 to disable. Default is 50.
+  max-issues-per-linter: 0
+
+  # Maximum count of issues with the same text. Set to 0 to disable. Default is 3.
+  max-same-issues: 0
+
+  new: false

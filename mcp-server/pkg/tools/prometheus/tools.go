@@ -16,6 +16,7 @@ type Tools struct {
 	renderer *Renderer
 }
 
+// NewTools creates a new Tools instance.
 func NewTools(clientProvider *client.Provider, logger *zap.Logger) (*Tools, error) {
 	renderer, err := NewRenderer(RendererOptions{
 		ClientProvider: clientProvider,
@@ -32,6 +33,7 @@ func NewTools(clientProvider *client.Provider, logger *zap.Logger) (*Tools, erro
 	}, nil
 }
 
+// MCPTools returns the list of tools that this package provides.
 func (t *Tools) MCPTools() []tools.MCPTool {
 	// Metrics-related tools
 	return []tools.MCPTool{

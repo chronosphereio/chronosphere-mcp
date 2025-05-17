@@ -1,3 +1,4 @@
+// Package events contains tools for querying events.
 package events
 
 import (
@@ -70,7 +71,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					return nil, fmt.Errorf("failed to list events: %s", err)
 				}
 				return &tools.Result{
-					JsonContent: resp,
+					JSONContent: resp,
 				}, nil
 			},
 		},
@@ -78,7 +79,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 			Metadata: tools.NewMetadata("get_events_metadata",
 				mcp.WithDescription("List properties you can query on events"),
 			),
-			Handler: func(session tools.Session, request mcp.CallToolRequest) (*tools.Result, error) {
+			Handler: func(session tools.Session, _ mcp.CallToolRequest) (*tools.Result, error) {
 				api, err := t.clientProvider.DataUnstableClient(session)
 				if err != nil {
 					return nil, err
@@ -145,7 +146,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 
 				eventsMetadata.LensServiceNames = resp.Payload.Values
 				return &tools.Result{
-					JsonContent: eventsMetadata,
+					JSONContent: eventsMetadata,
 				}, nil
 			},
 		},
@@ -174,7 +175,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					return nil, fmt.Errorf("failed to list label values for events: %s", err)
 				}
 				return &tools.Result{
-					JsonContent: resp,
+					JSONContent: resp,
 				}, nil
 			},
 		},

@@ -1,3 +1,4 @@
+// Package main is the entry point to starting the mcp-server.
 package main
 
 import (

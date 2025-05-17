@@ -6,6 +6,7 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
+// WithTimeRange adds start and end time parameters to the tool.
 func WithTimeRange() mcp.ToolOption {
 	return func(tool *mcp.Tool) {
 		mcp.WithString("start",
@@ -22,6 +23,7 @@ type TimeRange struct {
 	End   time.Time
 }
 
+// ParseTimeRange parses start and end time parameters from the request.
 func ParseTimeRange(request mcp.CallToolRequest) (*TimeRange, error) {
 	end, err := Time(request, "end", false, time.Now())
 	if err != nil {

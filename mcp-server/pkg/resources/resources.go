@@ -1,3 +1,4 @@
+// Package resources provides the MCP resources for the server.
 package resources
 
 import (

@@ -42,7 +42,7 @@ func GetSlo(clientProvider *client.Provider, logger *zap.Logger) tools.MCPTool {
 				return nil, fmt.Errorf("failed to call ReadSLO: %s", err)
 			}
 			return &tools.Result{
-				JsonContent: resp,
+				JSONContent: resp,
 			}, nil
 		},
 	}
@@ -131,7 +131,7 @@ func ListSlos(clientProvider *client.Provider, logger *zap.Logger) tools.MCPTool
 				return nil, fmt.Errorf("failed to call ListSLOs: %s", err)
 			}
 			return &tools.Result{
-				JsonContent: resp,
+				JSONContent: resp,
 			}, nil
 		},
 	}

@@ -42,8 +42,8 @@ run-client:
 		echo "Librechat config file $(LIBRECHAT_CONFIG) not found"; \
 		exit 1; \
 	fi
+	@echo  "LibreChat should be on localhost:3080 once container up (check docker-compose ps)"
 	docker-compose up -d
-
 
 .PHONY: run-server
 run-server: build-server
@@ -52,8 +52,7 @@ run-server: build-server
 		exit 1; \
 	fi
 	@echo "Starting MCP server..."
-	@echo  "LibreChat should be on localhost:3080 once container up (check docker-compose ps)"
-	$(server_bin_path) -c $(CONFIG_FILE) --org-name meta --api-token-filename .chronosphere_api_token --verbose
+	$(server_bin_path) -c $(CONFIG_FILE) --org-name $(ORG_NAME) --api-token-filename .chronosphere_api_token --verbose
 
 build-server:
 	go build -o $(server_bin_path) ./mcp-server

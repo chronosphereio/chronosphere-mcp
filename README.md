@@ -22,7 +22,7 @@ This MCP server uses the same authentication methods as chronoctl. By default, t
 
 #### Run the mcp server
 ```sh
-make run-server
+make run-server ORG_NAME=<your org here>
 ```
 
 ### Running the host client (libre chat)

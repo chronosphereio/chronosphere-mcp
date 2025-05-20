@@ -127,7 +127,7 @@ An unexpected error response.
 type StartListLogFieldNamesDefault struct {
 	_statusCode int
 
-	Payload *models.APIError
+	Payload *models.GooglerpcStatus
 }
 
 // IsSuccess returns true when this start list log field names default response has a 2xx status code
@@ -170,13 +170,13 @@ func (o *StartListLogFieldNamesDefault) String() string {
 	return fmt.Sprintf("[GET /api/unstable/data/logs:list-log-field-names-start][%d] StartListLogFieldNames default %s", o._statusCode, payload)
 }
 
-func (o *StartListLogFieldNamesDefault) GetPayload() *models.APIError {
+func (o *StartListLogFieldNamesDefault) GetPayload() *models.GooglerpcStatus {
 	return o.Payload
 }
 
 func (o *StartListLogFieldNamesDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
-	o.Payload = new(models.APIError)
+	o.Payload = new(models.GooglerpcStatus)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {

@@ -252,6 +252,63 @@
       ],
       "type": "string"
     },
+    "SpanLink": {
+      "description": "A pointer from the current span to another span in the same trace or in a\ndifferent trace. For example, this can be used in batching operations,\nwhere a single batch handler processes multiple requests from different\ntraces or when the handler receives a request from a different project.",
+      "properties": {
+        "trace_id": {
+          "description": "A unique identifier of a trace that this linked span is part of. The ID is a\n16-byte array.",
+          "format": "byte",
+          "type": "string"
+        },
+        "span_id": {
+          "description": "A unique identifier for the linked span. The ID is an 8-byte array.",
+          "format": "byte",
+          "type": "string"
+        },
+        "trace_state": {
+          "description": "The trace_state associated with the link.",
+          "type": "string"
+        },
+        "attributes": {
+          "description": "attributes is a collection of attribute key/value pairs on the link.\nAttribute keys MUST be unique (it is not allowed to have more than one\nattribute with the same key).",
+          "items": {
+            "$ref": "#/definitions/v1KeyValue"
+          },
+          "type": "array"
+        },
+        "dropped_attributes_count": {
+          "description": "dropped_attributes_count is the number of dropped attributes. If the value is 0,\nthen no attributes were dropped.",
+          "format": "int64",
+          "type": "integer"
+        },
+        "flags": {
+          "description": "Flags, a bit field.\n\nBits 0-7 (8 least significant bits) are the trace flags as defined in W3C Trace\nContext specification. To read the 8-bit W3C trace flag, use\n`flags \u0026 SPAN_FLAGS_TRACE_FLAGS_MASK`.\n\nSee https://www.w3.org/TR/trace-context-2/#trace-flags for the flag definitions.\n\nBits 8 and 9 represent the 3 states of whether the link is remote.\nThe states are (unknown, is not remote, is remote).\nTo read whether the value is known, use `(flags \u0026 SPAN_FLAGS_CONTEXT_HAS_IS_REMOTE_MASK) != 0`.\nTo read whether the link is remote, use `(flags \u0026 SPAN_FLAGS_CONTEXT_IS_REMOTE_MASK) != 0`.\n\nReaders MUST NOT assume that bits 10-31 (22 most significant bits) will be zero.\nWhen creating new spans, bits 10-31 (most-significant 22-bits) MUST be zero.\n\n[Optional].",
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "SpanSpanKind": {
+      "description": "SpanKind is the type of span. Can be used to specify additional relationships between spans\nin addition to a parent/child relationship.\n\n - SPAN_KIND_INTERNAL: Indicates that the span represents an internal operation within an application,\nas opposed to an operation happening at the boundaries. Default value.\n - SPAN_KIND_SERVER: Indicates that the span covers server-side handling of an RPC or other\nremote network request.\n - SPAN_KIND_CLIENT: Indicates that the span describes a request to some remote service.\n - SPAN_KIND_PRODUCER: Indicates that the span describes a producer sending a message to a broker.\nUnlike CLIENT and SERVER, there is often no direct critical path latency relationship\nbetween producer and consumer spans. A PRODUCER span ends when the message was accepted\nby the broker while the logical processing of the message might span a much longer time.\n - SPAN_KIND_CONSUMER: Indicates that the span describes consumer receiving a message from a broker.\nLike the PRODUCER kind, there is often no direct critical path latency relationship\nbetween producer and consumer spans.",
+      "enum": [
+        "SPAN_KIND_INTERNAL",
+        "SPAN_KIND_SERVER",
+        "SPAN_KIND_CLIENT",
+        "SPAN_KIND_PRODUCER",
+        "SPAN_KIND_CONSUMER"
+      ],
+      "type": "string"
+    },
+    "StatusStatusCode": {
+      "description": "- STATUS_CODE_OK: The Span has been validated by an Application developer or Operator to \nhave completed successfully.\n - STATUS_CODE_ERROR: The Span contains an error.",
+      "enum": [
+        "STATUS_CODE_OK",
+        "STATUS_CODE_ERROR"
+      ],
+      "title": "For the semantics of status codes see\nhttps://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-status",
+      "type": "string"
+    },
     "apiError": {
       "properties": {
         "code": {
@@ -634,14 +691,6 @@
             "$ref": "#/definitions/dataunstableLogBucket"
           },
           "type": "array"
-        }
-      },
-      "type": "object"
-    },
-    "dataunstableGetLogQueryResponse": {
-      "properties": {
-        "query": {
-          "type": "string"
         }
       },
       "type": "object"
@@ -1261,10 +1310,8 @@
     "datav1ListTracesResponse": {
       "properties": {
         "traces": {
-          "description": "List of opentelemetry.proto.trace.v1.TracesData",
           "items": {
-            "format": "byte",
-            "type": "string"
+            "$ref": "#/definitions/v1TracesData"
           },
           "type": "array"
         }
@@ -1273,6 +1320,24 @@
     },
     "genericError": {
       "additionalProperties": true,
+      "type": "object"
+    },
+    "googlerpcStatus": {
+      "properties": {
+        "code": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          },
+          "type": "array"
+        }
+      },
       "type": "object"
     },
     "protobufAny": {
@@ -1287,6 +1352,332 @@
     "protobufNullValue": {
       "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\nThe JSON representation for `NullValue` is JSON `null`.",
       "type": "string"
+    },
+    "resourcev1Resource": {
+      "description": "Resource information.",
+      "properties": {
+        "attributes": {
+          "description": "Set of attributes that describe the resource.\nAttribute keys MUST be unique (it is not allowed to have more than one\nattribute with the same key).",
+          "items": {
+            "$ref": "#/definitions/v1KeyValue"
+          },
+          "type": "array"
+        },
+        "dropped_attributes_count": {
+          "description": "dropped_attributes_count is the number of dropped attributes. If the value is 0, then\nno attributes were dropped.",
+          "format": "int64",
+          "type": "integer"
+        },
+        "entity_refs": {
+          "description": "Set of entities that participate in this Resource.\n\nNote: keys in the references MUST exist in attributes of this message.\n\nStatus: [Development]",
+          "items": {
+            "$ref": "#/definitions/v1EntityRef"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "tracev1Status": {
+      "description": "The Status type defines a logical error model that is suitable for different\nprogramming environments, including REST APIs and RPC APIs.",
+      "properties": {
+        "message": {
+          "description": "A developer-facing human readable error message.",
+          "type": "string"
+        },
+        "code": {
+          "$ref": "#/definitions/StatusStatusCode"
+        }
+      },
+      "type": "object"
+    },
+    "v1AnyValue": {
+      "description": "AnyValue is used to represent any type of attribute value. AnyValue may contain a\nprimitive value such as a string or integer or it may contain an arbitrary nested\nobject containing arrays, key-value lists and primitives.",
+      "properties": {
+        "string_value": {
+          "type": "string"
+        },
+        "bool_value": {
+          "type": "boolean"
+        },
+        "int_value": {
+          "format": "int64",
+          "type": "string"
+        },
+        "double_value": {
+          "format": "double",
+          "type": "number"
+        },
+        "array_value": {
+          "$ref": "#/definitions/v1ArrayValue"
+        },
+        "kvlist_value": {
+          "$ref": "#/definitions/v1KeyValueList"
+        },
+        "bytes_value": {
+          "format": "byte",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "v1ArrayValue": {
+      "description": "ArrayValue is a list of AnyValue messages. We need ArrayValue as a message\nsince oneof in AnyValue does not allow repeated fields.",
+      "properties": {
+        "values": {
+          "description": "Array of values. The array may be empty (contain 0 elements).",
+          "items": {
+            "$ref": "#/definitions/v1AnyValue"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "v1EntityRef": {
+      "description": "A reference to an Entity.\nEntity represents an object of interest associated with produced telemetry: e.g spans, metrics, profiles, or logs.\n\nStatus: [Development]",
+      "properties": {
+        "schema_url": {
+          "description": "This schema_url applies to the data in this message and to the Resource attributes\nreferenced by id_keys and description_keys.\nTODO: discuss if we are happy with this somewhat complicated definition of what\nthe schema_url applies to.\n\nThis field obsoletes the schema_url field in ResourceMetrics/ResourceSpans/ResourceLogs.",
+          "title": "The Schema URL, if known. This is the identifier of the Schema that the entity data\nis recorded in. To learn more about Schema URL see\nhttps://opentelemetry.io/docs/specs/otel/schemas/#schema-url",
+          "type": "string"
+        },
+        "type": {
+          "description": "Defines the type of the entity. MUST not change during the lifetime of the entity.\nFor example: \"service\" or \"host\". This field is required and MUST not be empty\nfor valid entities.",
+          "type": "string"
+        },
+        "id_keys": {
+          "description": "Attribute Keys that identify the entity.\nMUST not change during the lifetime of the entity. The Id must contain at least one attribute.\nThese keys MUST exist in the containing {message}.attributes.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "description_keys": {
+          "description": "Descriptive (non-identifying) attribute keys of the entity.\nMAY change over the lifetime of the entity. MAY be empty.\nThese attribute keys are not part of entity's identity.\nThese keys MUST exist in the containing {message}.attributes.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "v1InstrumentationScope": {
+      "description": "InstrumentationScope is a message representing the instrumentation scope information\nsuch as the fully qualified name and version.",
+      "properties": {
+        "name": {
+          "description": "An empty instrumentation scope name means the name is unknown.",
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "attributes": {
+          "description": "Additional attributes that describe the scope. [Optional].\nAttribute keys MUST be unique (it is not allowed to have more than one\nattribute with the same key).",
+          "items": {
+            "$ref": "#/definitions/v1KeyValue"
+          },
+          "type": "array"
+        },
+        "dropped_attributes_count": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "v1KeyValue": {
+      "description": "KeyValue is a key-value pair that is used to store Span attributes, Link\nattributes, etc.",
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/definitions/v1AnyValue"
+        }
+      },
+      "type": "object"
+    },
+    "v1KeyValueList": {
+      "description": "KeyValueList is a list of KeyValue messages. We need KeyValueList as a message\nsince `oneof` in AnyValue does not allow repeated fields. Everywhere else where we need\na list of KeyValue messages (e.g. in Span) we use `repeated KeyValue` directly to\navoid unnecessary extra wrapping (which slows down the protocol). The 2 approaches\nare semantically equivalent.",
+      "properties": {
+        "values": {
+          "description": "A collection of key/value pairs of key-value pairs. The list may be empty (may\ncontain 0 elements).\nThe keys MUST be unique (it is not allowed to have more than one\nvalue with the same key).",
+          "items": {
+            "$ref": "#/definitions/v1KeyValue"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "v1ResourceSpans": {
+      "description": "A collection of ScopeSpans from a Resource.",
+      "properties": {
+        "resource": {
+          "$ref": "#/definitions/resourcev1Resource"
+        },
+        "scope_spans": {
+          "description": "A list of ScopeSpans that originate from a resource.",
+          "items": {
+            "$ref": "#/definitions/v1ScopeSpans"
+          },
+          "type": "array"
+        },
+        "schema_url": {
+          "description": "The Schema URL, if known. This is the identifier of the Schema that the resource data\nis recorded in. Notably, the last part of the URL path is the version number of the\nschema: http[s]://server[:port]/path/\u003cversion\u003e. To learn more about Schema URL see\nhttps://opentelemetry.io/docs/specs/otel/schemas/#schema-url\nThis schema_url applies to the data in the \"resource\" field. It does not apply\nto the data in the \"scope_spans\" field which have their own schema_url field.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "v1ScopeSpans": {
+      "description": "A collection of Spans produced by an InstrumentationScope.",
+      "properties": {
+        "scope": {
+          "$ref": "#/definitions/v1InstrumentationScope"
+        },
+        "spans": {
+          "description": "A list of Spans that originate from an instrumentation scope.",
+          "items": {
+            "$ref": "#/definitions/v1Span"
+          },
+          "type": "array"
+        },
+        "schema_url": {
+          "description": "The Schema URL, if known. This is the identifier of the Schema that the span data\nis recorded in. Notably, the last part of the URL path is the version number of the\nschema: http[s]://server[:port]/path/\u003cversion\u003e. To learn more about Schema URL see\nhttps://opentelemetry.io/docs/specs/otel/schemas/#schema-url\nThis schema_url applies to all spans and span events in the \"spans\" field.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "v1Span": {
+      "description": "A Span represents a single operation performed by a single component of the system.\n\nThe next available field id is 17.",
+      "properties": {
+        "trace_id": {
+          "description": "A unique identifier for a trace. All spans from the same trace share\nthe same `trace_id`. The ID is a 16-byte array. An ID with all zeroes OR\nof length other than 16 bytes is considered invalid (empty string in OTLP/JSON\nis zero-length and thus is also invalid).\n\nThis field is required.",
+          "format": "byte",
+          "type": "string"
+        },
+        "span_id": {
+          "description": "A unique identifier for a span within a trace, assigned when the span\nis created. The ID is an 8-byte array. An ID with all zeroes OR of length\nother than 8 bytes is considered invalid (empty string in OTLP/JSON\nis zero-length and thus is also invalid).\n\nThis field is required.",
+          "format": "byte",
+          "type": "string"
+        },
+        "trace_state": {
+          "description": "trace_state conveys information about request position in multiple distributed tracing graphs.\nIt is a trace_state in w3c-trace-context format: https://www.w3.org/TR/trace-context/#tracestate-header\nSee also https://github.com/w3c/distributed-tracing for more details about this field.",
+          "type": "string"
+        },
+        "parent_span_id": {
+          "description": "The `span_id` of this span's parent span. If this is a root span, then this\nfield must be empty. The ID is an 8-byte array.",
+          "format": "byte",
+          "type": "string"
+        },
+        "flags": {
+          "description": "Flags, a bit field.\n\nBits 0-7 (8 least significant bits) are the trace flags as defined in W3C Trace\nContext specification. To read the 8-bit W3C trace flag, use\n`flags \u0026 SPAN_FLAGS_TRACE_FLAGS_MASK`.\n\nSee https://www.w3.org/TR/trace-context-2/#trace-flags for the flag definitions.\n\nBits 8 and 9 represent the 3 states of whether a span's parent\nis remote. The states are (unknown, is not remote, is remote).\nTo read whether the value is known, use `(flags \u0026 SPAN_FLAGS_CONTEXT_HAS_IS_REMOTE_MASK) != 0`.\nTo read whether the span is remote, use `(flags \u0026 SPAN_FLAGS_CONTEXT_IS_REMOTE_MASK) != 0`.\n\nWhen creating span messages, if the message is logically forwarded from another source\nwith an equivalent flags fields (i.e., usually another OTLP span message), the field SHOULD\nbe copied as-is. If creating from a source that does not have an equivalent flags field\n(such as a runtime representation of an OpenTelemetry span), the high 22 bits MUST\nbe set to zero.\nReaders MUST NOT assume that bits 10-31 (22 most significant bits) will be zero.\n\n[Optional].",
+          "format": "int64",
+          "type": "integer"
+        },
+        "name": {
+          "description": "A description of the span's operation.\n\nFor example, the name can be a qualified method name or a file name\nand a line number where the operation is called. A best practice is to use\nthe same display name at the same call point in an application.\nThis makes it easier to correlate spans in different traces.\n\nThis field is semantically required to be set to non-empty string.\nEmpty value is equivalent to an unknown span name.\n\nThis field is required.",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/definitions/SpanSpanKind"
+        },
+        "start_time_unix_nano": {
+          "description": "start_time_unix_nano is the start time of the span. On the client side, this is the time\nkept by the local machine where the span execution starts. On the server side, this\nis the time when the server's application handler starts running.\nValue is UNIX Epoch time in nanoseconds since 00:00:00 UTC on 1 January 1970.\n\nThis field is semantically required and it is expected that end_time \u003e= start_time.",
+          "format": "uint64",
+          "type": "string"
+        },
+        "end_time_unix_nano": {
+          "description": "end_time_unix_nano is the end time of the span. On the client side, this is the time\nkept by the local machine where the span execution ends. On the server side, this\nis the time when the server application handler stops running.\nValue is UNIX Epoch time in nanoseconds since 00:00:00 UTC on 1 January 1970.\n\nThis field is semantically required and it is expected that end_time \u003e= start_time.",
+          "format": "uint64",
+          "type": "string"
+        },
+        "attributes": {
+          "description": "\"/http/user_agent\": \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36\"\n    \"/http/server_latency\": 300\n    \"example.com/myattribute\": true\n    \"example.com/score\": 10.239\n\nThe OpenTelemetry API specification further restricts the allowed value types:\nhttps://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/common/README.md#attribute\nAttribute keys MUST be unique (it is not allowed to have more than one\nattribute with the same key).",
+          "items": {
+            "$ref": "#/definitions/v1KeyValue"
+          },
+          "title": "attributes is a collection of key/value pairs. Note, global attributes\nlike server name can be set using the resource API. Examples of attributes:",
+          "type": "array"
+        },
+        "dropped_attributes_count": {
+          "description": "dropped_attributes_count is the number of attributes that were discarded. Attributes\ncan be discarded because their keys are too long or because there are too many\nattributes. If this value is 0, then no attributes were dropped.",
+          "format": "int64",
+          "type": "integer"
+        },
+        "events": {
+          "description": "events is a collection of Event items.",
+          "items": {
+            "$ref": "#/definitions/v1SpanEvent"
+          },
+          "type": "array"
+        },
+        "dropped_events_count": {
+          "description": "dropped_events_count is the number of dropped events. If the value is 0, then no\nevents were dropped.",
+          "format": "int64",
+          "type": "integer"
+        },
+        "links": {
+          "description": "links is a collection of Links, which are references from this span to a span\nin the same or different trace.",
+          "items": {
+            "$ref": "#/definitions/SpanLink"
+          },
+          "type": "array"
+        },
+        "dropped_links_count": {
+          "description": "dropped_links_count is the number of dropped links after the maximum size was\nenforced. If this value is 0, then no links were dropped.",
+          "format": "int64",
+          "type": "integer"
+        },
+        "status": {
+          "$ref": "#/definitions/tracev1Status"
+        }
+      },
+      "type": "object"
+    },
+    "v1SpanEvent": {
+      "description": "Event is a time-stamped annotation of the span, consisting of user-supplied\ntext description and key-value pairs.",
+      "properties": {
+        "time_unix_nano": {
+          "description": "time_unix_nano is the time the event occurred.",
+          "format": "uint64",
+          "type": "string"
+        },
+        "name": {
+          "description": "name of the event.\nThis field is semantically required to be set to non-empty string.",
+          "type": "string"
+        },
+        "attributes": {
+          "description": "attributes is a collection of attribute key/value pairs on the event.\nAttribute keys MUST be unique (it is not allowed to have more than one\nattribute with the same key).",
+          "items": {
+            "$ref": "#/definitions/v1KeyValue"
+          },
+          "type": "array"
+        },
+        "dropped_attributes_count": {
+          "description": "dropped_attributes_count is the number of dropped attributes. If the value is 0,\nthen no attributes were dropped.",
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "v1TracesData": {
+      "description": "TracesData represents the traces data that can be stored in a persistent storage,\nOR can be embedded by other protocols that transfer OTLP traces data but do\nnot implement the OTLP protocol.\n\nThe main difference between this message and collector protocol is that\nin this message there will not be any \"control\" or \"metadata\" specific to\nOTLP protocol.\n\nWhen new fields are added into this message, the OTLP request MUST be updated\nas well.",
+      "properties": {
+        "resource_spans": {
+          "description": "An array of ResourceSpans.\nFor data coming from a single resource this array will typically contain\none element. Intermediary nodes that receive data from multiple origins\ntypically batch the data before forwarding further and in that case this\narray will contain multiple elements.",
+          "items": {
+            "$ref": "#/definitions/v1ResourceSpans"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
     }
   },
   "info": {
@@ -1343,7 +1734,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/apiError"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1373,7 +1764,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/apiError"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1403,7 +1794,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/apiError"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1490,7 +1881,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/apiError"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1547,7 +1938,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/apiError"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1603,7 +1994,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/apiError"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1653,7 +2044,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/apiError"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1727,7 +2118,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/apiError"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1783,7 +2174,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/apiError"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1812,7 +2203,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/apiError"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1850,7 +2241,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/apiError"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1919,7 +2310,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/apiError"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1966,43 +2357,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/apiError"
-            }
-          }
-        },
-        "tags": [
-          "DataUnstable"
-        ]
-      }
-    },
-    "/api/unstable/data/logs:get-log-query": {
-      "get": {
-        "operationId": "GetLogQuery",
-        "parameters": [
-          {
-            "description": "The query provided by the user. This field is always required.",
-            "in": "query",
-            "name": "query",
-            "type": "string"
-          },
-          {
-            "description": "Optional argument for providing the full prompt that is used for generating the user query.\nIf not specified, the backend service constructs the prompt based on the provided query.",
-            "in": "query",
-            "name": "prompt",
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/dataunstableGetLogQueryResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/apiError"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -2075,7 +2430,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/apiError"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -2126,7 +2481,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/apiError"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -2155,7 +2510,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/apiError"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -2205,7 +2560,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/apiError"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -2227,7 +2582,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/apiError"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -2286,7 +2641,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/apiError"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -2315,7 +2670,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/apiError"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -2374,7 +2729,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/apiError"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -2424,7 +2779,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/apiError"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -2453,7 +2808,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/apiError"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -2503,7 +2858,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/apiError"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -2558,7 +2913,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/apiError"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -2587,7 +2942,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/apiError"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -2642,7 +2997,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/apiError"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -2671,7 +3026,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/apiError"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -2744,7 +3099,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/apiError"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -2773,7 +3128,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/apiError"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -2844,7 +3199,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/apiError"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },

@@ -125,7 +125,7 @@ An unexpected error response.
 type CreateEventDefault struct {
 	_statusCode int
 
-	Payload *models.APIError
+	Payload *models.GooglerpcStatus
 }
 
 // IsSuccess returns true when this create event default response has a 2xx status code
@@ -168,13 +168,13 @@ func (o *CreateEventDefault) String() string {
 	return fmt.Sprintf("[POST /api/unstable/data/events][%d] CreateEvent default %s", o._statusCode, payload)
 }
 
-func (o *CreateEventDefault) GetPayload() *models.APIError {
+func (o *CreateEventDefault) GetPayload() *models.GooglerpcStatus {
 	return o.Payload
 }
 
 func (o *CreateEventDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
-	o.Payload = new(models.APIError)
+	o.Payload = new(models.GooglerpcStatus)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {

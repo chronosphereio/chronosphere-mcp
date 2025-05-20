@@ -127,7 +127,7 @@ An unexpected error response.
 type GetEventHistogramDefault struct {
 	_statusCode int
 
-	Payload *models.APIError
+	Payload *models.GooglerpcStatus
 }
 
 // IsSuccess returns true when this get event histogram default response has a 2xx status code
@@ -170,13 +170,13 @@ func (o *GetEventHistogramDefault) String() string {
 	return fmt.Sprintf("[GET /api/unstable/data/events:histogram][%d] GetEventHistogram default %s", o._statusCode, payload)
 }
 
-func (o *GetEventHistogramDefault) GetPayload() *models.APIError {
+func (o *GetEventHistogramDefault) GetPayload() *models.GooglerpcStatus {
 	return o.Payload
 }
 
 func (o *GetEventHistogramDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
-	o.Payload = new(models.APIError)
+	o.Payload = new(models.GooglerpcStatus)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {

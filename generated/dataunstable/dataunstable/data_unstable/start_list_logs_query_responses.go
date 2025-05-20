@@ -127,7 +127,7 @@ An unexpected error response.
 type StartListLogsQueryDefault struct {
 	_statusCode int
 
-	Payload *models.APIError
+	Payload *models.GooglerpcStatus
 }
 
 // IsSuccess returns true when this start list logs query default response has a 2xx status code
@@ -170,13 +170,13 @@ func (o *StartListLogsQueryDefault) String() string {
 	return fmt.Sprintf("[GET /api/unstable/data/logs:list-start][%d] StartListLogsQuery default %s", o._statusCode, payload)
 }
 
-func (o *StartListLogsQueryDefault) GetPayload() *models.APIError {
+func (o *StartListLogsQueryDefault) GetPayload() *models.GooglerpcStatus {
 	return o.Payload
 }
 
 func (o *StartListLogsQueryDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
-	o.Payload = new(models.APIError)
+	o.Payload = new(models.GooglerpcStatus)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {

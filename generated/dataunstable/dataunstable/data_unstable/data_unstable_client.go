@@ -74,8 +74,6 @@ type ClientService interface {
 
 	GetLogHistogram(params *GetLogHistogramParams, opts ...ClientOption) (*GetLogHistogramOK, error)
 
-	GetLogQuery(params *GetLogQueryParams, opts ...ClientOption) (*GetLogQueryOK, error)
-
 	GetLoggingUsage(params *GetLoggingUsageParams, opts ...ClientOption) (*GetLoggingUsageOK, error)
 
 	GetRangeQuery(params *GetRangeQueryParams, opts ...ClientOption) (*GetRangeQueryOK, error)
@@ -488,43 +486,6 @@ func (a *Client) GetLogHistogram(params *GetLogHistogramParams, opts ...ClientOp
 	}
 	// unexpected success response
 	unexpectedSuccess := result.(*GetLogHistogramDefault)
-	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
-}
-
-/*
-GetLogQuery get log query API
-*/
-func (a *Client) GetLogQuery(params *GetLogQueryParams, opts ...ClientOption) (*GetLogQueryOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewGetLogQueryParams()
-	}
-	op := &runtime.ClientOperation{
-		ID:                 "GetLogQuery",
-		Method:             "GET",
-		PathPattern:        "/api/unstable/data/logs:get-log-query",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &GetLogQueryReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	}
-	for _, opt := range opts {
-		opt(op)
-	}
-
-	result, err := a.transport.Submit(op)
-	if err != nil {
-		return nil, err
-	}
-	success, ok := result.(*GetLogQueryOK)
-	if ok {
-		return success, nil
-	}
-	// unexpected success response
-	unexpectedSuccess := result.(*GetLogQueryDefault)
 	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
 }
 

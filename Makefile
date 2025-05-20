@@ -70,16 +70,30 @@ run-agent: build-agent
 	@echo "Starting agent..."
 	$(agent_bin_path) -f $(AGENT_CONFIG_FILE) -i $(AGENT_INPUTS_FILE)
 
+.PHONY: build-agent
 build-agent:
 	go build -o $(agent_bin_path) ./agent
 
+.PHONY: build-mcpgen
 build-mcpgen:
 	cd tools && go build -o $(tools_bin_path)/mcpgen ./cmd/mcpgen
 
+.PHONY: tools-mcpgen
 tools-gen: build-mcpgen
 	$(tools_bin_path)/mcpgen -spec ./generated/configv1/spec.json -pkg configv1 -target ./mcp-server/pkg/generated/tools/configv1 -allowed-entities \
 		monitors,dashboards,slos
+
 .PHONY: lint
 lint: install-tools
 	@echo "--- :golang: linting code"
 	GOFLAGS=$(GOFLAGS) $(tools_bin_path)/golangci-lint run
+
+.PHONY: all-gen test-all-gen tidy
+tidy:
+	go mod tidy
+
+all-gen: swagger-gen tools-gen
+	@echo "--- :golang: all codegen complete"
+
+test-all-gen: tidy all-gen
+	./scripts/check-branch.sh

@@ -60,7 +60,7 @@ func {{ $toolSpec.CamelName }}(clientProvider *client.Provider, logger *zap.Logg
                 return nil, fmt.Errorf("failed to call {{$toolSpec.APIParam}}: %s", err)
             }
             return &tools.Result{
-                JsonContent: resp,
+                JSONContent: resp,
             }, nil
         },
 	}

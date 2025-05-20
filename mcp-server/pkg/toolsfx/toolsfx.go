@@ -8,6 +8,7 @@ import (
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/configapi"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/events"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/logs"
+	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/monitors"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/prometheus"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/traces"
 )
@@ -17,6 +18,7 @@ var Module = fx.Provide(
 		configapi.NewTools,
 		events.NewTools,
 		logs.NewTools,
+		monitors.NewTools,
 		prometheus.NewTools,
 		traces.NewTools,
 	)...,

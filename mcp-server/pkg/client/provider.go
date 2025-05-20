@@ -15,6 +15,7 @@ import (
 
 	"github.com/chronosphereio/mcp-server/generated/configv1/configv1"
 	"github.com/chronosphereio/mcp-server/generated/dataunstable/dataunstable"
+	"github.com/chronosphereio/mcp-server/generated/stateunstable/stateunstable"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
 )
 
@@ -49,12 +50,28 @@ func (c *Provider) PrometheusPromClient(session tools.Session) (api.Client, erro
 	return c.prometheusClientForBasePath(session, "/app/prom")
 }
 
+// DataUnstableClient creates a new client to hit data unstable APIs.
 func (c *Provider) DataUnstableClient(session tools.Session) (*dataunstable.DataUnstableAPI, error) {
 	t, err := c.transportForSession(session, "/")
 	if err != nil {
 		return nil, fmt.Errorf("could not construct Chronosphere data unstable API client: %v", err)
 	}
 	return dataunstable.New(t, strfmt.Default), nil
+}
+
+// StateUnstableClient creates a new client to hit state unstable APIs.
+func (c *Provider) StateUnstableClient(session tools.Session) (*stateunstable.StateUnstableAPI, error) {
+	t, err := c.transportForSession(session, "/")
+	if err != nil {
+		return nil, fmt.Errorf("could not construct Chronosphere state unstable API client: %v", err)
+	}
+	return stateunstable.New(t, strfmt.Default), nil
+}
+
+// TransportForSession creates a transport for the given session.
+// This is exposed for use by tools that need to create clients that aren't provided directly.
+func (c *Provider) TransportForSession(session tools.Session, basePath string) (*openapiclient.Runtime, error) {
+	return c.transportForSession(session, basePath)
 }
 
 func (c *Provider) prometheusClientForBasePath(session tools.Session, basePath string) (api.Client, error) {

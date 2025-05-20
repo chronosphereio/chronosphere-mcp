@@ -7,7 +7,9 @@ package models
 
 import (
 	"context"
+	"strconv"
 
+	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 )
@@ -17,17 +19,86 @@ import (
 // swagger:model datav1ListTracesResponse
 type Datav1ListTracesResponse struct {
 
-	// List of opentelemetry.proto.trace.v1.TracesData
-	Traces []strfmt.Base64 `json:"traces"`
+	// traces
+	Traces []*V1TracesData `json:"traces"`
 }
 
 // Validate validates this datav1 list traces response
 func (m *Datav1ListTracesResponse) Validate(formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.validateTraces(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
 	return nil
 }
 
-// ContextValidate validates this datav1 list traces response based on context it is used
+func (m *Datav1ListTracesResponse) validateTraces(formats strfmt.Registry) error {
+	if swag.IsZero(m.Traces) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.Traces); i++ {
+		if swag.IsZero(m.Traces[i]) { // not required
+			continue
+		}
+
+		if m.Traces[i] != nil {
+			if err := m.Traces[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("traces" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("traces" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// ContextValidate validate this datav1 list traces response based on the context it is used
 func (m *Datav1ListTracesResponse) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateTraces(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *Datav1ListTracesResponse) contextValidateTraces(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.Traces); i++ {
+
+		if m.Traces[i] != nil {
+
+			if swag.IsZero(m.Traces[i]) { // not required
+				return nil
+			}
+
+			if err := m.Traces[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("traces" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("traces" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
 	return nil
 }
 

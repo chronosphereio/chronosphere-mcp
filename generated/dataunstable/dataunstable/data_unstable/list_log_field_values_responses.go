@@ -127,7 +127,7 @@ An unexpected error response.
 type ListLogFieldValuesDefault struct {
 	_statusCode int
 
-	Payload *models.APIError
+	Payload *models.GooglerpcStatus
 }
 
 // IsSuccess returns true when this list log field values default response has a 2xx status code
@@ -170,13 +170,13 @@ func (o *ListLogFieldValuesDefault) String() string {
 	return fmt.Sprintf("[GET /api/unstable/data/logs:list-log-field-values][%d] ListLogFieldValues default %s", o._statusCode, payload)
 }
 
-func (o *ListLogFieldValuesDefault) GetPayload() *models.APIError {
+func (o *ListLogFieldValuesDefault) GetPayload() *models.GooglerpcStatus {
 	return o.Payload
 }
 
 func (o *ListLogFieldValuesDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
-	o.Payload = new(models.APIError)
+	o.Payload = new(models.GooglerpcStatus)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {

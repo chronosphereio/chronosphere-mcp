@@ -3,15 +3,12 @@ package config
 
 import (
 	"bytes"
-	"log"
 	"os"
 
 	"go.uber.org/config"
 )
 
 func ParseFile(path string) (config.Provider, error) {
-	log.Printf("Loading config file from %q\n", path)
-
 	data, err := os.ReadFile(path) //nolint:gosec
 	if err != nil {
 		return nil, err

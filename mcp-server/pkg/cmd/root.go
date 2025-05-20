@@ -59,7 +59,7 @@ func New() *cobra.Command {
 func provideLogger(verboseLogging bool) (*zap.Logger, error) {
 	tmpDir := os.TempDir()
 	loggerCfg := zap.NewProductionConfig()
-	loggerCfg.OutputPaths = []string{"stdout", path.Join(tmpDir, "mcp_server.log")}
+	loggerCfg.OutputPaths = []string{"stderr", path.Join(tmpDir, "mcp_server.log")}
 	loggerCfg.ErrorOutputPaths = []string{"stderr", path.Join(tmpDir, "mcp_server_error.log")}
 	if verboseLogging {
 		loggerCfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)

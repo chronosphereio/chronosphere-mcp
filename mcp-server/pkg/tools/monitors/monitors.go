@@ -1,0 +1,147 @@
+// Package monitors provides tools for querying Chronosphere monitor statuses.
+package monitors
+
+import (
+	"fmt"
+
+	"github.com/mark3labs/mcp-go/mcp"
+	"go.uber.org/zap"
+
+	"github.com/chronosphereio/mcp-server/generated/stateunstable/stateunstable/state_unstable"
+	"github.com/chronosphereio/mcp-server/mcp-server/pkg/client"
+	"github.com/chronosphereio/mcp-server/mcp-server/pkg/ptr"
+	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
+	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/pkg/params"
+)
+
+var _ tools.MCPTools = (*Tools)(nil)
+
+// Tools represents the monitor tools.
+type Tools struct {
+	logger         *zap.Logger
+	clientProvider *client.Provider
+}
+
+// NewTools creates a new set of monitor tools.
+func NewTools(clientProvider *client.Provider, logger *zap.Logger) (*Tools, error) {
+	logger.Info("monitor status tool configured")
+
+	return &Tools{
+		logger:         logger,
+		clientProvider: clientProvider,
+	}, nil
+}
+
+// Using the StateUnstableClient method from the Provider
+
+// MCPTools returns the list of monitor tools.
+func (t *Tools) MCPTools() []tools.MCPTool {
+	return []tools.MCPTool{
+		{
+			Metadata: tools.NewMetadata("list_monitor_statuses",
+				mcp.WithDescription("Lists the current status of monitors in Chronosphere. Returns monitor statuses with alert states and optional signal and series details."),
+				mcp.WithArray("monitor_slugs",
+					mcp.Description("Filter by monitor slug. If all filters are empty, return status for all monitors."),
+				),
+				mcp.WithArray("collection_slugs",
+					mcp.Description("Filter monitor state by owning collection."),
+				),
+				mcp.WithArray("team_slugs",
+					mcp.Description("Filter monitor state by owning team."),
+				),
+				mcp.WithBoolean("include_signal_statuses",
+					mcp.Description("Include signal status details in the response."),
+					mcp.DefaultBool(false),
+				),
+				mcp.WithBoolean("include_series_statuses",
+					mcp.Description("Include series status details in the response. Requires include_signal_statuses to be true."),
+					mcp.DefaultBool(false),
+				),
+				mcp.WithString("sort_by",
+					mcp.Description("Sort results by a specific field. Currently supports 'SORT_BY_STATE'."),
+					mcp.Enum("SORT_BY_STATE"),
+				),
+			),
+			Handler: func(session tools.Session, request mcp.CallToolRequest) (*tools.Result, error) {
+				// Parse parameters
+				monitorSlugs, err := params.StringArray(request, "monitor_slugs", false, nil)
+				if err != nil {
+					return nil, err
+				}
+
+				collectionSlugs, err := params.StringArray(request, "collection_slugs", false, nil)
+				if err != nil {
+					return nil, err
+				}
+
+				teamSlugs, err := params.StringArray(request, "team_slugs", false, nil)
+				if err != nil {
+					return nil, err
+				}
+
+				includeSignalStatuses, err := params.Bool(request, "include_signal_statuses", false, false)
+				if err != nil {
+					return nil, err
+				}
+
+				includeSeriesStatuses, err := params.Bool(request, "include_series_statuses", false, false)
+				if err != nil {
+					return nil, err
+				}
+
+				sortBy, err := params.String(request, "sort_by", false, "")
+				if err != nil {
+					return nil, err
+				}
+
+				// Construct query parameters
+				queryParams := state_unstable.NewListMonitorStatusesParams().
+					WithContext(session.Context)
+
+				if len(monitorSlugs) > 0 {
+					queryParams.SetMonitorSlugs(monitorSlugs)
+				}
+
+				if len(collectionSlugs) > 0 {
+					queryParams.SetCollectionSlugs(collectionSlugs)
+				}
+
+				if len(teamSlugs) > 0 {
+					queryParams.SetTeamSlugs(teamSlugs)
+				}
+
+				if includeSignalStatuses {
+					queryParams.SetIncludeSignalStatuses(ptr.To(includeSignalStatuses))
+				}
+
+				if includeSeriesStatuses {
+					if !includeSignalStatuses {
+						return nil, fmt.Errorf("include_signal_statuses must be true for include_series_statuses to be true")
+					}
+					queryParams.SetIncludeSeriesStatuses(ptr.To(includeSeriesStatuses))
+				}
+
+				if sortBy != "" {
+					queryParams.SetSortBy(ptr.To(sortBy))
+				}
+
+				t.logger.Info("list monitor statuses", zap.Any("params", queryParams))
+
+				// Get client and make API call
+				stateAPI, err := t.clientProvider.StateUnstableClient(session)
+				if err != nil {
+					return nil, err
+				}
+
+				resp, err := stateAPI.StateUnstable.ListMonitorStatuses(queryParams)
+				if err != nil {
+					return nil, fmt.Errorf("failed to list monitor statuses: %s", err)
+				}
+
+				return &tools.Result{
+					JSONContent: resp,
+				}, nil
+			},
+		},
+	}
+}

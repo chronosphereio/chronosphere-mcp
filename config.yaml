@@ -3,8 +3,8 @@ server:
     sse:
       enabled: true
       address: 0.0.0.0:8080
-      baseURL: http://host.docker.internal:8080
-      # baseURL: http://0.0.0.0:8080
+      #baseURL: http://host.docker.internal:8080
+      baseURL: http://0.0.0.0:8080
 
   tools:
     # List of tools to disable if you don't want to serve them to the client/host.

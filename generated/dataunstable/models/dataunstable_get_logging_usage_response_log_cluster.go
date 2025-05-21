@@ -29,6 +29,9 @@ type DataunstableGetLoggingUsageResponseLogCluster struct {
 	// Format: date-time
 	LastUpdatedAt strfmt.DateTime `json:"last_updated_at,omitempty"`
 
+	// log query
+	LogQuery string `json:"log_query,omitempty"`
+
 	// pattern
 	Pattern string `json:"pattern,omitempty"`
 

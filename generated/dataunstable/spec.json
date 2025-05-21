@@ -147,6 +147,10 @@
         "last_updated_at": {
           "format": "date-time",
           "type": "string"
+        },
+        "total_bytes": {
+          "format": "uint64",
+          "type": "string"
         }
       },
       "type": "object"
@@ -204,6 +208,21 @@
       ],
       "type": "string"
     },
+    "ListTracesRequestTagFilter": {
+      "properties": {
+        "key": {
+          "description": "The key (or name) of the span tag that is inspected by this filter.",
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/definitions/TagFilterStringFilter"
+        },
+        "numeric_value": {
+          "$ref": "#/definitions/TagFilterNumericFilter"
+        }
+      },
+      "type": "object"
+    },
     "LogQueryTimeSeriesDataLogQueryTimeSeries": {
       "properties": {
         "group_by_dimension_values": {
@@ -243,6 +262,17 @@
         }
       },
       "type": "object"
+    },
+    "NumericFilterComparisonType": {
+      "enum": [
+        "EQUAL",
+        "NOT_EQUAL",
+        "GREATER_THAN",
+        "GREATER_THAN_OR_EQUAL",
+        "LESS_THAN",
+        "LESS_THAN_OR_EQUAL"
+      ],
+      "type": "string"
     },
     "RecommendationRecommendationType": {
       "enum": [
@@ -308,6 +338,49 @@
       ],
       "title": "For the semantics of status codes see\nhttps://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-status",
       "type": "string"
+    },
+    "StringFilterStringFilterMatchType": {
+      "enum": [
+        "EXACT",
+        "REGEX",
+        "EXACT_NEGATION",
+        "REGEX_NEGATION",
+        "IN",
+        "NOT_IN"
+      ],
+      "type": "string"
+    },
+    "TagFilterNumericFilter": {
+      "properties": {
+        "comparison": {
+          "$ref": "#/definitions/NumericFilterComparisonType"
+        },
+        "value": {
+          "description": "The filter value used in comparison against match candidates.",
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "TagFilterStringFilter": {
+      "properties": {
+        "match": {
+          "$ref": "#/definitions/StringFilterStringFilterMatchType"
+        },
+        "value": {
+          "description": "The value the filter compares to the target trace or span field.",
+          "type": "string"
+        },
+        "in_values": {
+          "description": "Values the filter tests against when using IN or NOT_IN match type.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
     },
     "apiError": {
       "properties": {
@@ -662,6 +735,9 @@
         },
         "recommendation": {
           "$ref": "#/definitions/GetLogClusterUsageResponseRecommendation"
+        },
+        "log_query": {
+          "type": "string"
         }
       },
       "type": "object"
@@ -750,6 +826,9 @@
         },
         "last_updated_at": {
           "format": "date-time",
+          "type": "string"
+        },
+        "log_query": {
           "type": "string"
         }
       },
@@ -1303,6 +1382,46 @@
         },
         "string_value": {
           "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "datav1ListTracesRequest": {
+      "properties": {
+        "query_type": {
+          "$ref": "#/definitions/ListTracesRequestQueryType"
+        },
+        "trace_ids": {
+          "description": "Trace IDs to search for.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "start_time": {
+          "description": "Start time for the search.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "end_time": {
+          "description": "End time for the search.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "service": {
+          "description": "Service to filter on. An empty value doesn't apply any service filter.",
+          "type": "string"
+        },
+        "operation": {
+          "description": "Operation to filter on. An empty value doesn't apply any operation filter.",
+          "type": "string"
+        },
+        "tag_filters": {
+          "description": "Tag filter to apply. An empty value doesn't apply any tag filter.",
+          "items": {
+            "$ref": "#/definitions/ListTracesRequestTagFilter"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -3138,55 +3257,17 @@
       }
     },
     "/api/unstable/data/traces": {
-      "get": {
+      "post": {
         "description": "Tracing",
         "operationId": "ListTraces",
         "parameters": [
           {
-            "description": "Type of query to perform.\nTRACE_IDS: Search for specific trace IDs.\nSERVICE_OPERATION: Search for traces with a specific service and operation, over a specific time frame.",
-            "enum": [
-              "TRACE_IDS",
-              "SERVICE_OPERATION"
-            ],
-            "in": "query",
-            "name": "query_type",
-            "type": "string"
-          },
-          {
-            "collectionFormat": "multi",
-            "description": "Trace IDs to search for.",
-            "in": "query",
-            "items": {
-              "type": "string"
-            },
-            "name": "trace_ids",
-            "type": "array"
-          },
-          {
-            "description": "Start time for the search.",
-            "format": "date-time",
-            "in": "query",
-            "name": "start_time",
-            "type": "string"
-          },
-          {
-            "description": "End time for the search.",
-            "format": "date-time",
-            "in": "query",
-            "name": "end_time",
-            "type": "string"
-          },
-          {
-            "description": "Service to filter on. Empty means no filter.",
-            "in": "query",
-            "name": "service",
-            "type": "string"
-          },
-          {
-            "description": "Operation to filter on. Empty means no filter.",
-            "in": "query",
-            "name": "operation",
-            "type": "string"
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/datav1ListTracesRequest"
+            }
           }
         ],
         "responses": {

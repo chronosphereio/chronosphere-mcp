@@ -38,6 +38,9 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				mcp.WithDescription(`List logs from given a query with select fields. Since log results are quite large, will only receive the first page of logs. use the pageToken to fetch the next page. Consult the Log Query Syntax resource for more details on query syntax`),
 				withLogQueryParam(),
 				params.WithTimeRange(),
+				mcp.WithNumber("page_max_size",
+					mcp.Description("Maximum number of logs to return. Default is 10. Use page toke to fetch more pages."),
+					mcp.DefaultNumber(10)),
 				mcp.WithString("page_token",
 					mcp.Description("Page token to fetch the next page of logs"),
 				),
@@ -52,7 +55,18 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				if err != nil {
 					return nil, err
 				}
+
+				pageSize, err := params.Int(request, "page_max_size", false, 10)
+				if err != nil {
+					return nil, err
+				}
+
 				pageToken, err := params.String(request, "page_token", false, "")
+				if err != nil {
+					return nil, err
+				}
+
+				logsAPI, err := t.clientProvider.DataUnstableClient(session)
 				if err != nil {
 					return nil, err
 				}
@@ -62,16 +76,11 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					LogFilterQuery:          &query,
 					LogFilterHappenedAfter:  (*strfmt.DateTime)(&timeRange.Start),
 					LogFilterHappenedBefore: (*strfmt.DateTime)(&timeRange.End),
-					PageMaxSize:             ptr.To[int64](20),
+					PageMaxSize:             ptr.To(int64(pageSize)),
 					PageToken:               &pageToken,
 				}
-
 				t.logger.Info("list logs", zap.Any("params", queryParams))
 
-				logsAPI, err := t.clientProvider.DataUnstableClient(session)
-				if err != nil {
-					return nil, err
-				}
 				resp, err := logsAPI.DataUnstable.ListLogs(queryParams)
 				if err != nil {
 					return nil, fmt.Errorf("failed to list logs: %s", err)

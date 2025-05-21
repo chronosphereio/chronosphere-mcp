@@ -31,7 +31,7 @@ type ParamParser[T any] func(param interface{}) (T, error)
 // It returns a ParamResult which contains either the parsed value or error information
 func parse[T any](request mcp.CallToolRequest, key string, required bool, defaultValue T, parser ParamParser[T]) (T, error) {
 	// Check if the parameter exists
-	param, ok := request.Params.Arguments[key]
+	param, ok := request.GetArguments()[key]
 	if !ok {
 		if required {
 			var zero T
@@ -208,7 +208,7 @@ func Object[T any](request mcp.CallToolRequest, key string, required bool, defau
 
 // ObjectArray parses an array of objects parameter and returns the value and any tool result error
 func ObjectArray[T any](request mcp.CallToolRequest, key string, required bool) ([]T, error) {
-	args := request.Params.Arguments
+	args := request.GetArguments()
 	arrayRaw, ok := args[key]
 	if !ok {
 		if required {

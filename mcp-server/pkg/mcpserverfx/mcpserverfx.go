@@ -71,7 +71,8 @@ func invoke(p params) (*Transports, error) {
 
 	p.LifeCycle.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			return transports.Start(ctx)
+			go transports.Start(context.Background())
+			return nil
 		},
 		OnStop: func(ctx context.Context) error {
 			transports.Close(ctx)

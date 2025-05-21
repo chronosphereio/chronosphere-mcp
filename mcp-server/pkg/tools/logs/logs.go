@@ -35,7 +35,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 	return []tools.MCPTool{
 		{
 			Metadata: tools.NewMetadata("list_logs",
-				mcp.WithDescription(`List logs from given a query with select fields. Since log results are quite large, will only receive the first page of logs. use the pageToken to fetch the next page. Consult the Log Query Syntax resource for more details on query syntax`),
+				mcp.WithDescription(`List logs from a query. Since log results are quite large, will only receive the first page of logs. use the pageToken to fetch the next page. Consult the Log Query Syntax resource for more details on query syntax`),
 				withLogQueryParam(),
 				params.WithTimeRange(),
 				mcp.WithNumber("page_max_size",
@@ -87,6 +87,55 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				}
 
 				// TODO: summarize logs before returning.
+				return &tools.Result{
+					JSONContent: resp,
+				}, nil
+			},
+		},
+		{
+			Metadata: tools.NewMetadata("query_logs_range",
+				mcp.WithDescription(`Execute a range query for logs. This endpoint is more efficient and returns logs as either time series or grid data. By default, only the timestamp, message, severity and service fields are returned, you may want to request other properties by using the "project" function e.g. "<query> | project logID,timestamp,message,severity,service". Since log results are quite large, will only receive the first page of logs. use the pageToken to fetch the next page. Consult the Log Query Syntax resource for more details on query syntax`),
+				withLogQueryParam(),
+				params.WithTimeRange(),
+				mcp.WithString("page_token",
+					mcp.Description("Page token to fetch the next page of logs. An empty token identifies the first page."),
+				),
+			),
+			Handler: func(session tools.Session, request mcp.CallToolRequest) (*tools.Result, error) {
+				query, err := params.String(request, "query", true, "")
+				if err != nil {
+					return nil, err
+				}
+
+				timeRange, err := params.ParseTimeRange(request)
+				if err != nil {
+					return nil, err
+				}
+
+				pageToken, err := params.String(request, "page_token", false, "")
+				if err != nil {
+					return nil, err
+				}
+
+				logsAPI, err := t.clientProvider.DataUnstableClient(session)
+				if err != nil {
+					return nil, err
+				}
+
+				queryParams := &data_unstable.GetRangeQueryParams{
+					Context:                       session.Context,
+					Query:                         &query,
+					TimestampFilterHappenedAfter:  (*strfmt.DateTime)(&timeRange.Start),
+					TimestampFilterHappenedBefore: (*strfmt.DateTime)(&timeRange.End),
+					PageToken:                     &pageToken,
+				}
+				t.logger.Info("get range query", zap.Any("params", queryParams))
+
+				resp, err := logsAPI.DataUnstable.GetRangeQuery(queryParams)
+				if err != nil {
+					return nil, fmt.Errorf("failed to get range query: %s", err)
+				}
+
 				return &tools.Result{
 					JSONContent: resp,
 				}, nil

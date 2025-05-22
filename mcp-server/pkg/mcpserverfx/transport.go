@@ -56,7 +56,7 @@ func NewTransports(
 	}, nil
 }
 
-func (t *Transports) Start(ctx context.Context) error {
+func (t *Transports) Start(ctx context.Context) {
 	ctx, cancel := context.WithCancel(ctx)
 	t.cancelContext = cancel
 
@@ -84,7 +84,6 @@ func (t *Transports) Start(ctx context.Context) error {
 			}
 		}()
 	}
-	return nil
 }
 
 func (t *Transports) Close(ctx context.Context) {

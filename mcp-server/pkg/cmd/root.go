@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/chronosphereio/mcp-server/pkg/links"
 	"github.com/spf13/cobra"
 	"go.uber.org/config"
 	"go.uber.org/fx"
@@ -15,6 +16,11 @@ import (
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/mcpserverfx"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/toolsfx"
 )
+
+type APIConfig struct {
+	APIURL   string
+	APIToken string
+}
 
 // New returns the root command.
 func New() *cobra.Command {
@@ -33,7 +39,7 @@ func New() *cobra.Command {
 				fx.Provide(func() (config.Provider, error) {
 					return pkgconfig.ParseFile(flags.ConfigFilePath)
 				}),
-				fx.Provide(func() (*client.Provider, error) {
+				fx.Provide(func() (*APIConfig, error) {
 					apiURL, err := flags.GetAPIURL()
 					if err != nil {
 						return nil, err
@@ -42,7 +48,16 @@ func New() *cobra.Command {
 					if err != nil {
 						return nil, err
 					}
-					return client.NewProvider(apiURL, apiToken)
+					return &APIConfig{
+						APIURL:   apiURL,
+						APIToken: apiToken,
+					}, nil
+				}),
+				fx.Provide(func(apiConfig *APIConfig) *links.Builder {
+					return links.NewBuilder(apiConfig.APIURL)
+				}),
+				fx.Provide(func(apiConfig *APIConfig) (*client.Provider, error) {
+					return client.NewProvider(apiConfig.APIURL, apiConfig.APIToken)
 				}),
 				fx.Provide(func() (*zap.Logger, error) {
 					return provideLogger(flags.VerboseLogging)

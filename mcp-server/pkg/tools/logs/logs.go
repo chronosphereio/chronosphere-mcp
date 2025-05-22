@@ -4,6 +4,7 @@ package logs
 import (
 	"fmt"
 
+	"github.com/chronosphereio/mcp-server/pkg/links"
 	"github.com/go-openapi/strfmt"
 	"github.com/mark3labs/mcp-go/mcp"
 	"go.uber.org/zap"
@@ -20,14 +21,16 @@ var _ tools.MCPTools = (*Tools)(nil)
 type Tools struct {
 	logger         *zap.Logger
 	clientProvider *client.Provider
+	linkBuilder    *links.Builder
 }
 
-func NewTools(clientProvider *client.Provider, logger *zap.Logger) (*Tools, error) {
+func NewTools(clientProvider *client.Provider, logger *zap.Logger, linkBuilder *links.Builder) (*Tools, error) {
 	logger.Info("logging tool configured")
 
 	return &Tools{
 		logger:         logger,
 		clientProvider: clientProvider,
+		linkBuilder:    linkBuilder,
 	}, nil
 }
 
@@ -89,6 +92,10 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				// TODO: summarize logs before returning.
 				return &tools.Result{
 					JSONContent: resp,
+					ChronosphereLink: t.linkBuilder.LogExplorer().
+						WithQuery(query).
+						WithTimeRange(timeRange.Start, timeRange.End).
+						String(),
 				}, nil
 			},
 		},
@@ -138,6 +145,10 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 
 				return &tools.Result{
 					JSONContent: resp,
+					ChronosphereLink: t.linkBuilder.LogExplorer().
+						WithQuery(query).
+						WithTimeRange(timeRange.Start, timeRange.End).
+						String(),
 				}, nil
 			},
 		},
@@ -167,6 +178,9 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				}
 				return &tools.Result{
 					JSONContent: resp,
+					ChronosphereLink: t.linkBuilder.LogExplorer().
+						WithQuery(fmt.Sprintf("logID=%q", id)).
+						String(),
 				}, nil
 			},
 		},
@@ -219,6 +233,10 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 
 				return &tools.Result{
 					JSONContent: resp,
+					ChronosphereLink: t.linkBuilder.LogExplorer().
+						WithQuery(query).
+						WithTimeRange(timeRange.Start, timeRange.End).
+						String(),
 				}, nil
 			},
 		},
@@ -269,6 +287,10 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 
 				return &tools.Result{
 					JSONContent: resp,
+					ChronosphereLink: t.linkBuilder.LogExplorer().
+						WithQuery(query).
+						WithTimeRange(timeRange.Start, timeRange.End).
+						String(),
 				}, nil
 			},
 		},
@@ -328,6 +350,10 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 
 				return &tools.Result{
 					JSONContent: resp,
+					ChronosphereLink: t.linkBuilder.LogExplorer().
+						WithQuery(query).
+						WithTimeRange(timeRange.Start, timeRange.End).
+						String(),
 				}, nil
 			},
 			// TODO: Implement autocomplete requests.

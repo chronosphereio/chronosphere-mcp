@@ -8,6 +8,16 @@ import (
 	"time"
 )
 
+type Builder struct {
+	chronosphereURL string
+}
+
+func NewBuilder(chronosphereURL string) *Builder {
+	return &Builder{
+		chronosphereURL: chronosphereURL,
+	}
+}
+
 // LogExplorerBuilder builds links to the Chronosphere log explorer
 type LogExplorerBuilder struct {
 	chronosphereURL string
@@ -18,9 +28,9 @@ type LogExplorerBuilder struct {
 }
 
 // LogExplorer creates a new LogExplorerBuilder for the specified chronosphereURL
-func LogExplorer(chronosphereURL string) *LogExplorerBuilder {
+func (b *Builder) LogExplorer() *LogExplorerBuilder {
 	return &LogExplorerBuilder{
-		chronosphereURL: chronosphereURL,
+		chronosphereURL: b.chronosphereURL,
 		visualization:   "list", // default visualization
 	}
 }

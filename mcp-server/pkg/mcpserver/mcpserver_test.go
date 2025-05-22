@@ -58,7 +58,7 @@ func TestLoggingTool_mustHandle(t *testing.T) {
 				},
 			},
 			expectedContent: []mcp.Content{
-				mcp.NewTextContent("link: https://chronosphere.io"),
+				mcp.NewTextContent("link to chronosphere: https://chronosphere.io"),
 				mcp.NewTextContent(`{"data":"test"}`),
 			},
 		},

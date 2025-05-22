@@ -139,7 +139,7 @@ func (t *loggingTool) mustHandle(ctx context.Context, request mcp.CallToolReques
 
 	var toolResult mcp.CallToolResult
 	if resp.ChronosphereLink != "" {
-		toolResult.Content = append(toolResult.Content, mcp.NewTextContent("link: "+resp.ChronosphereLink))
+		toolResult.Content = append(toolResult.Content, mcp.NewTextContent("link to chronosphere: "+resp.ChronosphereLink))
 	}
 	if len(resp.ImageContent) > 0 {
 		encoded := base64.StdEncoding.EncodeToString(resp.ImageContent)

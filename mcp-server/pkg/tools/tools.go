@@ -15,6 +15,8 @@ type Result struct {
 
 	// Optional.
 	Meta map[string]any
+	// Optional. If set, an additional text content will be returned with this link in the response.
+	ChronosphereLink string
 }
 
 type Handler func(session Session, request mcp.CallToolRequest) (*Result, error)

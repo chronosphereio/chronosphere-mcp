@@ -137,24 +137,24 @@ func (t *loggingTool) mustHandle(ctx context.Context, request mcp.CallToolReques
 		return mcp.NewToolResultError(err.Error())
 	}
 
+	var toolResult mcp.CallToolResult
+	if resp.ChronosphereLink != "" {
+		toolResult.Content = append(toolResult.Content, mcp.NewTextContent("link: "+resp.ChronosphereLink))
+	}
 	if len(resp.ImageContent) > 0 {
 		encoded := base64.StdEncoding.EncodeToString(resp.ImageContent)
-		return &mcp.CallToolResult{
-			Content: []mcp.Content{
-				mcp.NewImageContent(encoded, "image/png"),
-			},
-		}
+		toolResult.Content = append(toolResult.Content, mcp.NewImageContent(encoded, "image/png"))
+		return &toolResult
 	}
 
 	resultBytes, err := json.Marshal(resp.JSONContent)
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Errorf("failed to serialize content: %s", err).Error())
 	}
-	result := &mcp.CallToolResult{
-		Content: []mcp.Content{mcp.NewTextContent(string(resultBytes))},
-	}
+
+	toolResult.Content = append(toolResult.Content, mcp.NewTextContent(string(resultBytes)))
 	if len(resp.Meta) > 0 {
-		result.Meta = resp.Meta
+		toolResult.Meta = resp.Meta
 	}
-	return result
+	return &toolResult
 }

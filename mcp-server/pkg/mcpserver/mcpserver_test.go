@@ -1,0 +1,117 @@
+package mcpserver
+
+import (
+	"context"
+	"encoding/base64"
+	"fmt"
+	"testing"
+
+	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
+
+	"github.com/chronosphereio/mcp-server/mcp-server/pkg/authcontext"
+	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
+)
+
+func TestLoggingTool_mustHandle(t *testing.T) {
+	tests := []struct {
+		name            string
+		sessionAPIToken string
+		tool            tools.MCPTool
+		expectedContent []mcp.Content
+		expectedMeta    map[string]any
+	}{
+		{
+			name:            "successful JSON response",
+			sessionAPIToken: "test-token",
+			tool: tools.MCPTool{
+				Handler: func(_ tools.Session, _ mcp.CallToolRequest) (*tools.Result, error) {
+					return &tools.Result{
+						JSONContent: map[string]string{"key": "value"},
+					}, nil
+				},
+			},
+			expectedContent: []mcp.Content{
+				mcp.NewTextContent(`{"key":"value"}`),
+			},
+		},
+		{
+			name:            "handler error",
+			sessionAPIToken: "test-token",
+			tool: tools.MCPTool{
+				Handler: func(_ tools.Session, _ mcp.CallToolRequest) (*tools.Result, error) {
+					return &tools.Result{}, fmt.Errorf("handler error")
+				},
+			},
+			expectedContent: mcp.NewToolResultError("handler error").Content,
+		},
+		{
+			name:            "response with Chronosphere link",
+			sessionAPIToken: "test-token",
+			tool: tools.MCPTool{
+				Handler: func(_ tools.Session, _ mcp.CallToolRequest) (*tools.Result, error) {
+					return &tools.Result{
+						ChronosphereLink: "https://chronosphere.io",
+						JSONContent:      map[string]string{"data": "test"},
+					}, nil
+				},
+			},
+			expectedContent: []mcp.Content{
+				mcp.NewTextContent("link: https://chronosphere.io"),
+				mcp.NewTextContent(`{"data":"test"}`),
+			},
+		},
+		{
+			name:            "response with image content",
+			sessionAPIToken: "test-token",
+			tool: tools.MCPTool{
+				Handler: func(_ tools.Session, _ mcp.CallToolRequest) (*tools.Result, error) {
+					return &tools.Result{
+						ImageContent: []byte("test-image-data"),
+					}, nil
+				},
+			},
+			expectedContent: []mcp.Content{
+				mcp.NewImageContent(base64.StdEncoding.EncodeToString([]byte("test-image-data")), "image/png"),
+			},
+		},
+		{
+			name:            "response with metadata",
+			sessionAPIToken: "test-token",
+			tool: tools.MCPTool{
+				Handler: func(_ tools.Session, _ mcp.CallToolRequest) (*tools.Result, error) {
+					return &tools.Result{
+						JSONContent: map[string]string{"key": "value"},
+						Meta:        map[string]any{"meta-key": "meta-value"},
+					}, nil
+				},
+			},
+			expectedContent: []mcp.Content{
+				mcp.NewTextContent(`{"key":"value"}`),
+			},
+			expectedMeta: map[string]any{"meta-key": "meta-value"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			logger := zap.NewNop()
+			lt := &loggingTool{
+				logger: logger,
+				tool:   tt.tool,
+			}
+
+			ctx := authcontext.SetSessionAPIToken(context.Background(), tt.sessionAPIToken)
+			result := lt.mustHandle(ctx, mcp.CallToolRequest{})
+
+			assert.Equal(t, len(tt.expectedContent), len(result.Content), "content length mismatch")
+
+			for i, content := range result.Content {
+				assert.Equal(t, tt.expectedContent[i], content, "content mismatch at index %d", i)
+			}
+
+			assert.Equal(t, tt.expectedMeta, result.Meta, "metadata mismatch")
+		})
+	}
+}

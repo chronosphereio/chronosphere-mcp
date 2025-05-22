@@ -6,13 +6,12 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/chronosphereio/chronoctl-core/src/cmd/pkg/client"
-	"github.com/chronosphereio/chronoctl-core/src/cmd/pkg/transport"
 	"github.com/go-openapi/runtime"
 	openapiclient "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 	"github.com/prometheus/client_golang/api"
 
+	"github.com/chronosphereio/chronoctl-core/src/cmd/pkg/transport"
 	"github.com/chronosphereio/mcp-server/generated/configv1/configv1"
 	"github.com/chronosphereio/mcp-server/generated/dataunstable/dataunstable"
 	"github.com/chronosphereio/mcp-server/generated/stateunstable/stateunstable"
@@ -24,11 +23,15 @@ var (
 )
 
 type Provider struct {
-	flags *client.Flags
+	apiURL   string
+	apiToken string
 }
 
-func NewProvider(flags *client.Flags) (*Provider, error) {
-	return &Provider{flags: flags}, nil
+func NewProvider(apiURL, apiToken string) (*Provider, error) {
+	return &Provider{
+		apiURL:   apiURL,
+		apiToken: apiToken,
+	}, nil
 }
 
 // ConfigV1Client creates a new client to hit configv1 APIs.
@@ -81,8 +84,8 @@ func (c *Provider) prometheusClientForBasePath(session tools.Session, basePath s
 	}
 
 	scheme := "https"
-	if c.flags.APIUrl != "" {
-		parsed, err := url.Parse(c.flags.APIUrl)
+	if c.apiURL != "" {
+		parsed, err := url.Parse(c.apiURL)
 		if err != nil {
 			return nil, fmt.Errorf("could not parse API url given: %v", err)
 		}
@@ -127,12 +130,19 @@ func (c *Provider) prometheusRoundTripper(openapiAuth runtime.ClientAuthInfoWrit
 }
 
 func (c *Provider) transportForSession(session tools.Session, basePath string) (*openapiclient.Runtime, error) {
-	flagsCopy := *c.flags
+	apiToken := c.apiToken
 	if session.APIToken != "" {
-		flagsCopy.APIToken = session.APIToken
-		flagsCopy.APITokenFilename = ""
+		apiToken = session.APIToken
 	}
-	return flagsCopy.Transport(component, basePath)
+	return transport.New(transport.RuntimeConfig{
+		Component:          component,
+		APIToken:           apiToken,
+		APIUrl:             fmt.Sprintf("%s%s", c.apiURL, basePath),
+		InsecureSkipVerify: false,
+		AllowHTTP:          false,
+		DefaultBasePath:    basePath,
+		EntityNamespace:    "",
+	})
 }
 
 type roundTripperFn func(req *http.Request) (*http.Response, error)

@@ -4,11 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"go.uber.org/config"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/client"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/mcpserver"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
 )
@@ -25,11 +23,9 @@ type params struct {
 	fx.In
 	LifeCycle fx.Lifecycle
 
-	Config         *Config
-	ClientProvider *client.Provider
-	ConfigProvider config.Provider
-	Logger         *zap.Logger
-	ToolGroups     []tools.MCPTools `group:"mcp_tools"`
+	Config     *Config
+	Logger     *zap.Logger
+	ToolGroups []tools.MCPTools `group:"mcp_tools"`
 }
 
 type ToolsConfig struct {

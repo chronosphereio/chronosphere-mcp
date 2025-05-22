@@ -5,7 +5,6 @@ import (
 	"os"
 	"path"
 
-	chronoctlclient "github.com/chronosphereio/chronoctl-core/src/cmd/pkg/client"
 	"github.com/spf13/cobra"
 	"go.uber.org/config"
 	"go.uber.org/fx"
@@ -19,10 +18,7 @@ import (
 
 // New returns the root command.
 func New() *cobra.Command {
-	flags := chronoctlclient.NewClientFlags()
-	configFilePath := ""
-	verboseLogging := false
-
+	flags := &Flags{}
 	cmd := &cobra.Command{
 		Use:   "mcp-server",
 		Short: "mcp-server provides an MCP server to AI applications",
@@ -35,13 +31,21 @@ func New() *cobra.Command {
 		Run: func(*cobra.Command, []string) {
 			app := fx.New(
 				fx.Provide(func() (config.Provider, error) {
-					return pkgconfig.ParseFile(configFilePath)
+					return pkgconfig.ParseFile(flags.ConfigFilePath)
 				}),
 				fx.Provide(func() (*client.Provider, error) {
-					return client.NewProvider(flags)
+					apiURL, err := flags.GetAPIURL()
+					if err != nil {
+						return nil, err
+					}
+					apiToken, err := flags.GetAPIToken()
+					if err != nil {
+						return nil, err
+					}
+					return client.NewProvider(apiURL, apiToken)
 				}),
 				fx.Provide(func() (*zap.Logger, error) {
-					return provideLogger(verboseLogging)
+					return provideLogger(flags.VerboseLogging)
 				}),
 				toolsfx.Module,
 				mcpserverfx.Module,
@@ -50,8 +54,6 @@ func New() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&configFilePath, "config-file", "c", "", "The YAML file containing configuration parameters")
-	cmd.Flags().BoolVarP(&verboseLogging, "verbose", "v", false, "Whether verbose logging, including logging requests and responses, should be enabled")
 	flags.AddFlags(cmd)
 	return cmd
 }

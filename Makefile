@@ -34,19 +34,20 @@ swagger-gen: install-tools
 swagger-serve-dataunstable:
 	$(tools_bin_path)/swagger serve mcp-server/pkg/generated/clients/dataunstable.swagger.json
 
-.PHONY: run-client
-run-client:
-	docker-compose down
-	if [ ! -f $(ENV_FILE) ]; then \
-		echo "Env file $(ENV_FILE) not found"; \
-		exit 1; \
-	fi
-	if [ ! -f $(LIBRECHAT_CONFIG) ]; then \
-		echo "Librechat config file $(LIBRECHAT_CONFIG) not found"; \
-		exit 1; \
-	fi
-	@echo  "LibreChat should be on localhost:3080 once container up (check docker-compose ps)"
-	docker-compose up -d
+.PHONY: run-chat
+run-chat:
+	@(cd chat && \
+		docker-compose down && \
+		if [ ! -f $(ENV_FILE) ]; then \
+			echo "Env file $(ENV_FILE) not found"; \
+			exit 1; \
+		fi && \
+		if [ ! -f $(LIBRECHAT_CONFIG) ]; then \
+			echo "Librechat config file $(LIBRECHAT_CONFIG) not found"; \
+			exit 1; \
+		fi && \
+		echo  "LibreChat should be on localhost:3080 once container up (check docker-compose ps)" && \
+		docker-compose up -d)
 
 .PHONY: run-server
 run-server: build-server

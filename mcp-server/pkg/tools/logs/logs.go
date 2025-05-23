@@ -3,6 +3,7 @@ package logs
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/chronosphereio/mcp-server/pkg/links"
 	"github.com/chronosphereio/mcp-server/pkg/ptr"
@@ -11,6 +12,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/chronosphereio/mcp-server/generated/dataunstable/dataunstable/data_unstable"
+	"github.com/chronosphereio/mcp-server/generated/dataunstable/models"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/client"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/pkg/params"
@@ -32,6 +34,123 @@ func NewTools(clientProvider *client.Provider, logger *zap.Logger, linkBuilder *
 		clientProvider: clientProvider,
 		linkBuilder:    linkBuilder,
 	}, nil
+}
+
+// CompactLogSummary represents a compact version of log query results
+type CompactLogSummary struct {
+	Summary         string                                          `json:"summary"`
+	TotalLogs       int                                             `json:"total_logs"`
+	Columns         []string                                        `json:"columns,omitempty"`
+	AvailableFields []string                                        `json:"available_fields,omitempty"`
+	Logs            []string                                        `json:"logs,omitempty"`
+	TimeSeriesData  *models.DataunstableLogQueryTimeSeriesData      `json:"time_series_data,omitempty"`
+	Metadata        *models.GetRangeQueryResponseRangeQueryMetadata `json:"metadata,omitempty"`
+	FieldSuggestion string                                          `json:"field_suggestion,omitempty"`
+}
+
+// createCompactSummary creates a compact summary of log query results
+func (t *Tools) createCompactSummary(session tools.Session, query string, timeRange *params.TimeRange, resp *models.DataunstableGetRangeQueryResponse) *CompactLogSummary {
+	summary := &CompactLogSummary{
+		Metadata: resp.Metadata,
+	}
+
+	// Fetch available field names to help with query refinement
+	if logsAPI, err := t.clientProvider.DataUnstableClient(session); err == nil {
+		fieldParams := &data_unstable.ListLogFieldNamesParams{
+			Context:                 session.Context,
+			LogFilterQuery:          &query,
+			LogFilterHappenedAfter:  (*strfmt.DateTime)(&timeRange.Start),
+			LogFilterHappenedBefore: (*strfmt.DateTime)(&timeRange.End),
+			Limit:                   ptr.To(int64(50)), // Limit to 50 fields to avoid overwhelming
+		}
+		if fieldResp, fieldErr := logsAPI.DataUnstable.ListLogFieldNames(fieldParams); fieldErr == nil && fieldResp.Payload != nil {
+			if fieldResp.Payload.Suggestions != nil {
+				// Extract field names from suggestions
+				fieldNames := make([]string, len(fieldResp.Payload.Suggestions))
+				for i, suggestion := range fieldResp.Payload.Suggestions {
+					if suggestion != nil {
+						fieldNames[i] = suggestion.Value
+					}
+				}
+				summary.AvailableFields = fieldNames
+				// Create a helpful suggestion for using the project keyword
+				if len(summary.AvailableFields) > 4 {
+					summary.FieldSuggestion = fmt.Sprintf("To get more details, try adding '| project logID,_timestamp,severity,message,%s' to your query to include additional fields. You can inspect full individual logs using the logID and the get_log tool.", strings.Join(summary.AvailableFields[:4], ","))
+				}
+			}
+		}
+	}
+
+	if resp.GridData != nil {
+		// Extract column names
+		columnNames := make([]string, len(resp.GridData.Columns))
+		for i, col := range resp.GridData.Columns {
+			if col != nil {
+				columnNames[i] = col.Name
+			}
+		}
+		summary.Columns = columnNames
+		summary.TotalLogs = len(resp.GridData.Rows)
+
+		// Create pipe-separated logs (all rows)
+		var logLines []string
+		// Add header row
+		logLines = append(logLines, strings.Join(columnNames, "|"))
+
+		// Add all data rows
+		for _, row := range resp.GridData.Rows {
+			if row != nil {
+				values := make([]string, len(columnNames))
+				for j, val := range row.Values {
+					if j < len(columnNames) && val != nil {
+						// Extract the actual value based on type and escape pipes
+						var strVal string
+						if val.StringValue != "" {
+							strVal = val.StringValue
+						} else if val.FloatValue != 0 {
+							strVal = fmt.Sprintf("%g", val.FloatValue)
+						} else {
+							strVal = fmt.Sprintf("%t", val.BoolValue)
+						}
+						// Replace pipe characters with Unicode pipe-like character to avoid conflicts
+						values[j] = strings.ReplaceAll(strVal, "|", "￨")
+					}
+				}
+				logLines = append(logLines, strings.Join(values, "|"))
+			}
+		}
+		summary.Logs = logLines
+
+		// Create summary text
+		var summaryParts []string
+		summaryParts = append(summaryParts, fmt.Sprintf("Found %d log entries", summary.TotalLogs))
+		if len(columnNames) > 0 {
+			summaryParts = append(summaryParts, fmt.Sprintf("Columns: %s", strings.Join(columnNames, ", ")))
+		}
+		if summary.TotalLogs > 0 {
+			summaryParts = append(summaryParts, "All entries shown below in pipe-separated format")
+		}
+		if len(summary.AvailableFields) > len(columnNames) {
+			summaryParts = append(summaryParts, fmt.Sprintf("%d additional fields available", len(summary.AvailableFields)-len(columnNames)))
+		}
+		summary.Summary = strings.Join(summaryParts, ". ")
+	} else if resp.TimeSeriesData != nil {
+		// Include full time series data since it's typically not verbose
+		summary.TimeSeriesData = resp.TimeSeriesData
+		summary.TotalLogs = 0
+		if resp.TimeSeriesData.Series != nil {
+			for _, series := range resp.TimeSeriesData.Series {
+				if series.Buckets != nil {
+					summary.TotalLogs += len(series.Buckets)
+				}
+			}
+		}
+		summary.Summary = fmt.Sprintf("Time series data with %d data points across %d series", summary.TotalLogs, len(resp.TimeSeriesData.Series))
+	} else {
+		summary.Summary = "No log data returned"
+	}
+
+	return summary
 }
 
 func (t *Tools) MCPTools() []tools.MCPTool {
@@ -143,8 +262,10 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					return nil, fmt.Errorf("failed to get range query: %s", err)
 				}
 
+				jsonContent := t.createCompactSummary(session, query, timeRange, resp.Payload)
+
 				return &tools.Result{
-					JSONContent: resp,
+					JSONContent: jsonContent,
 					ChronosphereLink: t.linkBuilder.LogExplorer().
 						WithQuery(query).
 						WithTimeRange(timeRange.Start, timeRange.End).

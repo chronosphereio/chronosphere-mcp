@@ -4,12 +4,12 @@ package monitors
 import (
 	"fmt"
 
+	"github.com/chronosphereio/mcp-server/pkg/ptr"
 	"github.com/mark3labs/mcp-go/mcp"
 	"go.uber.org/zap"
 
 	"github.com/chronosphereio/mcp-server/generated/stateunstable/stateunstable/state_unstable"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/client"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/ptr"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/pkg/params"
 )

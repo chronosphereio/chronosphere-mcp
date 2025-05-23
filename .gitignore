@@ -1,4 +1,4 @@
-.env
+chat/.env
 output/
 agent.yaml
 .chronosphere_api_token
@@ -23,6 +23,7 @@ test.log
 *.pyc
 .terraform*
 .locks/
+*.db
 gotestsum.json
 
 # vendored
@@ -45,3 +46,5 @@ vendor/
 # Debug binaries
 /debug
 /debug.test
+
+.claude

@@ -4,7 +4,7 @@ on:
   push:
     branches: [ "main" ]
   pull_request:
-    branches: [ "*" ]
+    # No branch targets so this runs on all PRs including stacked ones.
 
 jobs:
   build:

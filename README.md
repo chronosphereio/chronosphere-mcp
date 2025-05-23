@@ -3,6 +3,32 @@ MCP server for Chronosphere. Serves tools for fetching logs, metrics, traces, ev
 
 This project is a work in progress. Many features are not yet implemented and features may be added, changed or removed without warning.
 
+## MCP config with popular hosts (claude desktop, cursor)
+
+First build the binary
+```sh
+make chronomcp
+```
+
+```json
+{
+  "mcpServers": {
+    "chronosphere-mcp": {
+      "command": "<PATH/TO/REPO>/bin/chronomcp",
+      "args": [
+        "-c",
+        "/Users/c/code/mcp-server/config.yaml"
+      ],
+      "env": {
+        "CHRONOSPHERE_ORG_NAME": "<your org here>",
+        "CHRONOSPHERE_API_TOKEN": "<your api token here>"
+      }
+    }
+  }
+}
+```
+
+
 ## Developing
 ### Running the server
 #### Authentication to Chronosphere
@@ -10,8 +36,9 @@ This project is a work in progress. Many features are not yet implemented and fe
 This MCP server uses the same authentication methods as chronoctl. By default, the Makefile expects the API token to be stored in `.chronosphere_api_token`.
 
 #### Run the mcp server
+Create a `.chronosphere_api_token` file in the root of the repo with your Chronosphere API token.
 ```sh
-make run-server ORG_NAME=<your org here>
+make run-chronomcp CHRONOSPHERE_ORG_NAME=<your org here>
 ```
 
 ### Debugging MCP Tools
@@ -23,7 +50,7 @@ The MCP project provides an inspector useful for directly calling tools APIs. To
 1. Open http://127.0.0.1:6274/#resources , fill in `http://0.0.0.0:8080/sse` in the URL, with transport type SSE.
 
 ## Librechat agent (experimental)
-See [chat/README.md]
+See [chat/README.md](chat/README.md)
 
 ## Agent (experimental)
-See [agent/README.md]
+See [agent/README.md](chat/README.md)

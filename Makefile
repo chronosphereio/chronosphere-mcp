@@ -1,5 +1,5 @@
 tools_bin_path            := $(abspath ./_tools/bin)
-server_bin_path           := $(abspath ./bin/server)
+server_bin_path           := $(abspath ./bin/chronomcp)
 agent_bin_path           := $(abspath ./bin/agent)
 
 CONFIG_FILE ?= config.yaml
@@ -49,17 +49,22 @@ run-chat:
 		echo  "LibreChat should be on localhost:3080 once container up (check docker-compose ps)" && \
 		docker-compose up -d)
 
-.PHONY: run-server
-run-server: build-server
+.PHONY: run-server build-server chronomcp run-chronomcp
+chronomcp:
+	go build -o $(server_bin_path) ./mcp-server
+
+run-chronomcp: chronomcp
 	if [ ! -f $(CONFIG_FILE) ]; then \
 		echo "Config file $(CONFIG_FILE) not found"; \
 		exit 1; \
 	fi
 	@echo "Starting MCP server..."
-	$(server_bin_path) -c $(CONFIG_FILE) --org-name $(ORG_NAME) --api-token-filename .chronosphere_api_token --verbose
+	$(server_bin_path) -c $(CONFIG_FILE) --org-name $(CHRONOSPHERE_ORG_NAME) --api-token-filename .chronosphere_api_token --verbose
 
-build-server:
-	go build -o $(server_bin_path) ./mcp-server
+build-server: chronomcp # alias for backwards compatibility
+
+run-server: run-chronomcp # alias for backwards compatibility
+
 
 .PHONY: run-agent
 run-agent: build-agent

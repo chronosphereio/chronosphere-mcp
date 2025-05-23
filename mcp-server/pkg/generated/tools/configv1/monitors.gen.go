@@ -65,11 +65,11 @@ func ListMonitors(clientProvider *client.Provider, logger *zap.Logger) tools.MCP
 				mcp.Description("Filters results by name, where any Monitor with a matching name in the given list (and matches all other filters) is returned."),
 			),
 
-			mcp.WithNumber("page.max_size",
+			mcp.WithNumber("page_max_size",
 				mcp.Description("Page size preference (i.e. how many items are returned in the next page). If zero, the server will use a default. Regardless of what size is given, clients must never assume how many items will be returned."),
 			),
 
-			mcp.WithString("page.token",
+			mcp.WithString("page_token",
 				mcp.Description("Opaque page token identifying which page to request. An empty token identifies the first page."),
 			),
 
@@ -97,12 +97,12 @@ func ListMonitors(clientProvider *client.Provider, logger *zap.Logger) tools.MCP
 				return nil, err
 			}
 
-			pageMaxSize, err := params.Int(request, "page.max_size", false, 0)
+			pageMaxSize, err := params.Int(request, "page_max_size", false, 0)
 			if err != nil {
 				return nil, err
 			}
 
-			pageToken, err := params.String(request, "page.token", false, "")
+			pageToken, err := params.String(request, "page_token", false, "")
 			if err != nil {
 				return nil, err
 			}

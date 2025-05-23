@@ -117,7 +117,7 @@ func convertToolSpec(entityName string, action string, command *clispec.Command)
 	}
 	for _, param := range command.Parameters {
 		spec.Parameters = append(spec.Parameters, ParameterSpec{
-			Name:               param.Name,
+			Name:               inflect.Underscore(strings.Replace(param.Name, ".", "_", -1)),
 			GoName:             uncapitalize(camelCase(param.Name)),
 			SwaggerGoFieldName: acronymReplace(camelCase(param.Name)),
 			Description:        param.Description,

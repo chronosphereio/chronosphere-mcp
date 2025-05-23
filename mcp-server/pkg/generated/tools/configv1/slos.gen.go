@@ -8,9 +8,9 @@ import (
 
 	"github.com/chronosphereio/mcp-server/generated/configv1/configv1/s_l_o"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/client"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/ptr"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/pkg/params"
+	"github.com/chronosphereio/mcp-server/pkg/ptr"
 )
 
 func GetSlo(clientProvider *client.Provider, logger *zap.Logger) tools.MCPTool {

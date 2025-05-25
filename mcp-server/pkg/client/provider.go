@@ -6,12 +6,10 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/go-openapi/runtime"
 	openapiclient "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 	"github.com/prometheus/client_golang/api"
 
-	"github.com/chronosphereio/chronoctl-core/src/cmd/pkg/transport"
 	"github.com/chronosphereio/mcp-server/generated/configv1/configv1"
 	"github.com/chronosphereio/mcp-server/generated/dataunstable/dataunstable"
 	"github.com/chronosphereio/mcp-server/generated/stateunstable/stateunstable"
@@ -19,7 +17,7 @@ import (
 )
 
 var (
-	component = transport.Component("mcp-server")
+	_component = Component("chrono-mcp")
 )
 
 type Provider struct {
@@ -92,10 +90,7 @@ func (c *Provider) prometheusClientForBasePath(session tools.Session, basePath s
 		scheme = parsed.Scheme
 	}
 
-	rt, err := c.prometheusRoundTripper(t.DefaultAuthentication, t.Transport)
-	if err != nil {
-		return nil, fmt.Errorf("could not construct Chronosphere Prometheus RoundTripper: %v", err)
-	}
+	rt := newRoundTripper(http.DefaultTransport, _component, c.apiToken)
 
 	cl, err := api.NewClient(api.Config{
 		Address:      fmt.Sprintf("%s://%s/%s", scheme, t.Host, t.BasePath),
@@ -107,48 +102,11 @@ func (c *Provider) prometheusClientForBasePath(session tools.Session, basePath s
 	return cl, nil
 }
 
-// prometheusRoundTripper populates the Chronosphere API token as a Bearer token, suitable for use with Prometheus APIs.
-// The OpenAPI route typically populates the API token header in "Api-Token", which is different from Prometheus.
-func (c *Provider) prometheusRoundTripper(openapiAuth runtime.ClientAuthInfoWriter, base http.RoundTripper) (http.RoundTripper, error) {
-	testReq := &runtime.TestClientRequest{}
-	if err := openapiAuth.AuthenticateRequest(testReq, strfmt.Default); err != nil {
-		return nil, err
-	}
-
-	apiToken := ""
-	if testReq.GetHeaderParams() != nil {
-		if apiTokens := testReq.GetHeaderParams()["Api-Token"]; len(apiTokens) > 0 {
-			apiToken = apiTokens[0]
-		}
-	}
-	return roundTripperFn(func(req *http.Request) (*http.Response, error) {
-		if apiToken != "" {
-			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", apiToken))
-		}
-		return base.RoundTrip(req)
-	}), nil
-}
-
-func (c *Provider) transportForSession(session tools.Session, basePath string) (*openapiclient.Runtime, error) {
-	apiToken := c.apiToken
-	if session.APIToken != "" {
-		apiToken = session.APIToken
-	}
-	return transport.New(transport.RuntimeConfig{
-		Component:          component,
-		APIToken:           apiToken,
-		APIUrl:             fmt.Sprintf("%s%s", c.apiURL, basePath),
-		InsecureSkipVerify: false,
-		AllowHTTP:          false,
-		DefaultBasePath:    basePath,
-		EntityNamespace:    "",
+func (c *Provider) transportForSession(_ tools.Session, basePath string) (*openapiclient.Runtime, error) {
+	return newSwaggerRuntime(swaggerRuntimeConfig{
+		component: _component,
+		apiURL:    fmt.Sprintf("%s%s", c.apiURL, basePath),
+		allowHTTP: false,
+		authToken: c.apiToken,
 	})
-}
-
-type roundTripperFn func(req *http.Request) (*http.Response, error)
-
-var _ http.RoundTripper = roundTripperFn(nil)
-
-func (fn roundTripperFn) RoundTrip(req *http.Request) (*http.Response, error) {
-	return fn(req)
 }

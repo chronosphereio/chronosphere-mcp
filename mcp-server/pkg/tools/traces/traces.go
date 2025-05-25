@@ -75,6 +75,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				}
 
 				queryParams := &data_unstable.ListTracesParams{
+					Context:   session.Context,
 					StartTime: (*strfmt.DateTime)(ptr.To(timeRange.Start)),
 					EndTime:   (*strfmt.DateTime)(ptr.To(timeRange.End)),
 				}

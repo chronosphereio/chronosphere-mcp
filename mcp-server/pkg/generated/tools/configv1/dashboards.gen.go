@@ -31,6 +31,8 @@ func GetDashboard(clientProvider *client.Provider, logger *zap.Logger) tools.MCP
 
 			queryParams := &dashboard.ReadDashboardParams{
 				Slug: slug,
+
+				Context: session.Context,
 			}
 
 			api, err := clientProvider.ConfigV1Client(session)
@@ -120,6 +122,8 @@ func ListDashboards(clientProvider *client.Provider, logger *zap.Logger) tools.M
 				PageToken: &pageToken,
 
 				Slugs: slugs,
+
+				Context: session.Context,
 			}
 
 			api, err := clientProvider.ConfigV1Client(session)

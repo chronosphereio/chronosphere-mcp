@@ -85,7 +85,8 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					return nil, err
 				}
 				resp, err := api.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
-					Field: ptr.To(string(models.DataunstableEventFieldCATEGORYEVENTFIELD)),
+					Context: session.Context,
+					Field:   ptr.To(string(models.DataunstableEventFieldCATEGORYEVENTFIELD)),
 				})
 
 				eventsMetadata := struct {
@@ -102,7 +103,8 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				eventsMetadata.Categories = resp.Payload.Values
 
 				resp, err = api.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
-					Field: ptr.To(string(models.DataunstableEventFieldSOURCEEVENTFIELD)),
+					Context: session.Context,
+					Field:   ptr.To(string(models.DataunstableEventFieldSOURCEEVENTFIELD)),
 				})
 				if err != nil {
 					return nil, fmt.Errorf("failed to get sources for events: %s", err)
@@ -111,7 +113,8 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				eventsMetadata.Sources = resp.Payload.Values
 
 				resp, err = api.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
-					Field: ptr.To(string(models.DataunstableEventFieldTYPEEVENTFIELD)),
+					Context: session.Context,
+					Field:   ptr.To(string(models.DataunstableEventFieldTYPEEVENTFIELD)),
 				})
 				if err != nil {
 					return nil, fmt.Errorf("failed to get types for events: %s", err)
@@ -120,7 +123,8 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				eventsMetadata.Types = resp.Payload.Values
 
 				resp, err = api.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
-					Field: ptr.To(string(models.DataunstableEventFieldLABELNAMEEVENTFIELD)),
+					Context: session.Context,
+					Field:   ptr.To(string(models.DataunstableEventFieldLABELNAMEEVENTFIELD)),
 				})
 				if err != nil {
 					return nil, fmt.Errorf("failed to get label names for events: %s", err)
@@ -129,7 +133,8 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				eventsMetadata.LabelNames = resp.Payload.Values
 
 				resp, err = api.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
-					Field: ptr.To(string(models.DataunstableEventFieldLABELNAMEEVENTFIELD)),
+					Context: session.Context,
+					Field:   ptr.To(string(models.DataunstableEventFieldLABELNAMEEVENTFIELD)),
 				})
 				if err != nil {
 					return nil, fmt.Errorf("failed to get label names for events: %s", err)
@@ -138,7 +143,8 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				eventsMetadata.LabelNames = resp.Payload.Values
 
 				resp, err = api.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
-					Field: ptr.To(string(models.DataunstableEventFieldLENSSERVICEEVENTFIELD)),
+					Context: session.Context,
+					Field:   ptr.To(string(models.DataunstableEventFieldLENSSERVICEEVENTFIELD)),
 				})
 				if err != nil {
 					return nil, fmt.Errorf("failed to get label names for events: %s", err)
@@ -168,6 +174,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					return nil, err
 				}
 				resp, err := api.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
+					Context:   session.Context,
 					LabelName: ptr.To(labelName),
 					Field:     ptr.To(string(models.DataunstableEventFieldLABELNAMEEVENTFIELD)),
 				})

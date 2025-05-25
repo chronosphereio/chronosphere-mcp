@@ -31,6 +31,8 @@ func GetMonitor(clientProvider *client.Provider, logger *zap.Logger) tools.MCPTo
 
 			queryParams := &monitor.ReadMonitorParams{
 				Slug: slug,
+
+				Context: session.Context,
 			}
 
 			api, err := clientProvider.ConfigV1Client(session)
@@ -131,6 +133,8 @@ func ListMonitors(clientProvider *client.Provider, logger *zap.Logger) tools.MCP
 				Slugs: slugs,
 
 				TeamSlugs: teamSlugs,
+
+				Context: session.Context,
 			}
 
 			api, err := clientProvider.ConfigV1Client(session)

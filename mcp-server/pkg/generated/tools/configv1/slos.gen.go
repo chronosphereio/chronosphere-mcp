@@ -31,6 +31,8 @@ func GetSlo(clientProvider *client.Provider, logger *zap.Logger) tools.MCPTool {
 
 			queryParams := &s_l_o.ReadSLOParams{
 				Slug: slug,
+
+				Context: session.Context,
 			}
 
 			api, err := clientProvider.ConfigV1Client(session)
@@ -120,6 +122,8 @@ func ListSlos(clientProvider *client.Provider, logger *zap.Logger) tools.MCPTool
 				ServiceSlugs: serviceSlugs,
 
 				Slugs: slugs,
+
+				Context: session.Context,
 			}
 
 			api, err := clientProvider.ConfigV1Client(session)

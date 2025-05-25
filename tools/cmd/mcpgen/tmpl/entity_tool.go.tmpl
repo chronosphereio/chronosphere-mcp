@@ -49,6 +49,7 @@ func {{ $toolSpec.CamelName }}(clientProvider *client.Provider, logger *zap.Logg
                     {{$param.SwaggerGoFieldName}}: {{$param.GoName -}},
                 {{end -}}
             {{ end }}
+                Context: session.Context,
             }
 
 			api, err := clientProvider.ConfigV1Client(session)

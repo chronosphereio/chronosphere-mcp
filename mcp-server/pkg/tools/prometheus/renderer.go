@@ -1,6 +1,7 @@
 package prometheus
 
 import (
+	"context"
 	"errors"
 	"io"
 	"sort"
@@ -8,7 +9,6 @@ import (
 	"time"
 
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/client"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"gonum.org/v1/plot"
@@ -20,8 +20,8 @@ import (
 )
 
 type Renderer struct {
-	DataAPI func(session tools.Session) (v1.API, error)
-	PromAPI func(session tools.Session) (v1.API, error)
+	DataAPI func() (v1.API, error)
+	PromAPI func() (v1.API, error)
 }
 
 // RendererOptions contains options for the Renderer.
@@ -33,15 +33,15 @@ func NewRenderer(
 	opts RendererOptions,
 ) (*Renderer, error) {
 	return &Renderer{
-		DataAPI: func(session tools.Session) (v1.API, error) {
-			c, err := opts.ClientProvider.PrometheusDataClient(session)
+		DataAPI: func() (v1.API, error) {
+			c, err := opts.ClientProvider.PrometheusDataClient()
 			if err != nil {
 				return nil, err
 			}
 			return v1.NewAPI(c), nil
 		},
-		PromAPI: func(session tools.Session) (v1.API, error) {
-			c, err := opts.ClientProvider.PrometheusPromClient(session)
+		PromAPI: func() (v1.API, error) {
+			c, err := opts.ClientProvider.PrometheusPromClient()
 			if err != nil {
 				return nil, err
 			}
@@ -72,10 +72,10 @@ func (r *Renderer) RenderSeries(w io.Writer, series model.Matrix, ws, hs int, le
 }
 
 // Render renders a time series graph for the given query and time range.
-func (r *Renderer) Render(session tools.Session, w io.Writer, query string, start, end time.Time, ws, hs int, legend bool) error {
+func (r *Renderer) Render(ctx context.Context, w io.Writer, query string, start, end time.Time, ws, hs int, legend bool) error {
 	plot := plot.New()
 	plot.Legend.Top = true
-	timeseries, err := r.queryRange(session, query, start, end, legend)
+	timeseries, err := r.queryRange(ctx, query, start, end, legend)
 	if err != nil {
 		return err
 	}
@@ -95,12 +95,12 @@ func (r *Renderer) Render(session tools.Session, w io.Writer, query string, star
 }
 
 // returns name, plotter.XYer, name1, plotter.XYer ...
-func (r *Renderer) queryRange(session tools.Session, query string, start, end time.Time, legend bool) ([]interface{}, error) {
-	api, err := r.DataAPI(session)
+func (r *Renderer) queryRange(ctx context.Context, query string, start, end time.Time, legend bool) ([]interface{}, error) {
+	api, err := r.DataAPI()
 	if err != nil {
 		return nil, err
 	}
-	resp, _, err := api.QueryRange(session.Context, query, v1.Range{
+	resp, _, err := api.QueryRange(ctx, query, v1.Range{
 		Start: start,
 		End:   end,
 		Step:  60 * time.Second,

@@ -1,6 +1,7 @@
 package {{ .PkgName }}
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -29,7 +30,7 @@ func {{ $toolSpec.CamelName }}(clientProvider *client.Provider, logger *zap.Logg
                 ),
             {{ end }}
         ),
-        Handler: func(session tools.Session, request mcp.CallToolRequest) (*tools.Result, error) {
+        Handler: func(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
         {{ range $idx, $param := $toolSpec.Parameters }}
             {{ $param.GoName }}, err := params.{{$param.ParseType}}(request, {{ printf "%q" $param.Name }}, {{ if $param.Required }}true{{ else }}false{{ end }}, {{ $param.DefaultValue }})
             if err != nil {
@@ -38,6 +39,7 @@ func {{ $toolSpec.CamelName }}(clientProvider *client.Provider, logger *zap.Logg
         {{ end }}
 
             queryParams := &{{$entity.PkgName}}.{{$toolSpec.APIParam}}Params{
+                Context: ctx,
             {{ range $idx, $param := $toolSpec.Parameters }}
                 {{ if eq $param.GoName "pageToken" -}}
                     {{$param.SwaggerGoFieldName}}: &{{$param.GoName}},
@@ -49,10 +51,9 @@ func {{ $toolSpec.CamelName }}(clientProvider *client.Provider, logger *zap.Logg
                     {{$param.SwaggerGoFieldName}}: {{$param.GoName -}},
                 {{end -}}
             {{ end }}
-                Context: session.Context,
             }
 
-			api, err := clientProvider.ConfigV1Client(session)
+			api, err := clientProvider.ConfigV1Client()
 			if err != nil {
 				return nil, err
 			}

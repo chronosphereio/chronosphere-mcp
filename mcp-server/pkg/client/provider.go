@@ -13,7 +13,6 @@ import (
 	"github.com/chronosphereio/mcp-server/generated/configv1/configv1"
 	"github.com/chronosphereio/mcp-server/generated/dataunstable/dataunstable"
 	"github.com/chronosphereio/mcp-server/generated/stateunstable/stateunstable"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
 )
 
 var (
@@ -33,8 +32,8 @@ func NewProvider(apiURL, apiToken string) (*Provider, error) {
 }
 
 // ConfigV1Client creates a new client to hit configv1 APIs.
-func (c *Provider) ConfigV1Client(session tools.Session) (*configv1.ConfigV1API, error) {
-	t, err := c.transportForSession(session, "")
+func (c *Provider) ConfigV1Client() (*configv1.ConfigV1API, error) {
+	t, err := c.transportForSession("")
 	if err != nil {
 		return nil, fmt.Errorf("could not construct Chronosphere config v1 API client: %v", err)
 	}
@@ -42,18 +41,18 @@ func (c *Provider) ConfigV1Client(session tools.Session) (*configv1.ConfigV1API,
 }
 
 // PrometheusDataClient creates a new client to hit Prometheus APIs.
-func (c *Provider) PrometheusDataClient(session tools.Session) (api.Client, error) {
-	return c.prometheusClientForBasePath(session, "/data/metrics")
+func (c *Provider) PrometheusDataClient() (api.Client, error) {
+	return c.prometheusClientForBasePath("/data/metrics")
 }
 
 // PrometheusPromClient creates a new client to hit Prometheus APIs.
-func (c *Provider) PrometheusPromClient(session tools.Session) (api.Client, error) {
-	return c.prometheusClientForBasePath(session, "/app/prom")
+func (c *Provider) PrometheusPromClient() (api.Client, error) {
+	return c.prometheusClientForBasePath("/app/prom")
 }
 
 // DataUnstableClient creates a new client to hit data unstable APIs.
-func (c *Provider) DataUnstableClient(session tools.Session) (*dataunstable.DataUnstableAPI, error) {
-	t, err := c.transportForSession(session, "/")
+func (c *Provider) DataUnstableClient() (*dataunstable.DataUnstableAPI, error) {
+	t, err := c.transportForSession("/")
 	if err != nil {
 		return nil, fmt.Errorf("could not construct Chronosphere data unstable API client: %v", err)
 	}
@@ -61,8 +60,8 @@ func (c *Provider) DataUnstableClient(session tools.Session) (*dataunstable.Data
 }
 
 // StateUnstableClient creates a new client to hit state unstable APIs.
-func (c *Provider) StateUnstableClient(session tools.Session) (*stateunstable.StateUnstableAPI, error) {
-	t, err := c.transportForSession(session, "/")
+func (c *Provider) StateUnstableClient() (*stateunstable.StateUnstableAPI, error) {
+	t, err := c.transportForSession("/")
 	if err != nil {
 		return nil, fmt.Errorf("could not construct Chronosphere state unstable API client: %v", err)
 	}
@@ -71,12 +70,12 @@ func (c *Provider) StateUnstableClient(session tools.Session) (*stateunstable.St
 
 // TransportForSession creates a transport for the given session.
 // This is exposed for use by tools that need to create clients that aren't provided directly.
-func (c *Provider) TransportForSession(session tools.Session, basePath string) (*openapiclient.Runtime, error) {
-	return c.transportForSession(session, basePath)
+func (c *Provider) TransportForSession(basePath string) (*openapiclient.Runtime, error) {
+	return c.transportForSession(basePath)
 }
 
-func (c *Provider) prometheusClientForBasePath(session tools.Session, basePath string) (api.Client, error) {
-	t, err := c.transportForSession(session, basePath)
+func (c *Provider) prometheusClientForBasePath(basePath string) (api.Client, error) {
+	t, err := c.transportForSession(basePath)
 	if err != nil {
 		return nil, fmt.Errorf("could not construct Chronosphere Prometheus API transport: %v", err)
 	}
@@ -102,7 +101,7 @@ func (c *Provider) prometheusClientForBasePath(session tools.Session, basePath s
 	return cl, nil
 }
 
-func (c *Provider) transportForSession(_ tools.Session, basePath string) (*openapiclient.Runtime, error) {
+func (c *Provider) transportForSession(basePath string) (*openapiclient.Runtime, error) {
 	return newSwaggerRuntime(swaggerRuntimeConfig{
 		component: _component,
 		apiURL:    fmt.Sprintf("%s%s", c.apiURL, basePath),

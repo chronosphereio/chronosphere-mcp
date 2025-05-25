@@ -122,13 +122,7 @@ func (t *loggingTool) handle(ctx context.Context, request mcp.CallToolRequest) (
 }
 
 func (t *loggingTool) mustHandle(ctx context.Context, request mcp.CallToolRequest) *mcp.CallToolResult {
-	sessionAPIToken := authcontext.FetchSessionAPIToken(ctx)
-
-	session := tools.Session{
-		APIToken: sessionAPIToken,
-		Context:  ctx,
-	}
-	resp, err := t.tool.Handler(session, request)
+	resp, err := t.tool.Handler(ctx, request)
 	if err != nil {
 		t.logger.Info("received error from handler",
 			zap.String("method", request.Method),

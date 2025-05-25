@@ -2,6 +2,7 @@
 package monitors
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/chronosphereio/mcp-server/pkg/ptr"
@@ -62,7 +63,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					mcp.Enum("SORT_BY_STATE"),
 				),
 			),
-			Handler: func(session tools.Session, request mcp.CallToolRequest) (*tools.Result, error) {
+			Handler: func(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
 				// Parse parameters
 				monitorSlugs, err := params.StringArray(request, "monitor_slugs", false, nil)
 				if err != nil {
@@ -96,7 +97,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 
 				// Construct query parameters
 				queryParams := state_unstable.NewListMonitorStatusesParams().
-					WithContext(session.Context)
+					WithContext(ctx)
 
 				if len(monitorSlugs) > 0 {
 					queryParams.SetMonitorSlugs(monitorSlugs)
@@ -128,7 +129,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				t.logger.Info("list monitor statuses", zap.Any("params", queryParams))
 
 				// Get client and make API call
-				stateAPI, err := t.clientProvider.StateUnstableClient(session)
+				stateAPI, err := t.clientProvider.StateUnstableClient()
 				if err != nil {
 					return nil, err
 				}

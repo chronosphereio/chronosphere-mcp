@@ -2,6 +2,7 @@
 package events
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/chronosphereio/mcp-server/pkg/ptr"
@@ -44,7 +45,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					mcp.Description("The query to filter events e.g. categories, types, sources and arbitrary labels.")),
 				params.WithTimeRange(),
 			),
-			Handler: func(session tools.Session, request mcp.CallToolRequest) (*tools.Result, error) {
+			Handler: func(_ context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
 				timeRange, err := params.ParseTimeRange(request)
 				if err != nil {
 					return nil, err
@@ -62,7 +63,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					queryParams.Query = ptr.To(query)
 				}
 
-				api, err := t.clientProvider.DataUnstableClient(session)
+				api, err := t.clientProvider.DataUnstableClient()
 				if err != nil {
 					return nil, err
 				}
@@ -79,13 +80,13 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 			Metadata: tools.NewMetadata("get_events_metadata",
 				mcp.WithDescription("List properties you can query on events"),
 			),
-			Handler: func(session tools.Session, _ mcp.CallToolRequest) (*tools.Result, error) {
-				api, err := t.clientProvider.DataUnstableClient(session)
+			Handler: func(ctx context.Context, _ mcp.CallToolRequest) (*tools.Result, error) {
+				api, err := t.clientProvider.DataUnstableClient()
 				if err != nil {
 					return nil, err
 				}
 				resp, err := api.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
-					Context: session.Context,
+					Context: ctx,
 					Field:   ptr.To(string(models.DataunstableEventFieldCATEGORYEVENTFIELD)),
 				})
 
@@ -103,7 +104,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				eventsMetadata.Categories = resp.Payload.Values
 
 				resp, err = api.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
-					Context: session.Context,
+					Context: ctx,
 					Field:   ptr.To(string(models.DataunstableEventFieldSOURCEEVENTFIELD)),
 				})
 				if err != nil {
@@ -113,7 +114,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				eventsMetadata.Sources = resp.Payload.Values
 
 				resp, err = api.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
-					Context: session.Context,
+					Context: ctx,
 					Field:   ptr.To(string(models.DataunstableEventFieldTYPEEVENTFIELD)),
 				})
 				if err != nil {
@@ -123,7 +124,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				eventsMetadata.Types = resp.Payload.Values
 
 				resp, err = api.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
-					Context: session.Context,
+					Context: ctx,
 					Field:   ptr.To(string(models.DataunstableEventFieldLABELNAMEEVENTFIELD)),
 				})
 				if err != nil {
@@ -133,7 +134,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				eventsMetadata.LabelNames = resp.Payload.Values
 
 				resp, err = api.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
-					Context: session.Context,
+					Context: ctx,
 					Field:   ptr.To(string(models.DataunstableEventFieldLABELNAMEEVENTFIELD)),
 				})
 				if err != nil {
@@ -143,7 +144,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				eventsMetadata.LabelNames = resp.Payload.Values
 
 				resp, err = api.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
-					Context: session.Context,
+					Context: ctx,
 					Field:   ptr.To(string(models.DataunstableEventFieldLENSSERVICEEVENTFIELD)),
 				})
 				if err != nil {
@@ -163,18 +164,18 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					mcp.Required(),
 				),
 			),
-			Handler: func(session tools.Session, request mcp.CallToolRequest) (*tools.Result, error) {
+			Handler: func(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
 				labelName, err := params.String(request, "label_name", true, "")
 				if err != nil {
 					return nil, err
 				}
 
-				api, err := t.clientProvider.DataUnstableClient(session)
+				api, err := t.clientProvider.DataUnstableClient()
 				if err != nil {
 					return nil, err
 				}
 				resp, err := api.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
-					Context:   session.Context,
+					Context:   ctx,
 					LabelName: ptr.To(labelName),
 					Field:     ptr.To(string(models.DataunstableEventFieldLABELNAMEEVENTFIELD)),
 				})

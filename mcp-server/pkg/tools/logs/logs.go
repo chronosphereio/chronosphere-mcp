@@ -2,6 +2,7 @@
 package logs
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -49,15 +50,15 @@ type CompactLogSummary struct {
 }
 
 // createCompactSummary creates a compact summary of log query results
-func (t *Tools) createCompactSummary(session tools.Session, query string, timeRange *params.TimeRange, resp *models.DataunstableGetRangeQueryResponse) *CompactLogSummary {
+func (t *Tools) createCompactSummary(ctx context.Context, query string, timeRange *params.TimeRange, resp *models.DataunstableGetRangeQueryResponse) *CompactLogSummary {
 	summary := &CompactLogSummary{
 		Metadata: resp.Metadata,
 	}
 
 	// Fetch available field names to help with query refinement
-	if logsAPI, err := t.clientProvider.DataUnstableClient(session); err == nil {
+	if logsAPI, err := t.clientProvider.DataUnstableClient(); err == nil {
 		fieldParams := &data_unstable.ListLogFieldNamesParams{
-			Context:                 session.Context,
+			Context:                 ctx,
 			LogFilterQuery:          &query,
 			LogFilterHappenedAfter:  (*strfmt.DateTime)(&timeRange.Start),
 			LogFilterHappenedBefore: (*strfmt.DateTime)(&timeRange.End),
@@ -167,7 +168,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					mcp.Description("Page token to fetch the next page of logs"),
 				),
 			),
-			Handler: func(session tools.Session, request mcp.CallToolRequest) (*tools.Result, error) {
+			Handler: func(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
 				query, err := params.String(request, "query", true, "")
 				if err != nil {
 					return nil, err
@@ -188,13 +189,13 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					return nil, err
 				}
 
-				logsAPI, err := t.clientProvider.DataUnstableClient(session)
+				logsAPI, err := t.clientProvider.DataUnstableClient()
 				if err != nil {
 					return nil, err
 				}
 
 				queryParams := &data_unstable.ListLogsParams{
-					Context:                 session.Context,
+					Context:                 ctx,
 					LogFilterQuery:          &query,
 					LogFilterHappenedAfter:  (*strfmt.DateTime)(&timeRange.Start),
 					LogFilterHappenedBefore: (*strfmt.DateTime)(&timeRange.End),
@@ -227,7 +228,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					mcp.Description("Page token to fetch the next page of logs. An empty token identifies the first page."),
 				),
 			),
-			Handler: func(session tools.Session, request mcp.CallToolRequest) (*tools.Result, error) {
+			Handler: func(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
 				query, err := params.String(request, "query", true, "")
 				if err != nil {
 					return nil, err
@@ -243,13 +244,13 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					return nil, err
 				}
 
-				logsAPI, err := t.clientProvider.DataUnstableClient(session)
+				logsAPI, err := t.clientProvider.DataUnstableClient()
 				if err != nil {
 					return nil, err
 				}
 
 				queryParams := &data_unstable.GetRangeQueryParams{
-					Context:                       session.Context,
+					Context:                       ctx,
 					Query:                         &query,
 					TimestampFilterHappenedAfter:  (*strfmt.DateTime)(&timeRange.Start),
 					TimestampFilterHappenedBefore: (*strfmt.DateTime)(&timeRange.End),
@@ -262,7 +263,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					return nil, fmt.Errorf("failed to get range query: %s", err)
 				}
 
-				jsonContent := t.createCompactSummary(session, query, timeRange, resp.Payload)
+				jsonContent := t.createCompactSummary(ctx, query, timeRange, resp.Payload)
 
 				return &tools.Result{
 					JSONContent: jsonContent,
@@ -280,16 +281,16 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					mcp.Description("ID of the log message. This is the logID field in the log message."),
 				),
 			),
-			Handler: func(session tools.Session, request mcp.CallToolRequest) (*tools.Result, error) {
+			Handler: func(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
 				id, err := params.String(request, "id", true, "")
 				if err != nil {
 					return nil, err
 				}
 				queryParams := &data_unstable.ListLogsParams{
-					Context:        session.Context,
+					Context:        ctx,
 					LogFilterQuery: ptr.To(fmt.Sprintf(`logID=%q`, id)),
 				}
-				logsAPI, err := t.clientProvider.DataUnstableClient(session)
+				logsAPI, err := t.clientProvider.DataUnstableClient()
 				if err != nil {
 					return nil, err
 				}
@@ -314,7 +315,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					mcp.Description(`Log fields to group results within each bucket. May be "service", "severity" or any label name, or unset to have one group per bucket.`),
 				),
 			),
-			Handler: func(session tools.Session, request mcp.CallToolRequest) (*tools.Result, error) {
+			Handler: func(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
 				timeRange, err := params.ParseTimeRange(request)
 				if err != nil {
 					return nil, err
@@ -333,7 +334,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				// Calculate step size for 100 buckets
 				stepSize := timeRange.End.Sub(timeRange.Start) / 100
 				queryParams := &data_unstable.GetLogHistogramParams{
-					Context:                 session.Context,
+					Context:                 ctx,
 					LogFilterQuery:          &query,
 					LogFilterHappenedAfter:  (*strfmt.DateTime)(&timeRange.Start),
 					LogFilterHappenedBefore: (*strfmt.DateTime)(&timeRange.End),
@@ -343,7 +344,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 
 				t.logger.Info("get log histogram", zap.Any("params", queryParams))
 
-				logsAPI, err := t.clientProvider.DataUnstableClient(session)
+				logsAPI, err := t.clientProvider.DataUnstableClient()
 				if err != nil {
 					return nil, err
 				}
@@ -371,7 +372,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					mcp.DefaultNumber(100),
 				),
 			),
-			Handler: func(session tools.Session, request mcp.CallToolRequest) (*tools.Result, error) {
+			Handler: func(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
 				query, err := params.String(request, "query", false, "")
 				if err != nil {
 					return nil, err
@@ -388,7 +389,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				}
 
 				queryParams := &data_unstable.ListLogFieldNamesParams{
-					Context:                 session.Context,
+					Context:                 ctx,
 					LogFilterQuery:          &query,
 					LogFilterHappenedAfter:  (*strfmt.DateTime)(&timeRange.Start),
 					LogFilterHappenedBefore: (*strfmt.DateTime)(&timeRange.End),
@@ -397,7 +398,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 
 				t.logger.Info("list log field names", zap.Any("params", queryParams))
 
-				logsAPI, err := t.clientProvider.DataUnstableClient(session)
+				logsAPI, err := t.clientProvider.DataUnstableClient()
 				if err != nil {
 					return nil, err
 				}
@@ -428,7 +429,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					mcp.DefaultNumber(100),
 				),
 			),
-			Handler: func(session tools.Session, request mcp.CallToolRequest) (*tools.Result, error) {
+			Handler: func(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
 				query, err := params.String(request, "query", false, "")
 				if err != nil {
 					return nil, err
@@ -450,7 +451,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				}
 
 				queryParams := &data_unstable.ListLogFieldValuesParams{
-					Context:                 session.Context,
+					Context:                 ctx,
 					LogFilterQuery:          &query,
 					LogFilterHappenedAfter:  (*strfmt.DateTime)(&timeRange.Start),
 					LogFilterHappenedBefore: (*strfmt.DateTime)(&timeRange.End),
@@ -460,7 +461,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 
 				t.logger.Info("list log field values", zap.Any("params", queryParams))
 
-				logsAPI, err := t.clientProvider.DataUnstableClient(session)
+				logsAPI, err := t.clientProvider.DataUnstableClient()
 				if err != nil {
 					return nil, err
 				}

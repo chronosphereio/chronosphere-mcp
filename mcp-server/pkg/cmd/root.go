@@ -26,9 +26,9 @@ type APIConfig struct {
 func New() *cobra.Command {
 	flags := &Flags{}
 	cmd := &cobra.Command{
-		Use:   "mcp-server",
-		Short: "mcp-server provides an MCP server to AI applications",
-		Long:  "mcp-server provides an MCP server to AI applications",
+		Use:   "chronomcp",
+		Short: "chronomcp provides an MCP server to AI applications",
+		Long:  "chronomcp provides an MCP server to AI applications",
 		PersistentPreRun: func(cmd *cobra.Command, _ []string) {
 			// If command parsing works, let's silence usage so errors RunE errors
 			// don't display usage (adding unnecessary noise to the output).

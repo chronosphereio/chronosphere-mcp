@@ -7,6 +7,7 @@ AGENT_CONFIG_FILE ?= agent.yaml
 ENV_FILE ?= .env
 LIBRECHAT_CONFIG ?= librechat.yaml
 AGENT_INPUTS_FILE ?= agent/resources/inputs.txt
+LDFLAGS ?= -ldflags="-X github.com/chronosphereio/mcp-server/pkg/version.Version=$(shell git describe --tags --always --dirty) -X github.com/chronosphereio/mcp-server/pkg/version.BuildDate=$(shell date -u +%Y-%m-%dT%H:%M:%SZ) -X github.com/chronosphereio/mcp-server/pkg/version.GitCommit=$(shell git rev-parse HEAD)"
 
 .PHONY: install-tools
 install-tools: go-version-check
@@ -51,7 +52,7 @@ run-chat:
 
 .PHONY: run-server build-server chronomcp run-chronomcp
 chronomcp:
-	go build -o $(server_bin_path) ./mcp-server
+	go build $(LDFLAGS) -o $(server_bin_path) ./mcp-server
 
 run-chronomcp: chronomcp
 	if [ ! -f $(CONFIG_FILE) ]; then \
@@ -78,11 +79,11 @@ run-agent: build-agent
 
 .PHONY: build-agent
 build-agent:
-	go build -o $(agent_bin_path) ./agent
+	go build $(LDFLAGS) -o $(agent_bin_path) ./agent
 
 .PHONY: build-mcpgen
 build-mcpgen:
-	cd tools && go build -o $(tools_bin_path)/mcpgen ./cmd/mcpgen
+	cd tools && go build $(LDFLAGS) -o $(tools_bin_path)/mcpgen ./cmd/mcpgen
 
 .PHONY: tools-mcpgen
 tools-gen: build-mcpgen

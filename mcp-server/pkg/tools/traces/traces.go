@@ -5,13 +5,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/chronosphereio/mcp-server/generated/dataunstable/dataunstable"
-	"github.com/chronosphereio/mcp-server/pkg/ptr"
 	"github.com/go-openapi/strfmt"
 	"github.com/mark3labs/mcp-go/mcp"
 	"go.uber.org/zap"
 
+	"github.com/chronosphereio/mcp-server/generated/dataunstable/dataunstable"
 	"github.com/chronosphereio/mcp-server/generated/dataunstable/dataunstable/data_unstable"
+	"github.com/chronosphereio/mcp-server/generated/dataunstable/models"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/pkg/params"
 )
@@ -76,23 +76,25 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				}
 
 				queryParams := &data_unstable.ListTracesParams{
-					Context:   ctx,
-					StartTime: (*strfmt.DateTime)(ptr.To(timeRange.Start)),
-					EndTime:   (*strfmt.DateTime)(ptr.To(timeRange.End)),
+					Context: ctx,
+					Body: &models.Datav1ListTracesRequest{
+						StartTime: strfmt.DateTime(timeRange.Start),
+						EndTime:   strfmt.DateTime(timeRange.End),
+					},
 				}
 
 				if len(traceIDs) > 0 {
-					queryParams.TraceIds = traceIDs
-					queryParams.QueryType = ptr.To("TRACE_IDS")
+					queryParams.Body.TraceIds = traceIDs
+					queryParams.Body.QueryType = "TRACE_IDS"
 				} else {
-					queryParams.QueryType = ptr.To("SERVICE_OPERATION")
+					queryParams.Body.QueryType = "SERVICE_OPERATION"
 				}
 
 				if service != "" {
-					queryParams.Service = &service
+					queryParams.Body.Service = service
 				}
 				if operation != "" {
-					queryParams.Operation = &operation
+					queryParams.Body.Operation = operation
 				}
 
 				resp, err := t.api.DataUnstable.ListTraces(queryParams)

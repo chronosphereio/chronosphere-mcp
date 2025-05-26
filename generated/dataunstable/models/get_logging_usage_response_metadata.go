@@ -23,6 +23,9 @@ type GetLoggingUsageResponseMetadata struct {
 	// Format: date-time
 	LastUpdatedAt strfmt.DateTime `json:"last_updated_at,omitempty"`
 
+	// total bytes
+	TotalBytes string `json:"total_bytes,omitempty"`
+
 	// total logs
 	TotalLogs string `json:"total_logs,omitempty"`
 

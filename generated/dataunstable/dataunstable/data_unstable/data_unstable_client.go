@@ -832,7 +832,7 @@ func (a *Client) ListTraces(params *ListTracesParams, opts ...ClientOption) (*Li
 	}
 	op := &runtime.ClientOperation{
 		ID:                 "ListTraces",
-		Method:             "GET",
+		Method:             "POST",
 		PathPattern:        "/api/unstable/data/traces",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},

@@ -14,7 +14,8 @@ import (
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
-	"github.com/go-openapi/swag"
+
+	"github.com/chronosphereio/mcp-server/generated/dataunstable/models"
 )
 
 // NewListTracesParams creates a new ListTracesParams object,
@@ -62,47 +63,8 @@ ListTracesParams contains all the parameters to send to the API endpoint
 */
 type ListTracesParams struct {
 
-	/* EndTime.
-
-	   End time for the search.
-
-	   Format: date-time
-	*/
-	EndTime *strfmt.DateTime
-
-	/* Operation.
-
-	   Operation to filter on. Empty means no filter.
-	*/
-	Operation *string
-
-	/* QueryType.
-
-	     Type of query to perform.
-	TRACE_IDS: Search for specific trace IDs.
-	SERVICE_OPERATION: Search for traces with a specific service and operation, over a specific time frame.
-	*/
-	QueryType *string
-
-	/* Service.
-
-	   Service to filter on. Empty means no filter.
-	*/
-	Service *string
-
-	/* StartTime.
-
-	   Start time for the search.
-
-	   Format: date-time
-	*/
-	StartTime *strfmt.DateTime
-
-	/* TraceIds.
-
-	   Trace IDs to search for.
-	*/
-	TraceIds []string
+	// Body.
+	Body *models.Datav1ListTracesRequest
 
 	timeout    time.Duration
 	Context    context.Context
@@ -157,70 +119,15 @@ func (o *ListTracesParams) SetHTTPClient(client *http.Client) {
 	o.HTTPClient = client
 }
 
-// WithEndTime adds the endTime to the list traces params
-func (o *ListTracesParams) WithEndTime(endTime *strfmt.DateTime) *ListTracesParams {
-	o.SetEndTime(endTime)
+// WithBody adds the body to the list traces params
+func (o *ListTracesParams) WithBody(body *models.Datav1ListTracesRequest) *ListTracesParams {
+	o.SetBody(body)
 	return o
 }
 
-// SetEndTime adds the endTime to the list traces params
-func (o *ListTracesParams) SetEndTime(endTime *strfmt.DateTime) {
-	o.EndTime = endTime
-}
-
-// WithOperation adds the operation to the list traces params
-func (o *ListTracesParams) WithOperation(operation *string) *ListTracesParams {
-	o.SetOperation(operation)
-	return o
-}
-
-// SetOperation adds the operation to the list traces params
-func (o *ListTracesParams) SetOperation(operation *string) {
-	o.Operation = operation
-}
-
-// WithQueryType adds the queryType to the list traces params
-func (o *ListTracesParams) WithQueryType(queryType *string) *ListTracesParams {
-	o.SetQueryType(queryType)
-	return o
-}
-
-// SetQueryType adds the queryType to the list traces params
-func (o *ListTracesParams) SetQueryType(queryType *string) {
-	o.QueryType = queryType
-}
-
-// WithService adds the service to the list traces params
-func (o *ListTracesParams) WithService(service *string) *ListTracesParams {
-	o.SetService(service)
-	return o
-}
-
-// SetService adds the service to the list traces params
-func (o *ListTracesParams) SetService(service *string) {
-	o.Service = service
-}
-
-// WithStartTime adds the startTime to the list traces params
-func (o *ListTracesParams) WithStartTime(startTime *strfmt.DateTime) *ListTracesParams {
-	o.SetStartTime(startTime)
-	return o
-}
-
-// SetStartTime adds the startTime to the list traces params
-func (o *ListTracesParams) SetStartTime(startTime *strfmt.DateTime) {
-	o.StartTime = startTime
-}
-
-// WithTraceIds adds the traceIds to the list traces params
-func (o *ListTracesParams) WithTraceIds(traceIds []string) *ListTracesParams {
-	o.SetTraceIds(traceIds)
-	return o
-}
-
-// SetTraceIds adds the traceIds to the list traces params
-func (o *ListTracesParams) SetTraceIds(traceIds []string) {
-	o.TraceIds = traceIds
+// SetBody adds the body to the list traces params
+func (o *ListTracesParams) SetBody(body *models.Datav1ListTracesRequest) {
+	o.Body = body
 }
 
 // WriteToRequest writes these params to a swagger request
@@ -230,99 +137,8 @@ func (o *ListTracesParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Re
 		return err
 	}
 	var res []error
-
-	if o.EndTime != nil {
-
-		// query param end_time
-		var qrEndTime strfmt.DateTime
-
-		if o.EndTime != nil {
-			qrEndTime = *o.EndTime
-		}
-		qEndTime := qrEndTime.String()
-		if qEndTime != "" {
-
-			if err := r.SetQueryParam("end_time", qEndTime); err != nil {
-				return err
-			}
-		}
-	}
-
-	if o.Operation != nil {
-
-		// query param operation
-		var qrOperation string
-
-		if o.Operation != nil {
-			qrOperation = *o.Operation
-		}
-		qOperation := qrOperation
-		if qOperation != "" {
-
-			if err := r.SetQueryParam("operation", qOperation); err != nil {
-				return err
-			}
-		}
-	}
-
-	if o.QueryType != nil {
-
-		// query param query_type
-		var qrQueryType string
-
-		if o.QueryType != nil {
-			qrQueryType = *o.QueryType
-		}
-		qQueryType := qrQueryType
-		if qQueryType != "" {
-
-			if err := r.SetQueryParam("query_type", qQueryType); err != nil {
-				return err
-			}
-		}
-	}
-
-	if o.Service != nil {
-
-		// query param service
-		var qrService string
-
-		if o.Service != nil {
-			qrService = *o.Service
-		}
-		qService := qrService
-		if qService != "" {
-
-			if err := r.SetQueryParam("service", qService); err != nil {
-				return err
-			}
-		}
-	}
-
-	if o.StartTime != nil {
-
-		// query param start_time
-		var qrStartTime strfmt.DateTime
-
-		if o.StartTime != nil {
-			qrStartTime = *o.StartTime
-		}
-		qStartTime := qrStartTime.String()
-		if qStartTime != "" {
-
-			if err := r.SetQueryParam("start_time", qStartTime); err != nil {
-				return err
-			}
-		}
-	}
-
-	if o.TraceIds != nil {
-
-		// binding items for trace_ids
-		joinedTraceIds := o.bindParamTraceIds(reg)
-
-		// query array param trace_ids
-		if err := r.SetQueryParam("trace_ids", joinedTraceIds...); err != nil {
+	if o.Body != nil {
+		if err := r.SetBodyParam(o.Body); err != nil {
 			return err
 		}
 	}
@@ -331,21 +147,4 @@ func (o *ListTracesParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Re
 		return errors.CompositeValidationError(res...)
 	}
 	return nil
-}
-
-// bindParamListTraces binds the parameter trace_ids
-func (o *ListTracesParams) bindParamTraceIds(formats strfmt.Registry) []string {
-	traceIdsIR := o.TraceIds
-
-	var traceIdsIC []string
-	for _, traceIdsIIR := range traceIdsIR { // explode []string
-
-		traceIdsIIV := traceIdsIIR // string as string
-		traceIdsIC = append(traceIdsIC, traceIdsIIV)
-	}
-
-	// items.CollectionFormat: "multi"
-	traceIdsIS := swag.JoinByFormat(traceIdsIC, "multi")
-
-	return traceIdsIS
 }

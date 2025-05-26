@@ -28,6 +28,9 @@ type DataunstableGetLogClusterUsageResponse struct {
 	// key
 	Key string `json:"key,omitempty"`
 
+	// log query
+	LogQuery string `json:"log_query,omitempty"`
+
 	// pattern
 	Pattern string `json:"pattern,omitempty"`
 

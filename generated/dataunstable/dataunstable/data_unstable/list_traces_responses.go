@@ -88,12 +88,12 @@ func (o *ListTracesOK) Code() int {
 
 func (o *ListTracesOK) Error() string {
 	payload, _ := json.Marshal(o.Payload)
-	return fmt.Sprintf("[GET /api/unstable/data/traces][%d] listTracesOK %s", 200, payload)
+	return fmt.Sprintf("[POST /api/unstable/data/traces][%d] listTracesOK %s", 200, payload)
 }
 
 func (o *ListTracesOK) String() string {
 	payload, _ := json.Marshal(o.Payload)
-	return fmt.Sprintf("[GET /api/unstable/data/traces][%d] listTracesOK %s", 200, payload)
+	return fmt.Sprintf("[POST /api/unstable/data/traces][%d] listTracesOK %s", 200, payload)
 }
 
 func (o *ListTracesOK) GetPayload() *models.Datav1ListTracesResponse {
@@ -162,12 +162,12 @@ func (o *ListTracesDefault) Code() int {
 
 func (o *ListTracesDefault) Error() string {
 	payload, _ := json.Marshal(o.Payload)
-	return fmt.Sprintf("[GET /api/unstable/data/traces][%d] ListTraces default %s", o._statusCode, payload)
+	return fmt.Sprintf("[POST /api/unstable/data/traces][%d] ListTraces default %s", o._statusCode, payload)
 }
 
 func (o *ListTracesDefault) String() string {
 	payload, _ := json.Marshal(o.Payload)
-	return fmt.Sprintf("[GET /api/unstable/data/traces][%d] ListTraces default %s", o._statusCode, payload)
+	return fmt.Sprintf("[POST /api/unstable/data/traces][%d] ListTraces default %s", o._statusCode, payload)
 }
 
 func (o *ListTracesDefault) GetPayload() *models.GooglerpcStatus {

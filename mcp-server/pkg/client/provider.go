@@ -45,11 +45,6 @@ func (c *Provider) PrometheusDataClient() (api.Client, error) {
 	return c.prometheusClientForBasePath("/data/metrics")
 }
 
-// PrometheusPromClient creates a new client to hit Prometheus APIs.
-func (c *Provider) PrometheusPromClient() (api.Client, error) {
-	return c.prometheusClientForBasePath("/app/prom")
-}
-
 // DataUnstableClient creates a new client to hit data unstable APIs.
 func (c *Provider) DataUnstableClient() (*dataunstable.DataUnstableAPI, error) {
 	t, err := c.transportForSession("/")

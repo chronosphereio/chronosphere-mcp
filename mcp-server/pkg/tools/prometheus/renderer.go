@@ -21,7 +21,6 @@ import (
 
 type Renderer struct {
 	DataAPI func() (v1.API, error)
-	PromAPI func() (v1.API, error)
 }
 
 // RendererOptions contains options for the Renderer.
@@ -35,13 +34,6 @@ func NewRenderer(
 	return &Renderer{
 		DataAPI: func() (v1.API, error) {
 			c, err := opts.ClientProvider.PrometheusDataClient()
-			if err != nil {
-				return nil, err
-			}
-			return v1.NewAPI(c), nil
-		},
-		PromAPI: func() (v1.API, error) {
-			c, err := opts.ClientProvider.PrometheusPromClient()
 			if err != nil {
 				return nil, err
 			}

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/client"
+	"github.com/prometheus/client_golang/api"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"gonum.org/v1/plot"
@@ -25,7 +25,7 @@ type Renderer struct {
 
 // RendererOptions contains options for the Renderer.
 type RendererOptions struct {
-	ClientProvider *client.Provider
+	api api.Client
 }
 
 func NewRenderer(
@@ -33,11 +33,7 @@ func NewRenderer(
 ) (*Renderer, error) {
 	return &Renderer{
 		DataAPI: func() (v1.API, error) {
-			c, err := opts.ClientProvider.PrometheusDataClient()
-			if err != nil {
-				return nil, err
-			}
-			return v1.NewAPI(c), nil
+			return v1.NewAPI(opts.api), nil
 		},
 	}, nil
 }

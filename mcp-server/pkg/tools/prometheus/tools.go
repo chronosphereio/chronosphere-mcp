@@ -2,9 +2,9 @@ package prometheus
 
 import (
 	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/prometheus/client_golang/api"
 	"go.uber.org/zap"
 
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/client"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/pkg/params"
 )
@@ -17,9 +17,9 @@ type Tools struct {
 }
 
 // NewTools creates a new Tools instance.
-func NewTools(clientProvider *client.Provider, logger *zap.Logger) (*Tools, error) {
+func NewTools(api api.Client, logger *zap.Logger) (*Tools, error) {
 	renderer, err := NewRenderer(RendererOptions{
-		ClientProvider: clientProvider,
+		api: api,
 	})
 	if err != nil {
 		return nil, err

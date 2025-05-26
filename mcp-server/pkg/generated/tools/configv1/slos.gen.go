@@ -7,14 +7,14 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 	"go.uber.org/zap"
 
+	"github.com/chronosphereio/mcp-server/generated/configv1/configv1"
 	"github.com/chronosphereio/mcp-server/generated/configv1/configv1/s_l_o"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/client"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/pkg/params"
 	"github.com/chronosphereio/mcp-server/pkg/ptr"
 )
 
-func GetSlo(clientProvider *client.Provider, logger *zap.Logger) tools.MCPTool {
+func GetSlo(api *configv1.ConfigV1API, logger *zap.Logger) tools.MCPTool {
 	return tools.MCPTool{
 		Metadata: tools.NewMetadata("get_slo",
 			mcp.WithDescription("Get slos resource"),
@@ -36,10 +36,6 @@ func GetSlo(clientProvider *client.Provider, logger *zap.Logger) tools.MCPTool {
 				Slug: slug,
 			}
 
-			api, err := clientProvider.ConfigV1Client()
-			if err != nil {
-				return nil, err
-			}
 			resp, err := api.Slo.ReadSLO(queryParams)
 			if err != nil {
 				return nil, fmt.Errorf("failed to call ReadSLO: %s", err)
@@ -51,7 +47,7 @@ func GetSlo(clientProvider *client.Provider, logger *zap.Logger) tools.MCPTool {
 	}
 }
 
-func ListSlos(clientProvider *client.Provider, logger *zap.Logger) tools.MCPTool {
+func ListSlos(api *configv1.ConfigV1API, logger *zap.Logger) tools.MCPTool {
 	return tools.MCPTool{
 		Metadata: tools.NewMetadata("list_slos",
 			mcp.WithDescription("List slos resources"),
@@ -127,10 +123,6 @@ func ListSlos(clientProvider *client.Provider, logger *zap.Logger) tools.MCPTool
 				Slugs: slugs,
 			}
 
-			api, err := clientProvider.ConfigV1Client()
-			if err != nil {
-				return nil, err
-			}
 			resp, err := api.Slo.ListSLOs(queryParams)
 			if err != nil {
 				return nil, fmt.Errorf("failed to call ListSLOs: %s", err)

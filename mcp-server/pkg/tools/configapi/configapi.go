@@ -4,7 +4,7 @@ package configapi
 import (
 	"go.uber.org/zap"
 
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/client"
+	configv1client "github.com/chronosphereio/mcp-server/generated/configv1/configv1"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/generated/tools/configv1"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
 )
@@ -13,29 +13,29 @@ var _ tools.MCPTools = (*Tools)(nil)
 
 // Tools provides tools for the Chronosphere config API.
 type Tools struct {
-	logger         *zap.Logger
-	clientProvider *client.Provider
+	logger *zap.Logger
+	client *configv1client.ConfigV1API
 }
 
 func NewTools(
-	clientProvider *client.Provider,
+	client *configv1client.ConfigV1API,
 	logger *zap.Logger,
 ) (*Tools, error) {
 	logger.Info("events tool configured")
 
 	return &Tools{
-		logger:         logger,
-		clientProvider: clientProvider,
+		logger: logger,
+		client: client,
 	}, nil
 }
 
 func (t *Tools) MCPTools() []tools.MCPTool {
 	return []tools.MCPTool{
-		configv1.GetMonitor(t.clientProvider, t.logger),
-		configv1.ListMonitors(t.clientProvider, t.logger),
-		configv1.GetDashboard(t.clientProvider, t.logger),
-		configv1.ListDashboards(t.clientProvider, t.logger),
-		configv1.GetSlo(t.clientProvider, t.logger),
-		configv1.ListSlos(t.clientProvider, t.logger),
+		configv1.GetMonitor(t.client, t.logger),
+		configv1.ListMonitors(t.client, t.logger),
+		configv1.GetDashboard(t.client, t.logger),
+		configv1.ListDashboards(t.client, t.logger),
+		configv1.GetSlo(t.client, t.logger),
+		configv1.ListSlos(t.client, t.logger),
 	}
 }

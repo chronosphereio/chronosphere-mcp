@@ -5,13 +5,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/chronosphereio/mcp-server/generated/dataunstable/dataunstable"
 	"github.com/chronosphereio/mcp-server/pkg/ptr"
 	"github.com/go-openapi/strfmt"
 	"github.com/mark3labs/mcp-go/mcp"
 	"go.uber.org/zap"
 
 	"github.com/chronosphereio/mcp-server/generated/dataunstable/dataunstable/data_unstable"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/client"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/pkg/params"
 )
@@ -19,19 +19,19 @@ import (
 var _ tools.MCPTools = (*Tools)(nil)
 
 type Tools struct {
-	logger         *zap.Logger
-	clientProvider *client.Provider
+	logger *zap.Logger
+	api    *dataunstable.DataUnstableAPI
 }
 
 func NewTools(
-	clientProvider *client.Provider,
+	api *dataunstable.DataUnstableAPI,
 	logger *zap.Logger,
 ) (*Tools, error) {
 	logger.Info("events tool configured")
 
 	return &Tools{
-		logger:         logger,
-		clientProvider: clientProvider,
+		logger: logger,
+		api:    api,
 	}, nil
 }
 
@@ -95,11 +95,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					queryParams.Operation = &operation
 				}
 
-				api, err := t.clientProvider.DataUnstableClient()
-				if err != nil {
-					return nil, err
-				}
-				resp, err := api.DataUnstable.ListTraces(queryParams)
+				resp, err := t.api.DataUnstable.ListTraces(queryParams)
 				if err != nil {
 					return nil, fmt.Errorf("failed to list traces: %s", err)
 				}

@@ -7,14 +7,14 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 	"go.uber.org/zap"
 
+	"github.com/chronosphereio/mcp-server/generated/configv1/configv1"
 	"github.com/chronosphereio/mcp-server/generated/configv1/configv1/monitor"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/client"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/pkg/params"
 	"github.com/chronosphereio/mcp-server/pkg/ptr"
 )
 
-func GetMonitor(clientProvider *client.Provider, logger *zap.Logger) tools.MCPTool {
+func GetMonitor(api *configv1.ConfigV1API, logger *zap.Logger) tools.MCPTool {
 	return tools.MCPTool{
 		Metadata: tools.NewMetadata("get_monitor",
 			mcp.WithDescription("Get monitors resource"),
@@ -36,10 +36,6 @@ func GetMonitor(clientProvider *client.Provider, logger *zap.Logger) tools.MCPTo
 				Slug: slug,
 			}
 
-			api, err := clientProvider.ConfigV1Client()
-			if err != nil {
-				return nil, err
-			}
 			resp, err := api.Monitor.ReadMonitor(queryParams)
 			if err != nil {
 				return nil, fmt.Errorf("failed to call ReadMonitor: %s", err)
@@ -51,7 +47,7 @@ func GetMonitor(clientProvider *client.Provider, logger *zap.Logger) tools.MCPTo
 	}
 }
 
-func ListMonitors(clientProvider *client.Provider, logger *zap.Logger) tools.MCPTool {
+func ListMonitors(api *configv1.ConfigV1API, logger *zap.Logger) tools.MCPTool {
 	return tools.MCPTool{
 		Metadata: tools.NewMetadata("list_monitors",
 			mcp.WithDescription("List monitors resources"),
@@ -138,10 +134,6 @@ func ListMonitors(clientProvider *client.Provider, logger *zap.Logger) tools.MCP
 				TeamSlugs: teamSlugs,
 			}
 
-			api, err := clientProvider.ConfigV1Client()
-			if err != nil {
-				return nil, err
-			}
 			resp, err := api.Monitor.ListMonitors(queryParams)
 			if err != nil {
 				return nil, fmt.Errorf("failed to call ListMonitors: %s", err)

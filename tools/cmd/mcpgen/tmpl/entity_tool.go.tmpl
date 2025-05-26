@@ -7,8 +7,8 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 	"go.uber.org/zap"
 
+	"github.com/chronosphereio/mcp-server/generated/configv1/configv1"
 	"github.com/chronosphereio/mcp-server/generated/configv1/configv1/{{ .Entity.PkgName }}"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/client"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/pkg/params"
 	"github.com/chronosphereio/mcp-server/pkg/ptr"
@@ -17,7 +17,7 @@ import (
 {{ $entity := .Entity }}
 
 {{ range $idx, $toolSpec := .Entity.ToolSpecs }}
-func {{ $toolSpec.CamelName }}(clientProvider *client.Provider, logger *zap.Logger) tools.MCPTool {
+func {{ $toolSpec.CamelName }}(api *configv1.ConfigV1API, logger *zap.Logger) tools.MCPTool {
     return tools.MCPTool{
         Metadata: tools.NewMetadata({{ printf "%q" $toolSpec.SnakeName }},
             mcp.WithDescription({{ printf "%q" $toolSpec.Description }}),
@@ -53,10 +53,6 @@ func {{ $toolSpec.CamelName }}(clientProvider *client.Provider, logger *zap.Logg
             {{ end }}
             }
 
-			api, err := clientProvider.ConfigV1Client()
-			if err != nil {
-				return nil, err
-			}
 		    resp, err := api.{{$entity.Name}}.{{$toolSpec.APIParam}}(queryParams)
             if err != nil {
                 return nil, fmt.Errorf("failed to call {{$toolSpec.APIParam}}: %s", err)

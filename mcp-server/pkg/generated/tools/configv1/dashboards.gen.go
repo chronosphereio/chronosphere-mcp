@@ -7,14 +7,14 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 	"go.uber.org/zap"
 
+	"github.com/chronosphereio/mcp-server/generated/configv1/configv1"
 	"github.com/chronosphereio/mcp-server/generated/configv1/configv1/dashboard"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/client"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/pkg/params"
 	"github.com/chronosphereio/mcp-server/pkg/ptr"
 )
 
-func GetDashboard(clientProvider *client.Provider, logger *zap.Logger) tools.MCPTool {
+func GetDashboard(api *configv1.ConfigV1API, logger *zap.Logger) tools.MCPTool {
 	return tools.MCPTool{
 		Metadata: tools.NewMetadata("get_dashboard",
 			mcp.WithDescription("Get dashboards resource"),
@@ -36,10 +36,6 @@ func GetDashboard(clientProvider *client.Provider, logger *zap.Logger) tools.MCP
 				Slug: slug,
 			}
 
-			api, err := clientProvider.ConfigV1Client()
-			if err != nil {
-				return nil, err
-			}
 			resp, err := api.Dashboard.ReadDashboard(queryParams)
 			if err != nil {
 				return nil, fmt.Errorf("failed to call ReadDashboard: %s", err)
@@ -51,7 +47,7 @@ func GetDashboard(clientProvider *client.Provider, logger *zap.Logger) tools.MCP
 	}
 }
 
-func ListDashboards(clientProvider *client.Provider, logger *zap.Logger) tools.MCPTool {
+func ListDashboards(api *configv1.ConfigV1API, logger *zap.Logger) tools.MCPTool {
 	return tools.MCPTool{
 		Metadata: tools.NewMetadata("list_dashboards",
 			mcp.WithDescription("List dashboards resources"),
@@ -127,10 +123,6 @@ func ListDashboards(clientProvider *client.Provider, logger *zap.Logger) tools.M
 				Slugs: slugs,
 			}
 
-			api, err := clientProvider.ConfigV1Client()
-			if err != nil {
-				return nil, err
-			}
 			resp, err := api.Dashboard.ListDashboards(queryParams)
 			if err != nil {
 				return nil, fmt.Errorf("failed to call ListDashboards: %s", err)

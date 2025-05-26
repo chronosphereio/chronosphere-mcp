@@ -84,7 +84,7 @@ func (s *Server) SSEServer(baseURL string, options ...server.SSEOption) *server.
 		append(options,
 			[]server.SSEOption{
 				server.WithBaseURL(baseURL),
-				server.WithHTTPContextFunc(func(ctx context.Context, r *http.Request) context.Context {
+				server.WithSSEContextFunc(func(ctx context.Context, r *http.Request) context.Context {
 					authValue := strings.ReplaceAll(r.Header.Get("Authorization"), "Bearer ", "")
 					return authcontext.SetSessionAPIToken(ctx, authValue)
 				}),

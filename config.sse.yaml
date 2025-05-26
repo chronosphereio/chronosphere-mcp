@@ -7,6 +7,9 @@ server:
       baseURL: http://0.0.0.0:8080
     stdio:
       enabled: false
+    http:
+      enabled: false
+      address: :8081
 
   tools:
     # List of tools to disable if you don't want to serve them to the client/host.

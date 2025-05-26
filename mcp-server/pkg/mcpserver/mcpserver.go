@@ -6,8 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"strings"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -84,10 +82,15 @@ func (s *Server) SSEServer(baseURL string, options ...server.SSEOption) *server.
 		append(options,
 			[]server.SSEOption{
 				server.WithBaseURL(baseURL),
-				server.WithSSEContextFunc(func(ctx context.Context, r *http.Request) context.Context {
-					authValue := strings.ReplaceAll(r.Header.Get("Authorization"), "Bearer ", "")
-					return authcontext.SetSessionAPIToken(ctx, authValue)
-				}),
+				server.WithSSEContextFunc(authcontext.HTTPInboundContextFunc),
+			}...)...)
+}
+
+func (s *Server) StreamableHTTPServer(options ...server.StreamableHTTPOption) *server.StreamableHTTPServer {
+	return server.NewStreamableHTTPServer(s.server,
+		append(options,
+			[]server.StreamableHTTPOption{
+				server.WithHTTPContextFunc(authcontext.HTTPInboundContextFunc),
 			}...)...)
 }
 

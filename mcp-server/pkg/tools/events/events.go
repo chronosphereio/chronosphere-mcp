@@ -45,7 +45,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					mcp.Description("The query to filter events e.g. categories, types, sources and arbitrary labels.")),
 				params.WithTimeRange(),
 			),
-			Handler: func(_ context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
+			Handler: func(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
 				timeRange, err := params.ParseTimeRange(request)
 				if err != nil {
 					return nil, err
@@ -56,6 +56,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				}
 
 				queryParams := &data_unstable.ListEventsParams{
+					Context:        ctx,
 					HappenedAfter:  (*strfmt.DateTime)(ptr.To(timeRange.Start)),
 					HappenedBefore: (*strfmt.DateTime)(ptr.To(timeRange.End)),
 				}

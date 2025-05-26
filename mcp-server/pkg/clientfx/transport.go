@@ -1,4 +1,4 @@
-package client
+package clientfx
 
 import (
 	"errors"
@@ -7,10 +7,11 @@ import (
 	"net/url"
 
 	xswagger "github.com/chronosphereio/chronoctl-core/src/x/swagger"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/authcontext"
-	"github.com/chronosphereio/mcp-server/pkg/version"
 	httpruntime "github.com/go-openapi/runtime"
 	httptransport "github.com/go-openapi/runtime/client"
+
+	"github.com/chronosphereio/mcp-server/mcp-server/pkg/authcontext"
+	"github.com/chronosphereio/mcp-server/pkg/version"
 )
 
 // Component is a value that indicates the part of the CLI that is invoking an

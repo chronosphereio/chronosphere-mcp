@@ -5,12 +5,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/chronosphereio/mcp-server/generated/stateunstable/stateunstable"
 	"github.com/chronosphereio/mcp-server/pkg/ptr"
 	"github.com/mark3labs/mcp-go/mcp"
 	"go.uber.org/zap"
 
 	"github.com/chronosphereio/mcp-server/generated/stateunstable/stateunstable/state_unstable"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/client"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/pkg/params"
 )
@@ -19,17 +19,17 @@ var _ tools.MCPTools = (*Tools)(nil)
 
 // Tools represents the monitor tools.
 type Tools struct {
-	logger         *zap.Logger
-	clientProvider *client.Provider
+	logger *zap.Logger
+	api    *stateunstable.StateUnstableAPI
 }
 
 // NewTools creates a new set of monitor tools.
-func NewTools(clientProvider *client.Provider, logger *zap.Logger) (*Tools, error) {
+func NewTools(api *stateunstable.StateUnstableAPI, logger *zap.Logger) (*Tools, error) {
 	logger.Info("monitor status tool configured")
 
 	return &Tools{
-		logger:         logger,
-		clientProvider: clientProvider,
+		logger: logger,
+		api:    api,
 	}, nil
 }
 
@@ -128,13 +128,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 
 				t.logger.Info("list monitor statuses", zap.Any("params", queryParams))
 
-				// Get client and make API call
-				stateAPI, err := t.clientProvider.StateUnstableClient()
-				if err != nil {
-					return nil, err
-				}
-
-				resp, err := stateAPI.StateUnstable.ListMonitorStatuses(queryParams)
+				resp, err := t.api.StateUnstable.ListMonitorStatuses(queryParams)
 				if err != nil {
 					return nil, fmt.Errorf("failed to list monitor statuses: %s", err)
 				}

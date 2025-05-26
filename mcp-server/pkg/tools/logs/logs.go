@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/chronosphereio/mcp-server/generated/dataunstable/dataunstable"
 	"github.com/chronosphereio/mcp-server/pkg/links"
 	"github.com/chronosphereio/mcp-server/pkg/ptr"
 	"github.com/go-openapi/strfmt"
@@ -14,7 +15,6 @@ import (
 
 	"github.com/chronosphereio/mcp-server/generated/dataunstable/dataunstable/data_unstable"
 	"github.com/chronosphereio/mcp-server/generated/dataunstable/models"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/client"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
 	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/pkg/params"
 )
@@ -22,18 +22,18 @@ import (
 var _ tools.MCPTools = (*Tools)(nil)
 
 type Tools struct {
-	logger         *zap.Logger
-	clientProvider *client.Provider
-	linkBuilder    *links.Builder
+	logger      *zap.Logger
+	api         *dataunstable.DataUnstableAPI
+	linkBuilder *links.Builder
 }
 
-func NewTools(clientProvider *client.Provider, logger *zap.Logger, linkBuilder *links.Builder) (*Tools, error) {
+func NewTools(api *dataunstable.DataUnstableAPI, logger *zap.Logger, linkBuilder *links.Builder) (*Tools, error) {
 	logger.Info("logging tool configured")
 
 	return &Tools{
-		logger:         logger,
-		clientProvider: clientProvider,
-		linkBuilder:    linkBuilder,
+		logger:      logger,
+		api:         api,
+		linkBuilder: linkBuilder,
 	}, nil
 }
 
@@ -56,28 +56,26 @@ func (t *Tools) createCompactSummary(ctx context.Context, query string, timeRang
 	}
 
 	// Fetch available field names to help with query refinement
-	if logsAPI, err := t.clientProvider.DataUnstableClient(); err == nil {
-		fieldParams := &data_unstable.ListLogFieldNamesParams{
-			Context:                 ctx,
-			LogFilterQuery:          &query,
-			LogFilterHappenedAfter:  (*strfmt.DateTime)(&timeRange.Start),
-			LogFilterHappenedBefore: (*strfmt.DateTime)(&timeRange.End),
-			Limit:                   ptr.To(int64(50)), // Limit to 50 fields to avoid overwhelming
-		}
-		if fieldResp, fieldErr := logsAPI.DataUnstable.ListLogFieldNames(fieldParams); fieldErr == nil && fieldResp.Payload != nil {
-			if fieldResp.Payload.Suggestions != nil {
-				// Extract field names from suggestions
-				fieldNames := make([]string, len(fieldResp.Payload.Suggestions))
-				for i, suggestion := range fieldResp.Payload.Suggestions {
-					if suggestion != nil {
-						fieldNames[i] = suggestion.Value
-					}
+	fieldParams := &data_unstable.ListLogFieldNamesParams{
+		Context:                 ctx,
+		LogFilterQuery:          &query,
+		LogFilterHappenedAfter:  (*strfmt.DateTime)(&timeRange.Start),
+		LogFilterHappenedBefore: (*strfmt.DateTime)(&timeRange.End),
+		Limit:                   ptr.To(int64(50)), // Limit to 50 fields to avoid overwhelming
+	}
+	if fieldResp, fieldErr := t.api.DataUnstable.ListLogFieldNames(fieldParams); fieldErr == nil && fieldResp.Payload != nil {
+		if fieldResp.Payload.Suggestions != nil {
+			// Extract field names from suggestions
+			fieldNames := make([]string, len(fieldResp.Payload.Suggestions))
+			for i, suggestion := range fieldResp.Payload.Suggestions {
+				if suggestion != nil {
+					fieldNames[i] = suggestion.Value
 				}
-				summary.AvailableFields = fieldNames
-				// Create a helpful suggestion for using the project keyword
-				if len(summary.AvailableFields) > 4 {
-					summary.FieldSuggestion = fmt.Sprintf("To get more details, try adding '| project logID,_timestamp,severity,message,%s' to your query to include additional fields. You can inspect full individual logs using the logID and the get_log tool.", strings.Join(summary.AvailableFields[:4], ","))
-				}
+			}
+			summary.AvailableFields = fieldNames
+			// Create a helpful suggestion for using the project keyword
+			if len(summary.AvailableFields) > 4 {
+				summary.FieldSuggestion = fmt.Sprintf("To get more details, try adding '| project logID,_timestamp,severity,message,%s' to your query to include additional fields. You can inspect full individual logs using the logID and the get_log tool.", strings.Join(summary.AvailableFields[:4], ","))
 			}
 		}
 	}
@@ -189,11 +187,6 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					return nil, err
 				}
 
-				logsAPI, err := t.clientProvider.DataUnstableClient()
-				if err != nil {
-					return nil, err
-				}
-
 				queryParams := &data_unstable.ListLogsParams{
 					Context:                 ctx,
 					LogFilterQuery:          &query,
@@ -204,7 +197,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				}
 				t.logger.Info("list logs", zap.Any("params", queryParams))
 
-				resp, err := logsAPI.DataUnstable.ListLogs(queryParams)
+				resp, err := t.api.DataUnstable.ListLogs(queryParams)
 				if err != nil {
 					return nil, fmt.Errorf("failed to list logs: %s", err)
 				}
@@ -244,11 +237,6 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					return nil, err
 				}
 
-				logsAPI, err := t.clientProvider.DataUnstableClient()
-				if err != nil {
-					return nil, err
-				}
-
 				queryParams := &data_unstable.GetRangeQueryParams{
 					Context:                       ctx,
 					Query:                         &query,
@@ -258,7 +246,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				}
 				t.logger.Info("get range query", zap.Any("params", queryParams))
 
-				resp, err := logsAPI.DataUnstable.GetRangeQuery(queryParams)
+				resp, err := t.api.DataUnstable.GetRangeQuery(queryParams)
 				if err != nil {
 					return nil, fmt.Errorf("failed to get range query: %s", err)
 				}
@@ -290,11 +278,8 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					Context:        ctx,
 					LogFilterQuery: ptr.To(fmt.Sprintf(`logID=%q`, id)),
 				}
-				logsAPI, err := t.clientProvider.DataUnstableClient()
-				if err != nil {
-					return nil, err
-				}
-				resp, err := logsAPI.DataUnstable.ListLogs(queryParams)
+
+				resp, err := t.api.DataUnstable.ListLogs(queryParams)
 				if err != nil {
 					return nil, fmt.Errorf("failed to query log by ID: %s", err)
 				}
@@ -344,11 +329,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 
 				t.logger.Info("get log histogram", zap.Any("params", queryParams))
 
-				logsAPI, err := t.clientProvider.DataUnstableClient()
-				if err != nil {
-					return nil, err
-				}
-				resp, err := logsAPI.DataUnstable.GetLogHistogram(queryParams)
+				resp, err := t.api.DataUnstable.GetLogHistogram(queryParams)
 				if err != nil {
 					return nil, fmt.Errorf("failed to get log histogram: %s", err)
 				}
@@ -398,11 +379,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 
 				t.logger.Info("list log field names", zap.Any("params", queryParams))
 
-				logsAPI, err := t.clientProvider.DataUnstableClient()
-				if err != nil {
-					return nil, err
-				}
-				resp, err := logsAPI.DataUnstable.ListLogFieldNames(queryParams)
+				resp, err := t.api.DataUnstable.ListLogFieldNames(queryParams)
 				if err != nil {
 					return nil, fmt.Errorf("failed to list log field names: %s", err)
 				}
@@ -461,11 +438,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 
 				t.logger.Info("list log field values", zap.Any("params", queryParams))
 
-				logsAPI, err := t.clientProvider.DataUnstableClient()
-				if err != nil {
-					return nil, err
-				}
-				resp, err := logsAPI.DataUnstable.ListLogFieldValues(queryParams)
+				resp, err := t.api.DataUnstable.ListLogFieldValues(queryParams)
 				if err != nil {
 					return nil, fmt.Errorf("failed to list log field values: %s", err)
 				}

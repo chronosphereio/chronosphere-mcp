@@ -1,6 +1,7 @@
 package configv1
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -23,19 +24,19 @@ func GetDashboard(clientProvider *client.Provider, logger *zap.Logger) tools.MCP
 				mcp.Required(),
 			),
 		),
-		Handler: func(session tools.Session, request mcp.CallToolRequest) (*tools.Result, error) {
+		Handler: func(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
 			slug, err := params.String(request, "slug", true, "")
 			if err != nil {
 				return nil, err
 			}
 
 			queryParams := &dashboard.ReadDashboardParams{
-				Slug: slug,
+				Context: ctx,
 
-				Context: session.Context,
+				Slug: slug,
 			}
 
-			api, err := clientProvider.ConfigV1Client(session)
+			api, err := clientProvider.ConfigV1Client()
 			if err != nil {
 				return nil, err
 			}
@@ -79,7 +80,7 @@ func ListDashboards(clientProvider *client.Provider, logger *zap.Logger) tools.M
 				mcp.Description("Filters results by slug, where any Dashboard with a matching slug in the given list (and matches all other filters) is returned."),
 			),
 		),
-		Handler: func(session tools.Session, request mcp.CallToolRequest) (*tools.Result, error) {
+		Handler: func(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
 			collectionSlugs, err := params.StringArray(request, "collection_slugs", false, nil)
 			if err != nil {
 				return nil, err
@@ -111,6 +112,8 @@ func ListDashboards(clientProvider *client.Provider, logger *zap.Logger) tools.M
 			}
 
 			queryParams := &dashboard.ListDashboardsParams{
+				Context: ctx,
+
 				CollectionSlugs: collectionSlugs,
 
 				IncludeDashboardJSON: ptr.To(includeDashboardJson),
@@ -122,11 +125,9 @@ func ListDashboards(clientProvider *client.Provider, logger *zap.Logger) tools.M
 				PageToken: &pageToken,
 
 				Slugs: slugs,
-
-				Context: session.Context,
 			}
 
-			api, err := clientProvider.ConfigV1Client(session)
+			api, err := clientProvider.ConfigV1Client()
 			if err != nil {
 				return nil, err
 			}

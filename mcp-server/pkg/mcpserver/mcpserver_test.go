@@ -26,7 +26,7 @@ func TestLoggingTool_mustHandle(t *testing.T) {
 			name:            "successful JSON response",
 			sessionAPIToken: "test-token",
 			tool: tools.MCPTool{
-				Handler: func(_ tools.Session, _ mcp.CallToolRequest) (*tools.Result, error) {
+				Handler: func(_ context.Context, _ mcp.CallToolRequest) (*tools.Result, error) {
 					return &tools.Result{
 						JSONContent: map[string]string{"key": "value"},
 					}, nil
@@ -40,7 +40,7 @@ func TestLoggingTool_mustHandle(t *testing.T) {
 			name:            "handler error",
 			sessionAPIToken: "test-token",
 			tool: tools.MCPTool{
-				Handler: func(_ tools.Session, _ mcp.CallToolRequest) (*tools.Result, error) {
+				Handler: func(_ context.Context, _ mcp.CallToolRequest) (*tools.Result, error) {
 					return &tools.Result{}, fmt.Errorf("handler error")
 				},
 			},
@@ -50,7 +50,7 @@ func TestLoggingTool_mustHandle(t *testing.T) {
 			name:            "response with Chronosphere link",
 			sessionAPIToken: "test-token",
 			tool: tools.MCPTool{
-				Handler: func(_ tools.Session, _ mcp.CallToolRequest) (*tools.Result, error) {
+				Handler: func(_ context.Context, _ mcp.CallToolRequest) (*tools.Result, error) {
 					return &tools.Result{
 						ChronosphereLink: "https://chronosphere.io",
 						JSONContent:      map[string]string{"data": "test"},
@@ -66,7 +66,7 @@ func TestLoggingTool_mustHandle(t *testing.T) {
 			name:            "response with image content",
 			sessionAPIToken: "test-token",
 			tool: tools.MCPTool{
-				Handler: func(_ tools.Session, _ mcp.CallToolRequest) (*tools.Result, error) {
+				Handler: func(_ context.Context, _ mcp.CallToolRequest) (*tools.Result, error) {
 					return &tools.Result{
 						ImageContent: []byte("test-image-data"),
 					}, nil
@@ -80,7 +80,7 @@ func TestLoggingTool_mustHandle(t *testing.T) {
 			name:            "response with metadata",
 			sessionAPIToken: "test-token",
 			tool: tools.MCPTool{
-				Handler: func(_ tools.Session, _ mcp.CallToolRequest) (*tools.Result, error) {
+				Handler: func(_ context.Context, _ mcp.CallToolRequest) (*tools.Result, error) {
 					return &tools.Result{
 						JSONContent: map[string]string{"key": "value"},
 						Meta:        map[string]any{"meta-key": "meta-value"},

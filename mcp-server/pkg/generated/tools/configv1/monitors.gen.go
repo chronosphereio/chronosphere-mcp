@@ -1,6 +1,7 @@
 package configv1
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -23,19 +24,19 @@ func GetMonitor(clientProvider *client.Provider, logger *zap.Logger) tools.MCPTo
 				mcp.Required(),
 			),
 		),
-		Handler: func(session tools.Session, request mcp.CallToolRequest) (*tools.Result, error) {
+		Handler: func(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
 			slug, err := params.String(request, "slug", true, "")
 			if err != nil {
 				return nil, err
 			}
 
 			queryParams := &monitor.ReadMonitorParams{
-				Slug: slug,
+				Context: ctx,
 
-				Context: session.Context,
+				Slug: slug,
 			}
 
-			api, err := clientProvider.ConfigV1Client(session)
+			api, err := clientProvider.ConfigV1Client()
 			if err != nil {
 				return nil, err
 			}
@@ -83,7 +84,7 @@ func ListMonitors(clientProvider *client.Provider, logger *zap.Logger) tools.MCP
 				mcp.Description("Filter returned monitors by the teams that own the collections that they belong to."),
 			),
 		),
-		Handler: func(session tools.Session, request mcp.CallToolRequest) (*tools.Result, error) {
+		Handler: func(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
 			bucketSlugs, err := params.StringArray(request, "bucket_slugs", false, nil)
 			if err != nil {
 				return nil, err
@@ -120,6 +121,8 @@ func ListMonitors(clientProvider *client.Provider, logger *zap.Logger) tools.MCP
 			}
 
 			queryParams := &monitor.ListMonitorsParams{
+				Context: ctx,
+
 				BucketSlugs: bucketSlugs,
 
 				CollectionSlugs: collectionSlugs,
@@ -133,11 +136,9 @@ func ListMonitors(clientProvider *client.Provider, logger *zap.Logger) tools.MCP
 				Slugs: slugs,
 
 				TeamSlugs: teamSlugs,
-
-				Context: session.Context,
 			}
 
-			api, err := clientProvider.ConfigV1Client(session)
+			api, err := clientProvider.ConfigV1Client()
 			if err != nil {
 				return nil, err
 			}

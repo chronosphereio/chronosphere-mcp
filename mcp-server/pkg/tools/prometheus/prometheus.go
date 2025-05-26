@@ -3,6 +3,7 @@ package prometheus
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"time"
 
@@ -13,7 +14,7 @@ import (
 	"github.com/prometheus/common/model"
 )
 
-func (t *Tools) listPrometheusSeries(session tools.Session, request mcp.CallToolRequest) (*tools.Result, error) {
+func (t *Tools) listPrometheusSeries(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
 	selectors, errResult := params.StringArray(request, "selectors", true, nil)
 	if errResult != nil {
 		return nil, errResult
@@ -28,11 +29,11 @@ func (t *Tools) listPrometheusSeries(session tools.Session, request mcp.CallTool
 		return nil, err
 	}
 
-	api, err := t.renderer.DataAPI(session)
+	api, err := t.renderer.DataAPI()
 	if err != nil {
 		return nil, err
 	}
-	resp, warnings, err := api.Series(session.Context, selectors, timeRange.Start, timeRange.End)
+	resp, warnings, err := api.Series(ctx, selectors, timeRange.Start, timeRange.End)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get series: %s", err)
 	}
@@ -40,7 +41,7 @@ func (t *Tools) listPrometheusSeries(session tools.Session, request mcp.CallTool
 	return promJSONResponse(resp, warnings)
 }
 
-func (t *Tools) queryPrometheusRange(session tools.Session, request mcp.CallToolRequest) (*tools.Result, error) {
+func (t *Tools) queryPrometheusRange(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
 	query, err := params.String(request, "query", true, "")
 	if err != nil {
 		return nil, err
@@ -60,11 +61,11 @@ func (t *Tools) queryPrometheusRange(session tools.Session, request mcp.CallTool
 		return nil, fmt.Errorf("stepSeconds must be a positive integer")
 	}
 
-	api, err := t.renderer.DataAPI(session)
+	api, err := t.renderer.DataAPI()
 	if err != nil {
 		return nil, err
 	}
-	resp, warnings, err := api.QueryRange(session.Context, query, v1.Range{
+	resp, warnings, err := api.QueryRange(ctx, query, v1.Range{
 		Start: timeRange.Start,
 		End:   timeRange.End,
 		Step:  step,
@@ -80,7 +81,7 @@ func (t *Tools) queryPrometheusRange(session tools.Session, request mcp.CallTool
 	return promJSONResponse(matrix, warnings)
 }
 
-func (t *Tools) renderPrometheusRangeQuery(session tools.Session, request mcp.CallToolRequest) (*tools.Result, error) {
+func (t *Tools) renderPrometheusRangeQuery(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
 	query, err := params.String(request, "query", true, "")
 	if err != nil {
 		return nil, err
@@ -95,11 +96,11 @@ func (t *Tools) renderPrometheusRangeQuery(session tools.Session, request mcp.Ca
 		return nil, err
 	}
 
-	api, err := t.renderer.DataAPI(session)
+	api, err := t.renderer.DataAPI()
 	if err != nil {
 		return nil, err
 	}
-	resp, _, err := api.QueryRange(session.Context, query, v1.Range{
+	resp, _, err := api.QueryRange(ctx, query, v1.Range{
 		Start: timeRange.Start,
 		End:   timeRange.End,
 		Step:  time.Duration(step) * time.Second,
@@ -133,7 +134,7 @@ func (t *Tools) renderPrometheusPNG(
 	return buf.Bytes(), nil
 }
 
-func (t *Tools) queryPrometheusInstant(session tools.Session, request mcp.CallToolRequest) (*tools.Result, error) {
+func (t *Tools) queryPrometheusInstant(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
 	expression, errResult := params.String(request, "expression", true, "")
 	if errResult != nil {
 		return nil, errResult
@@ -142,11 +143,11 @@ func (t *Tools) queryPrometheusInstant(session tools.Session, request mcp.CallTo
 	if errResult != nil {
 		return nil, errResult
 	}
-	api, err := t.renderer.DataAPI(session)
+	api, err := t.renderer.DataAPI()
 	if err != nil {
 		return nil, err
 	}
-	resp, warnings, err := api.Query(session.Context, expression, evalTime)
+	resp, warnings, err := api.Query(ctx, expression, evalTime)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query prometheus: %s", err)
 	}
@@ -154,7 +155,7 @@ func (t *Tools) queryPrometheusInstant(session tools.Session, request mcp.CallTo
 	return promJSONResponse(resp, warnings)
 }
 
-func (t *Tools) listPrometheusLabelValues(session tools.Session, request mcp.CallToolRequest) (*tools.Result, error) {
+func (t *Tools) listPrometheusLabelValues(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
 	labelName, errResult := params.String(request, "label_name", true, "")
 	if errResult != nil {
 		return nil, errResult
@@ -167,11 +168,11 @@ func (t *Tools) listPrometheusLabelValues(session tools.Session, request mcp.Cal
 	if err != nil {
 		return nil, err
 	}
-	api, err := t.renderer.DataAPI(session)
+	api, err := t.renderer.DataAPI()
 	if err != nil {
 		return nil, err
 	}
-	resp, warnings, err := api.LabelValues(session.Context, labelName, selectors, timeRange.Start, timeRange.End)
+	resp, warnings, err := api.LabelValues(ctx, labelName, selectors, timeRange.Start, timeRange.End)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get label names: %s", err)
 	}
@@ -179,7 +180,7 @@ func (t *Tools) listPrometheusLabelValues(session tools.Session, request mcp.Cal
 	return promJSONResponse(resp, warnings)
 }
 
-func (t *Tools) listPrometheusLabelNames(session tools.Session, request mcp.CallToolRequest) (*tools.Result, error) {
+func (t *Tools) listPrometheusLabelNames(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
 	selectors, errResult := params.StringArray(request, "selectors", false, nil)
 	if errResult != nil {
 		return nil, errResult
@@ -190,28 +191,28 @@ func (t *Tools) listPrometheusLabelNames(session tools.Session, request mcp.Call
 		return nil, err
 	}
 
-	api, err := t.renderer.DataAPI(session)
+	api, err := t.renderer.DataAPI()
 	if err != nil {
 		return nil, err
 	}
 	// TODO: should we set a limit?
-	resp, warnings, err := api.LabelNames(session.Context, selectors, timeRange.End, timeRange.End)
+	resp, warnings, err := api.LabelNames(ctx, selectors, timeRange.End, timeRange.End)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get label names: %s", err)
 	}
 	return promJSONResponse(resp, warnings)
 }
 
-func (t *Tools) listPrometheusSeriesMetadata(session tools.Session, request mcp.CallToolRequest) (*tools.Result, error) {
+func (t *Tools) listPrometheusSeriesMetadata(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
 	metric, err := params.String(request, "metric", true, "")
 	if err != nil {
 		return nil, err
 	}
-	api, err := t.renderer.DataAPI(session)
+	api, err := t.renderer.DataAPI()
 	if err != nil {
 		return nil, err
 	}
-	resp, err := api.Metadata(session.Context, metric, "1")
+	resp, err := api.Metadata(ctx, metric, "1")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get series metadata: %s", err)
 	}

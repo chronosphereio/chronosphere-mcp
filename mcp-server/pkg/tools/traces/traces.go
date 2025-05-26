@@ -2,6 +2,7 @@
 package traces
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/chronosphereio/mcp-server/pkg/ptr"
@@ -51,7 +52,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				),
 				params.WithTimeRange(),
 			),
-			Handler: func(session tools.Session, request mcp.CallToolRequest) (*tools.Result, error) {
+			Handler: func(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
 				timeRange, err := params.ParseTimeRange(request)
 				if err != nil {
 					return nil, err
@@ -75,7 +76,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				}
 
 				queryParams := &data_unstable.ListTracesParams{
-					Context:   session.Context,
+					Context:   ctx,
 					StartTime: (*strfmt.DateTime)(ptr.To(timeRange.Start)),
 					EndTime:   (*strfmt.DateTime)(ptr.To(timeRange.End)),
 				}
@@ -94,7 +95,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					queryParams.Operation = &operation
 				}
 
-				api, err := t.clientProvider.DataUnstableClient(session)
+				api, err := t.clientProvider.DataUnstableClient()
 				if err != nil {
 					return nil, err
 				}

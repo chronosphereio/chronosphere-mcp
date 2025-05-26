@@ -19,7 +19,7 @@ type Result struct {
 	ChronosphereLink string
 }
 
-type Handler func(session Session, request mcp.CallToolRequest) (*Result, error)
+type Handler func(ctx context.Context, request mcp.CallToolRequest) (*Result, error)
 
 type Metadata struct {
 	// The name of the tool.
@@ -35,8 +35,7 @@ type Metadata struct {
 }
 
 type Session struct {
-	APIToken string
-	Context  context.Context
+	Context context.Context
 }
 
 type MCPTool struct {

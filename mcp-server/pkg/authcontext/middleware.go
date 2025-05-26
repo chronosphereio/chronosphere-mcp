@@ -1,6 +1,16 @@
 package authcontext
 
-import "net/http"
+import (
+	"context"
+	"net/http"
+	"strings"
+)
+
+// HTTPInboundContextFunc extracts the Authorization header from the HTTP request and sets it in the context.
+func HTTPInboundContextFunc(ctx context.Context, r *http.Request) context.Context {
+	authValue := strings.ReplaceAll(r.Header.Get("Authorization"), "Bearer ", "")
+	return SetSessionAPIToken(ctx, authValue)
+}
 
 // RoundTripper wraps an http.RoundTripper and adds an Authorization header.
 type RoundTripper struct {

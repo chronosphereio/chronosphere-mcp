@@ -37,12 +37,6 @@ type Config struct {
 	Tools     *ToolsConfig    `yaml:"tools"`
 }
 
-type SSETransportConfig struct {
-	Enabled bool   `yaml:"enabled"`
-	Address string `yaml:"address" validate:"nonzero"`
-	BaseURL string `yaml:"baseURL" validate:"nonzero"`
-}
-
 func invoke(p params) (*Transports, error) {
 	cfg := p.Config
 
@@ -59,8 +53,8 @@ func invoke(p params) (*Transports, error) {
 			DisabledTools: disabledTools,
 		},
 		p.Logger,
-		cfg.Transport.StdioTransport,
-		cfg.Transport.SSETransport)
+		&cfg.Transport,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create transports: %v", err)
 	}

@@ -10,7 +10,7 @@ import (
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 
-	"github.com/chronosphereio/mcp-server/generated/stateunstable/stateunstable/state_unstable"
+	"github.com/chronosphereio/chronosphere-mcp/generated/stateunstable/stateunstable/state_unstable"
 )
 
 // Default state unstable API HTTP client.

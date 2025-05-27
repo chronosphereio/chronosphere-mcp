@@ -79,7 +79,7 @@ linters-settings:
     sections:
       - standard
       - default
-      - prefix(github.com/chronosphereio/mcp-server)
+      - prefix(github.com/chronosphereio/chronosphere-mcp)
   dupl:
     # tokens count to trigger issue, 150 by default
     threshold: 100

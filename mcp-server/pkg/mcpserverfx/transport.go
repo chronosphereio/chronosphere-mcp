@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/mcpserver"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/mcpserver"
 
 	"github.com/mark3labs/mcp-go/server"
 	"go.uber.org/zap"

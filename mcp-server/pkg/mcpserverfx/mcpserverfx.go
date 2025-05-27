@@ -7,8 +7,8 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/mcpserver"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/mcpserver"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools"
 )
 
 // Module registers the server.

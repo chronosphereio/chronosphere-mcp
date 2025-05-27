@@ -4,13 +4,13 @@ package toolsfx
 import (
 	"go.uber.org/fx"
 
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/configapi"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/events"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/logs"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/monitors"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/prometheus"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/traces"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/configapi"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/events"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/logs"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/monitors"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/prometheus"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/traces"
 )
 
 var Module = fx.Provide(

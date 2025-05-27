@@ -6,8 +6,8 @@ import (
 
 	"go.uber.org/fx"
 
-	"github.com/chronosphereio/mcp-server/agent/pkg/agentfx"
-	"github.com/chronosphereio/mcp-server/agent/pkg/configfx"
+	"github.com/chronosphereio/chronosphere-mcp/agent/pkg/agentfx"
+	"github.com/chronosphereio/chronosphere-mcp/agent/pkg/configfx"
 )
 
 func main() {

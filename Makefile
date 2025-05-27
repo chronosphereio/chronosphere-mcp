@@ -7,7 +7,7 @@ AGENT_CONFIG_FILE ?= agent.yaml
 ENV_FILE ?= .env
 LIBRECHAT_CONFIG ?= librechat.yaml
 AGENT_INPUTS_FILE ?= agent/resources/inputs.txt
-LDFLAGS ?= -ldflags="-X github.com/chronosphereio/mcp-server/pkg/version.Version=$(shell git describe --tags --always --dirty) -X github.com/chronosphereio/mcp-server/pkg/version.BuildDate=$(shell date -u +%Y-%m-%dT%H:%M:%SZ) -X github.com/chronosphereio/mcp-server/pkg/version.GitCommit=$(shell git rev-parse HEAD)"
+LDFLAGS ?= -ldflags="-X github.com/chronosphereio/chronosphere-mcp/pkg/version.Version=$(shell git describe --tags --always --dirty) -X github.com/chronosphereio/chronosphere-mcp/pkg/version.BuildDate=$(shell date -u +%Y-%m-%dT%H:%M:%SZ) -X github.com/chronosphereio/chronosphere-mcp/pkg/version.GitCommit=$(shell git rev-parse HEAD)"
 
 .PHONY: install-tools
 install-tools: go-version-check

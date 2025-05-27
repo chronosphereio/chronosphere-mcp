@@ -13,7 +13,7 @@ import (
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
 
-	"github.com/chronosphereio/mcp-server/generated/stateunstable/models"
+	"github.com/chronosphereio/chronosphere-mcp/generated/stateunstable/models"
 )
 
 // EchoReader is a Reader for the Echo structure.

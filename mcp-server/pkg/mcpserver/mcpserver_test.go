@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/authcontext"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/authcontext"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools"
 )
 
 func TestLoggingTool_mustHandle(t *testing.T) {

@@ -1,4 +1,4 @@
-module github.com/chronosphereio/mcp-server/tools
+module github.com/chronosphereio/chronosphere-mcp/tools
 
 go 1.24.2
 

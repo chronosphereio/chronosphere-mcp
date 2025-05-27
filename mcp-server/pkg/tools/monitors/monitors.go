@@ -5,14 +5,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/chronosphereio/mcp-server/generated/stateunstable/stateunstable"
-	"github.com/chronosphereio/mcp-server/pkg/ptr"
+	"github.com/chronosphereio/chronosphere-mcp/generated/stateunstable/stateunstable"
+	"github.com/chronosphereio/chronosphere-mcp/pkg/ptr"
 	"github.com/mark3labs/mcp-go/mcp"
 	"go.uber.org/zap"
 
-	"github.com/chronosphereio/mcp-server/generated/stateunstable/stateunstable/state_unstable"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/pkg/params"
+	"github.com/chronosphereio/chronosphere-mcp/generated/stateunstable/stateunstable/state_unstable"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/pkg/params"
 )
 
 var _ tools.MCPTools = (*Tools)(nil)

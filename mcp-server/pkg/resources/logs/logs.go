@@ -5,7 +5,7 @@ import (
 	"context"
 	_ "embed"
 
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/resources"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/resources"
 	"github.com/mark3labs/mcp-go/mcp"
 )
 

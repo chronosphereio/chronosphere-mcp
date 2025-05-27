@@ -17,9 +17,9 @@ import (
 	"go.uber.org/zap"
 	"gopkg.in/validator.v2"
 
-	pkgagent "github.com/chronosphereio/mcp-server/agent/pkg/agent"
-	"github.com/chronosphereio/mcp-server/agent/pkg/configfx"
-	"github.com/chronosphereio/mcp-server/agent/pkg/mcp"
+	pkgagent "github.com/chronosphereio/chronosphere-mcp/agent/pkg/agent"
+	"github.com/chronosphereio/chronosphere-mcp/agent/pkg/configfx"
+	"github.com/chronosphereio/chronosphere-mcp/agent/pkg/mcp"
 )
 
 // Module registers the server.

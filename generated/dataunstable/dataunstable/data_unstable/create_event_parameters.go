@@ -15,7 +15,7 @@ import (
 	cr "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 
-	"github.com/chronosphereio/mcp-server/generated/dataunstable/models"
+	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/models"
 )
 
 // NewCreateEventParams creates a new CreateEventParams object,

@@ -9,11 +9,11 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 	"go.uber.org/zap"
 
-	"github.com/chronosphereio/mcp-server/generated/dataunstable/dataunstable"
-	"github.com/chronosphereio/mcp-server/generated/dataunstable/dataunstable/data_unstable"
-	"github.com/chronosphereio/mcp-server/generated/dataunstable/models"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/pkg/params"
+	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/dataunstable"
+	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/dataunstable/data_unstable"
+	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/models"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/pkg/params"
 )
 
 var _ tools.MCPTools = (*Tools)(nil)

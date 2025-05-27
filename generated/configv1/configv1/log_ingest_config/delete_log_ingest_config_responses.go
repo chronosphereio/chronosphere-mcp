@@ -13,7 +13,7 @@ import (
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
 
-	"github.com/chronosphereio/mcp-server/generated/configv1/models"
+	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/models"
 )
 
 // DeleteLogIngestConfigReader is a Reader for the DeleteLogIngestConfig structure.

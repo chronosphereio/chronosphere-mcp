@@ -11,10 +11,10 @@ import (
 	"github.com/mark3labs/mcp-go/server"
 	"go.uber.org/zap"
 
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/authcontext"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/resources"
-	logresources "github.com/chronosphereio/mcp-server/mcp-server/pkg/resources/logs"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/authcontext"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/resources"
+	logresources "github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/resources/logs"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools"
 )
 
 type Server struct {

@@ -10,11 +10,11 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/clientfx"
-	pkgconfig "github.com/chronosphereio/mcp-server/mcp-server/pkg/config"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/mcpserverfx"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/toolsfx"
-	"github.com/chronosphereio/mcp-server/pkg/links"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/clientfx"
+	pkgconfig "github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/config"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/mcpserverfx"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/toolsfx"
+	"github.com/chronosphereio/chronosphere-mcp/pkg/links"
 )
 
 // New returns the root command.

@@ -10,9 +10,9 @@ import (
 	"github.com/prometheus/client_golang/api"
 	"go.uber.org/fx"
 
-	"github.com/chronosphereio/mcp-server/generated/configv1/configv1"
-	"github.com/chronosphereio/mcp-server/generated/dataunstable/dataunstable"
-	"github.com/chronosphereio/mcp-server/generated/stateunstable/stateunstable"
+	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1"
+	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/dataunstable"
+	"github.com/chronosphereio/chronosphere-mcp/generated/stateunstable/stateunstable"
 )
 
 var (

@@ -13,7 +13,7 @@ import (
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
 
-	"github.com/chronosphereio/mcp-server/generated/dataunstable/models"
+	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/models"
 )
 
 // PollRangeQueryReader is a Reader for the PollRangeQuery structure.

@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools/pkg/params"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/pkg/params"
 	"github.com/mark3labs/mcp-go/mcp"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"

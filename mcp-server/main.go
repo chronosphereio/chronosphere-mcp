@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/cmd"
-	"github.com/chronosphereio/mcp-server/pkg/version"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/cmd"
+	"github.com/chronosphereio/chronosphere-mcp/pkg/version"
 )
 
 func main() {

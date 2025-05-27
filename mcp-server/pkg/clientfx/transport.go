@@ -10,8 +10,8 @@ import (
 	httpruntime "github.com/go-openapi/runtime"
 	httptransport "github.com/go-openapi/runtime/client"
 
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/authcontext"
-	"github.com/chronosphereio/mcp-server/pkg/version"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/authcontext"
+	"github.com/chronosphereio/chronosphere-mcp/pkg/version"
 )
 
 // Component is a value that indicates the part of the CLI that is invoking an

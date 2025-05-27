@@ -4,9 +4,9 @@ package configapi
 import (
 	"go.uber.org/zap"
 
-	configv1client "github.com/chronosphereio/mcp-server/generated/configv1/configv1"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/generated/tools/configv1"
-	"github.com/chronosphereio/mcp-server/mcp-server/pkg/tools"
+	configv1client "github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/generated/tools/configv1"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools"
 )
 
 var _ tools.MCPTools = (*Tools)(nil)

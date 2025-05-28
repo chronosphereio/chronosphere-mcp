@@ -9,7 +9,7 @@ server:
       enabled: false
     http:
       enabled: false
-      address: :8081
+      address: 0.0.0.0:8081
 
   tools:
     # List of tools to disable if you don't want to serve them to the client/host.

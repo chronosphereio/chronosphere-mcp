@@ -2,7 +2,7 @@ server:
   transport:
     http:
       enabled: true
-      address: :8081
+      address: 0.0.0.0:8081
     sse:
       enabled: false
       address: 0.0.0.0:8080

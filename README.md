@@ -17,7 +17,7 @@ make chronomcp
       "command": "<PATH/TO/REPO>/bin/chronomcp",
       "args": [
         "-c",
-        "/Users/c/code/mcp-server/config.yaml"
+        "<PATH/TO/REPO>/config.yaml"
       ],
       "env": {
         "CHRONOSPHERE_ORG_NAME": "<your org here>",
@@ -45,9 +45,9 @@ make run-chronomcp CHRONOSPHERE_ORG_NAME=<your org here>
 
 The MCP project provides an inspector useful for directly calling tools APIs. To use:
 
-1. Change baseURL in config.yaml to be 0.0.0.0/sse instead of docker
+1. Start the MCP server with streamable http transport `make run-chronomcp CONFIG_FILE=./config.http.yaml CHRONOSPHERE_ORG_NAME=<your org here>`
 1. Run `npx @modelcontextprotocol/inspector node build/index.js`.
-1. Open http://127.0.0.1:6274/#resources , fill in `http://0.0.0.0:8080/sse` in the URL, with transport type SSE.
+1. Open http://localhost:6274/#resources , fill in `http://0.0.0.0:8081/mcp` in the URL, with transport type Streamable HTTP.
 
 ## Librechat agent (experimental)
 See [chat/README.md](chat/README.md)

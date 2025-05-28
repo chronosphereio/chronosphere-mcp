@@ -48,3 +48,8 @@ vendor/
 /debug.test
 
 .claude
+.github_release_token
+dist
+
+CLAUDE.md
+CODEX.md

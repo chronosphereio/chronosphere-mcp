@@ -2,7 +2,7 @@ tools_bin_path            := $(abspath ./_tools/bin)
 server_bin_path           := $(abspath ./bin/chronomcp)
 agent_bin_path           := $(abspath ./bin/agent)
 
-CONFIG_FILE ?= config.http.yaml
+CONFIG_FILE ?= config.httGp.yaml
 AGENT_CONFIG_FILE ?= agent.yaml
 ENV_FILE ?= .env
 LIBRECHAT_CONFIG ?= librechat.yaml
@@ -12,6 +12,7 @@ LDFLAGS ?= -ldflags="-X github.com/chronosphereio/chronosphere-mcp/pkg/version.V
 .PHONY: install-tools
 install-tools: go-version-check
 	cd tools && GOBIN=$(tools_bin_path) go install  github.com/go-swagger/go-swagger/cmd/swagger  github.com/golangci/golangci-lint/cmd/golangci-lint
+	GOBIN=$(tools_bin_path) go install github.com/goreleaser/goreleaser/v2@latest
 
 .PHONY: go-version-check
 go-version-check:
@@ -99,3 +100,18 @@ all-gen: swagger-gen tools-gen
 
 test-all-gen: tidy all-gen
 	./scripts/check-branch.sh
+
+.PHONY: release-dry-run
+release-dry-run: install-tools
+	@echo "--- :package: Running GoReleaser dry-run (build + package without publishing)"
+	$(tools_bin_path)/goreleaser release --snapshot --skip=publish --clean
+
+.PHONY: release-snapshot
+release-snapshot: install-tools
+	@echo "--- :package: Building snapshot binaries only"
+	$(tools_bin_path)/goreleaser build --snapshot --clean
+
+.PHONY: release
+release: install-tools
+	@echo "--- :package: Creating and publishing release"
+	$(tools_bin_path)/goreleaser release --clean

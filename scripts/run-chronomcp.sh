@@ -15,7 +15,7 @@ if [ -z "${CHRONOSPHERE_ORG_NAME:-}" ]; then
 fi
 
 echo "Starting MCP server..."
-ARGS=()
+ARGS=""
 if [ -z "${CHRONOSPHERE_API_TOKEN:-}" ]; then
   if [ ! -f .chronosphere_api_token ]; then
     echo "Either CHRONOSPHERE_API_TOKEN needs to be set or .chronosphere_api_token file must contain the chronosphere api token";

@@ -55,12 +55,7 @@ chronomcp:
 	go build $(LDFLAGS) -o $(server_bin_path) ./mcp-server
 
 run-chronomcp: chronomcp
-	if [ ! -f $(CONFIG_FILE) ]; then \
-		echo "Config file $(CONFIG_FILE) not found"; \
-		exit 1; \
-	fi
-	@echo "Starting MCP server..."
-	$(server_bin_path) -c $(CONFIG_FILE) --org-name $(CHRONOSPHERE_ORG_NAME) --api-token-filename .chronosphere_api_token --verbose
+	CONFIG_FILE=$(CONFIG_FILE) ./scripts/run-chronomcp.sh $(server_bin_path)
 
 build-server: chronomcp # alias for backwards compatibility
 

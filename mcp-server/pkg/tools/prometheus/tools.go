@@ -83,7 +83,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 		{
 			Metadata: tools.NewMetadata("list_prometheus_series",
 				mcp.WithDescription("Returns the list of time series that match a certain label set."),
-				mcp.WithArray("selectors",
+				params.WithStringArray("selectors",
 					mcp.Description("Repeated series selector arguments that select the series to return. At least one selector must be provided."),
 					mcp.Required(),
 				),
@@ -98,7 +98,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					mcp.Description("The label name for which values should be returned. Required."),
 					mcp.Required(),
 				),
-				mcp.WithArray("selectors",
+				params.WithStringArray("selectors",
 					mcp.Description("Repeated series selector argument that selects the series to return. This is an array of strings. Optional."),
 				),
 				params.WithTimeRange(),
@@ -108,7 +108,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 		{
 			Metadata: tools.NewMetadata("list_prometheus_label_names",
 				mcp.WithDescription("returns the list of all label names that (optionally) match a set of selectors and/or were present during a given time range."),
-				mcp.WithArray("selectors",
+				params.WithStringArray("selectors",
 					mcp.Description("Repeated series selector argument that selects the series to return. This is an array of strings. Optional."),
 				),
 				params.WithTimeRange(),

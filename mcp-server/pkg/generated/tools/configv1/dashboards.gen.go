@@ -52,7 +52,7 @@ func ListDashboards(api *configv1.ConfigV1API, logger *zap.Logger) tools.MCPTool
 		Metadata: tools.NewMetadata("list_dashboards",
 			mcp.WithDescription("List dashboards resources"),
 
-			mcp.WithArray("collection_slugs",
+			params.WithStringArray("collection_slugs",
 				mcp.Description("Filters results by collection_slug, where any Dashboard with a matching collection_slug in the given list (and matches all other filters) is returned."),
 			),
 
@@ -60,7 +60,7 @@ func ListDashboards(api *configv1.ConfigV1API, logger *zap.Logger) tools.MCPTool
 				mcp.Description("Optional flag to populate the dashboard_json of the returned dashboards. By default, dashboard_json will be left empty."),
 			),
 
-			mcp.WithArray("names",
+			params.WithStringArray("names",
 				mcp.Description("Filters results by name, where any Dashboard with a matching name in the given list (and matches all other filters) is returned."),
 			),
 
@@ -72,7 +72,7 @@ func ListDashboards(api *configv1.ConfigV1API, logger *zap.Logger) tools.MCPTool
 				mcp.Description("Opaque page token identifying which page to request. An empty token identifies the first page."),
 			),
 
-			mcp.WithArray("slugs",
+			params.WithStringArray("slugs",
 				mcp.Description("Filters results by slug, where any Dashboard with a matching slug in the given list (and matches all other filters) is returned."),
 			),
 		),

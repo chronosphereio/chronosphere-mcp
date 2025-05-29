@@ -22,7 +22,7 @@ func {{ $toolSpec.CamelName }}(api *configv1.ConfigV1API, logger *zap.Logger) to
         Metadata: tools.NewMetadata({{ printf "%q" $toolSpec.SnakeName }},
             mcp.WithDescription({{ printf "%q" $toolSpec.Description }}),
             {{ range $idx, $param := $toolSpec.Parameters }}
-                mcp.With{{$param.MCPType}}({{ printf "%q" $param.Name }},
+                {{$param.MCPParamFunc}}({{ printf "%q" $param.Name }},
                     mcp.Description({{ printf "%q" $param.Description }}),
                     {{ if $param.Required -}}
                         mcp.Required(),

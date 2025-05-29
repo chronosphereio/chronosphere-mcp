@@ -260,6 +260,13 @@ func stringArrayParser(param interface{}) ([]string, error) {
 	}
 }
 
+func WithStringArray(name string, opts ...mcp.PropertyOption) mcp.ToolOption {
+	opts = append(opts, mcp.Items(map[string]any{
+		"type": "string",
+	}))
+	return mcp.WithArray(name, opts...)
+}
+
 // StringArray parses a string array parameter and returns the value and any tool result error
 func StringArray(request mcp.CallToolRequest, key string, required bool, defaultValue []string) ([]string, error) {
 	return parse(request, key, required, defaultValue, stringArrayParser)

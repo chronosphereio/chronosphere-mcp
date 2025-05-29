@@ -47,7 +47,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				mcp.WithString("operation",
 					mcp.Description("Optional. Operation to filter traces. Can not be used with trace_ids"),
 				),
-				mcp.WithArray("trace_ids",
+				params.WithStringArray("trace_ids",
 					mcp.Description("Optional. Trace IDs to filter traces. Can not be used with service or operation"),
 				),
 				params.WithTimeRange(),

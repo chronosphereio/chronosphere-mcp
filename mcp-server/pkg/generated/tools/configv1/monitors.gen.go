@@ -52,15 +52,15 @@ func ListMonitors(api *configv1.ConfigV1API, logger *zap.Logger) tools.MCPTool {
 		Metadata: tools.NewMetadata("list_monitors",
 			mcp.WithDescription("List monitors resources"),
 
-			mcp.WithArray("bucket_slugs",
+			params.WithStringArray("bucket_slugs",
 				mcp.Description("Filters results by bucket_slug, where any Monitor with a matching bucket_slug in the given list (and matches all other filters) is returned."),
 			),
 
-			mcp.WithArray("collection_slugs",
+			params.WithStringArray("collection_slugs",
 				mcp.Description("Filters results by collection_slug, where any Monitor with a matching collection_slug in the given list (and matches all other filters) is returned."),
 			),
 
-			mcp.WithArray("names",
+			params.WithStringArray("names",
 				mcp.Description("Filters results by name, where any Monitor with a matching name in the given list (and matches all other filters) is returned."),
 			),
 
@@ -72,11 +72,11 @@ func ListMonitors(api *configv1.ConfigV1API, logger *zap.Logger) tools.MCPTool {
 				mcp.Description("Opaque page token identifying which page to request. An empty token identifies the first page."),
 			),
 
-			mcp.WithArray("slugs",
+			params.WithStringArray("slugs",
 				mcp.Description("Filters results by slug, where any Monitor with a matching slug in the given list (and matches all other filters) is returned."),
 			),
 
-			mcp.WithArray("team_slugs",
+			params.WithStringArray("team_slugs",
 				mcp.Description("Filter returned monitors by the teams that own the collections that they belong to."),
 			),
 		),

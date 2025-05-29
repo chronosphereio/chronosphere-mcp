@@ -296,7 +296,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				mcp.WithDescription("Get histogram of logs from a given query"),
 				withLogQueryParam(),
 				params.WithTimeRange(),
-				mcp.WithArray("group_by",
+				params.WithStringArray("group_by",
 					mcp.Description(`Log fields to group results within each bucket. May be "service", "severity" or any label name, or unset to have one group per bucket.`),
 				),
 			),

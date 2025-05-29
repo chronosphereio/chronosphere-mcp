@@ -21,8 +21,8 @@ type ParameterSpec struct {
 	Name        string
 	GoName      string
 	Description string
-	// MCPType is the type for the mcp framework
-	MCPType      string
+	// MCPParamFunc is the type for the mcp framework
+	MCPParamFunc string
 	ParseType    string
 	DefaultValue string
 	Required     bool
@@ -121,7 +121,7 @@ func convertToolSpec(entityName string, action string, command *clispec.Command)
 			GoName:             uncapitalize(camelCase(param.Name)),
 			SwaggerGoFieldName: acronymReplace(camelCase(param.Name)),
 			Description:        param.Description,
-			MCPType:            goTypeToMCPType(param.GoType),
+			MCPParamFunc:       goTypeToMCPParamFunc(param.GoType),
 			ParseType:          goTypeToParamParseType(param.GoType),
 			DefaultValue:       getDefaultValue(param.GoType),
 			Required:           param.Required,
@@ -170,17 +170,17 @@ func goTypeToParamParseType(goType string) string {
 	return goType
 }
 
-// goTypeToMCPType converts a Go type to the corresponding mcp.With${type}.
-func goTypeToMCPType(goType string) string {
+// goTypeToMCPParamFunc converts a Go type to the corresponding mcp.With${type}.
+func goTypeToMCPParamFunc(goType string) string {
 	switch goType {
 	case "string":
-		return "String"
+		return "mcp.WithString"
 	case "bool":
-		return "Boolean"
+		return "mcp.WithBoolean"
 	case "int":
-		return "Number"
+		return "mcp.WithNumber"
 	case "[]string":
-		return "Array"
+		return "params.WithStringArray"
 	}
 
 	log.Fatalf("unsupported type: %s", goType)

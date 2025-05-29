@@ -52,11 +52,11 @@ func ListSlos(api *configv1.ConfigV1API, logger *zap.Logger) tools.MCPTool {
 		Metadata: tools.NewMetadata("list_slos",
 			mcp.WithDescription("List slos resources"),
 
-			mcp.WithArray("collection_slugs",
+			params.WithStringArray("collection_slugs",
 				mcp.Description(""),
 			),
 
-			mcp.WithArray("names",
+			params.WithStringArray("names",
 				mcp.Description("Filters results by name, where any SLO with a matching name in the given list (and matches all other filters) is returned."),
 			),
 
@@ -68,11 +68,11 @@ func ListSlos(api *configv1.ConfigV1API, logger *zap.Logger) tools.MCPTool {
 				mcp.Description("Opaque page token identifying which page to request. An empty token identifies the first page."),
 			),
 
-			mcp.WithArray("service_slugs",
+			params.WithStringArray("service_slugs",
 				mcp.Description(""),
 			),
 
-			mcp.WithArray("slugs",
+			params.WithStringArray("slugs",
 				mcp.Description("Filters results by slug, where any SLO with a matching slug in the given list (and matches all other filters) is returned."),
 			),
 		),

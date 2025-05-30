@@ -13,6 +13,7 @@ import (
 	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1"
 	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/dataunstable"
 	"github.com/chronosphereio/chronosphere-mcp/generated/stateunstable/stateunstable"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/clientfx/logscale"
 )
 
 var (
@@ -34,6 +35,7 @@ type Provider struct {
 	ConfigV1       *configv1.ConfigV1API
 	DataUnstable   *dataunstable.DataUnstableAPI
 	StateUnstable  *stateunstable.StateUnstableAPI
+	LogScale       logscale.Client `fx:"logscaleClient"`
 }
 
 func NewProvider(apiConfig *APIConfig) (Provider, error) {
@@ -46,11 +48,21 @@ func NewProvider(apiConfig *APIConfig) (Provider, error) {
 	if err != nil {
 		return Provider{}, fmt.Errorf("could not create Prometheus data client: %v", err)
 	}
+
+	rt := newRoundTripper(http.DefaultTransport, _component, apiConfig.APIToken)
+	logscaleClient, err := logscale.New(&logscale.Options{
+		URL:       apiConfig.APIURL + "/logscale",
+		Transport: rt,
+	})
+	if err != nil {
+		return Provider{}, fmt.Errorf("could not create LogScale client: %w", err)
+	}
 	return Provider{
 		PrometheusData: promClient,
 		ConfigV1:       configv1.New(t, strfmt.Default),
 		DataUnstable:   dataunstable.New(t, strfmt.Default),
 		StateUnstable:  stateunstable.New(t, strfmt.Default),
+		LogScale:       logscaleClient,
 	}, nil
 }
 

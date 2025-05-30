@@ -33,6 +33,10 @@ func NewTools(api api.Client, logger *zap.Logger) (*Tools, error) {
 	}, nil
 }
 
+func (t *Tools) GroupName() string {
+	return "metrics"
+}
+
 // MCPTools returns the list of tools that this package provides.
 func (t *Tools) MCPTools() []tools.MCPTool {
 	// Metrics-related tools

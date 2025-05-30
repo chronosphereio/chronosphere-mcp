@@ -30,8 +30,9 @@ func getAllTools(t *testing.T) []tools.MCPTool {
 		// Provide test API config (with empty values for testing)
 		fx.Provide(func() *clientfx.APIConfig {
 			return &clientfx.APIConfig{
-				APIURL:   "https://test.chronosphere.io",
-				APIToken: "test-token",
+				APIURL:      "https://test.chronosphere.io",
+				APIToken:    "test-token",
+				LogscaleURL: "https://test.logs.chronosphere.io",
 			}
 		}),
 		// Provide links builder

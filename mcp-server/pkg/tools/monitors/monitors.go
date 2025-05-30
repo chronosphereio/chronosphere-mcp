@@ -33,6 +33,10 @@ func NewTools(api *stateunstable.StateUnstableAPI, logger *zap.Logger) (*Tools, 
 	}, nil
 }
 
+func (t *Tools) GroupName() string {
+	return "monitors"
+}
+
 // Using the StateUnstableClient method from the Provider
 
 // MCPTools returns the list of monitor tools.

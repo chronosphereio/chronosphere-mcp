@@ -65,5 +65,6 @@ func (t MCPTool) MCPGoTool() mcp.Tool {
 }
 
 type MCPTools interface {
+	GroupName() string
 	MCPTools() []MCPTool
 }

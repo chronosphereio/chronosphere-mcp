@@ -36,6 +36,10 @@ func NewTools(
 	}, nil
 }
 
+func (t *Tools) GroupName() string {
+	return "events"
+}
+
 func (t *Tools) MCPTools() []tools.MCPTool {
 	return []tools.MCPTool{
 		{

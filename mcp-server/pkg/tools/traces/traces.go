@@ -35,6 +35,10 @@ func NewTools(
 	}, nil
 }
 
+func (t *Tools) GroupName() string {
+	return "traces"
+}
+
 // MCPTools returns a list of MCP tools related to traces.
 func (t *Tools) MCPTools() []tools.MCPTool {
 	return []tools.MCPTool{

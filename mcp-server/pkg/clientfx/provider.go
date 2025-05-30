@@ -24,8 +24,11 @@ var (
 )
 
 type APIConfig struct {
-	APIURL   string
-	APIToken string
+	APIURL           string
+	APIToken         string
+	LogscaleURL      string
+	LogscaleAPIToken string
+	UseLogscale      bool
 }
 
 type Provider struct {
@@ -49,9 +52,10 @@ func NewProvider(apiConfig *APIConfig) (Provider, error) {
 		return Provider{}, fmt.Errorf("could not create Prometheus data client: %v", err)
 	}
 
-	rt := newRoundTripper(http.DefaultTransport, _component, apiConfig.APIToken)
+	rt := newRoundTripper(http.DefaultTransport, _component, apiConfig.LogscaleAPIToken)
 	logscaleClient, err := logscale.New(&logscale.Options{
-		URL:       apiConfig.APIURL + "/logscale",
+		URL:       apiConfig.LogscaleURL,
+		APIToken:  apiConfig.LogscaleAPIToken,
 		Transport: rt,
 	})
 	if err != nil {

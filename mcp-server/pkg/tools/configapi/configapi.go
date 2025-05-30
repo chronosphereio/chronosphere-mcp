@@ -29,6 +29,10 @@ func NewTools(
 	}, nil
 }
 
+func (t *Tools) GroupName() string {
+	return "configapi"
+}
+
 func (t *Tools) MCPTools() []tools.MCPTool {
 	return []tools.MCPTool{
 		configv1.GetMonitor(t.client, t.logger),

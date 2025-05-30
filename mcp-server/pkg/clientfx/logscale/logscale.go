@@ -29,11 +29,14 @@ type Client interface {
 type client struct {
 	tenantURL *url.URL
 	client    *http.Client
+	apiToken  string
 }
 
 // Options are options for the logscale query client.
 type Options struct {
 	URL string // required
+	// APIToken for logscale (this is different from the Chronosphere API token).
+	APIToken string
 	// Transport is an optional RoundTripper that is used as the transport for the http request.
 	// If not set, the http.DefaultTransport is used.
 	Transport http.RoundTripper
@@ -65,6 +68,7 @@ func New(opts *Options) (Client, error) {
 	return &client{
 		tenantURL: tenantURL,
 		client:    &http.Client{Transport: rt},
+		apiToken:  opts.APIToken,
 	}, nil
 }
 
@@ -89,6 +93,7 @@ func (c *client) Query(ctx context.Context, query, repository string, start, end
 	}
 	req.Header.Set("Content-Type", contentType)
 	req.Header.Set("Accept", contentType)
+	req.Header.Set("Authorization", "Bearer "+c.apiToken)
 
 	resp, err := c.client.Do(req)
 	if err != nil {

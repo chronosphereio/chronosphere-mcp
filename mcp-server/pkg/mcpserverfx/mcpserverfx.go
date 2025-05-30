@@ -7,6 +7,7 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/clientfx"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/mcpserver"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools"
 )
@@ -26,6 +27,7 @@ type params struct {
 	Config     *Config
 	Logger     *zap.Logger
 	ToolGroups []tools.MCPTools `group:"mcp_tools"`
+	APIConfig  *clientfx.APIConfig
 }
 
 type ToolsConfig struct {
@@ -51,6 +53,7 @@ func invoke(p params) (*Transports, error) {
 			Logger:        p.Logger,
 			ToolGroups:    p.ToolGroups,
 			DisabledTools: disabledTools,
+			UseLogscale:   p.APIConfig.UseLogscale,
 		},
 		p.Logger,
 		&cfg.Transport,

@@ -14,7 +14,10 @@ const (
 	ChronosphereOrgNameKey = "CHRONOSPHERE_ORG_NAME"
 	// ChronosphereAPITokenKey is the environment variable that specifies the Chronosphere API token
 	ChronosphereAPITokenKey = "CHRONOSPHERE_API_TOKEN"
-	apiURLFormat            = "https://%s.chronosphere.io"
+	// LogscaleAPITokenKey is the environment variable that specifies the LogScale API token
+	LogscaleAPITokenKey = "LOGSCALE_API_TOKEN"
+	apiURLFormat        = "https://%s.chronosphere.io"
+	logscaleURLFormat   = "https://%s.logs.chronosphere.io"
 )
 
 type Flags struct {
@@ -24,6 +27,7 @@ type Flags struct {
 	apiURL           string
 	ConfigFilePath   string
 	VerboseLogging   bool
+	UseLogScale      bool
 }
 
 // AddFlags adds client flags to a Cobra command.
@@ -33,9 +37,20 @@ func (f *Flags) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&f.apiToken, "api-token", "", "The client API token used to authenticate to user. Mutally exclusive with --api-token-filename. If both --api-token and --api-token-filename are unset, the "+ChronosphereAPITokenKey+" environment variable is used.")
 	cmd.Flags().StringVar(&f.apiTokenFileName, "api-token-filename", "", "A file containing the API token used for authentication. Mutally exclusive with --api-token. If both --api-token and --api-token-filename are unset, the "+ChronosphereAPITokenKey+" environment variable is used.")
 	cmd.Flags().StringVar(&f.orgName, "org-name", "", "The name of your team's Chronosphere organization. Defaults to "+ChronosphereOrgNameKey+" environment variable.")
+	cmd.Flags().BoolVar(&f.UseLogScale, "use-logscale", false, "Whether to use LogScale instead of chronosphere logs for log queries. If set, the LogScale API token must be provided via the LOGSCALE_API_TOKEN environment variable.")
 
 	cmd.Flags().StringVar(&f.apiURL, "api-url", f.apiURL, "The URL of the Chronosphere API. Defaults to https://<organization>.chronosphere.io/api.")
 	cmd.Flags().MarkHidden("api-url") //nolint:errcheck
+}
+
+func (f *Flags) GetLogscaleAPIToken() (string, error) {
+	if f.UseLogScale {
+		if token := os.Getenv(LogscaleAPITokenKey); token != "" {
+			return token, nil
+		}
+		return "", errors.New("LogScale API token must be provided via the " + LogscaleAPITokenKey + " environment variable")
+	}
+	return "", nil
 }
 
 func (f *Flags) GetAPIToken() (string, error) {
@@ -72,4 +87,16 @@ func (f *Flags) GetAPIURL() (string, error) {
 		}
 	}
 	return fmt.Sprintf(apiURLFormat, f.orgName), nil
+}
+
+func (f *Flags) GetLogscaleURL() (string, error) {
+	if f.UseLogScale {
+		if f.orgName == "" {
+			if f.orgName = os.Getenv(ChronosphereOrgNameKey); f.orgName == "" {
+				return "", errors.New("org name must be provided as a flag or via the " + ChronosphereOrgNameKey + " environment variable")
+			}
+		}
+		return fmt.Sprintf(logscaleURLFormat, f.orgName), nil
+	}
+	return "", nil
 }

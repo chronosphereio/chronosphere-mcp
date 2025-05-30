@@ -6,17 +6,17 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/dataunstable"
-	"github.com/chronosphereio/chronosphere-mcp/pkg/links"
-	"github.com/chronosphereio/chronosphere-mcp/pkg/ptr"
 	"github.com/go-openapi/strfmt"
 	"github.com/mark3labs/mcp-go/mcp"
 	"go.uber.org/zap"
 
+	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/dataunstable"
 	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/dataunstable/data_unstable"
 	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/models"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/pkg/params"
+	"github.com/chronosphereio/chronosphere-mcp/pkg/links"
+	"github.com/chronosphereio/chronosphere-mcp/pkg/ptr"
 )
 
 var _ tools.MCPTools = (*Tools)(nil)
@@ -35,6 +35,10 @@ func NewTools(api *dataunstable.DataUnstableAPI, logger *zap.Logger, linkBuilder
 		api:         api,
 		linkBuilder: linkBuilder,
 	}, nil
+}
+
+func (t *Tools) GroupName() string {
+	return "logs"
 }
 
 // CompactLogSummary represents a compact version of log query results

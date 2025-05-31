@@ -23,12 +23,27 @@ var (
 	)
 )
 
-type APIConfig struct {
-	APIURL           string
-	APIToken         string
-	LogscaleURL      string
-	LogscaleAPIToken string
-	UseLogscale      bool
+type ChronosphereConfig struct {
+	APIURL           string `yaml:"apiURL" validate:"nonzero"`
+	APIToken         string `yaml:"apiToken"`
+	UseLogscale      bool   `yaml:"useLogscale"`
+	LogscaleURL      string `yaml:"logscaleURL" validate:"nonzero"`
+	LogscaleAPIToken string `yaml:"logscaleAPIToken"`
+}
+
+func (c *ChronosphereConfig) Validate() error {
+	if c.APIURL == "" {
+		return fmt.Errorf("apiURL must be set")
+	}
+	if c.UseLogscale {
+		if c.LogscaleURL == "" {
+			return fmt.Errorf("logscaleURL must be set")
+		}
+		if c.LogscaleAPIToken == "" {
+			return fmt.Errorf("logscaleAPIToken must be set")
+		}
+	}
+	return nil
 }
 
 type Provider struct {
@@ -41,7 +56,7 @@ type Provider struct {
 	LogScale       logscale.Client `fx:"logscaleClient"`
 }
 
-func NewProvider(apiConfig *APIConfig) (Provider, error) {
+func NewProvider(apiConfig *ChronosphereConfig) (Provider, error) {
 	t, err := transportForSession(apiConfig, "")
 	if err != nil {
 		return Provider{}, fmt.Errorf("could not construct Chronosphere config v1 API client: %v", err)
@@ -70,7 +85,7 @@ func NewProvider(apiConfig *APIConfig) (Provider, error) {
 	}, nil
 }
 
-func prometheusClientForBasePath(config *APIConfig, basePath string) (api.Client, error) {
+func prometheusClientForBasePath(config *ChronosphereConfig, basePath string) (api.Client, error) {
 	rt := newRoundTripper(http.DefaultTransport, _component, config.APIToken)
 
 	cl, err := api.NewClient(api.Config{
@@ -83,7 +98,7 @@ func prometheusClientForBasePath(config *APIConfig, basePath string) (api.Client
 	return cl, nil
 }
 
-func transportForSession(config *APIConfig, basePath string) (*openapiclient.Runtime, error) {
+func transportForSession(config *ChronosphereConfig, basePath string) (*openapiclient.Runtime, error) {
 	return newSwaggerRuntime(swaggerRuntimeConfig{
 		component: _component,
 		apiURL:    fmt.Sprintf("%s%s", config.APIURL, basePath),

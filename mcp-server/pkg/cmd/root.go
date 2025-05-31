@@ -34,32 +34,10 @@ func New() *cobra.Command {
 				fx.Provide(func() (config.Provider, error) {
 					return pkgconfig.ParseFile(flags.ConfigFilePath)
 				}),
-				fx.Provide(func() (*clientfx.APIConfig, error) {
-					apiURL, err := flags.GetAPIURL()
-					if err != nil {
-						return nil, err
-					}
-					apiToken, err := flags.GetAPIToken()
-					if err != nil {
-						return nil, err
-					}
-					logcaleToken, err := flags.GetLogscaleAPIToken()
-					if err != nil {
-						return nil, err
-					}
-					logscaleURL, err := flags.GetLogscaleURL()
-					if err != nil {
-						return nil, err
-					}
-					return &clientfx.APIConfig{
-						APIURL:           apiURL,
-						APIToken:         apiToken,
-						LogscaleURL:      logscaleURL,
-						LogscaleAPIToken: logcaleToken,
-						UseLogscale:      flags.UseLogScale,
-					}, nil
+				fx.Provide(func() *mcpserverfx.Flags {
+					return flags
 				}),
-				fx.Provide(func(apiConfig *clientfx.APIConfig) *links.Builder {
+				fx.Provide(func(apiConfig *clientfx.ChronosphereConfig) *links.Builder {
 					return links.NewBuilder(apiConfig.APIURL)
 				}),
 				clientfx.Module,

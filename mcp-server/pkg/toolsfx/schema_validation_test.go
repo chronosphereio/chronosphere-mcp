@@ -28,8 +28,8 @@ func getAllTools(t *testing.T) []tools.MCPTool {
 			return zap.NewNop()
 		}),
 		// Provide test API config (with empty values for testing)
-		fx.Provide(func() *clientfx.APIConfig {
-			return &clientfx.APIConfig{
+		fx.Provide(func() *clientfx.ChronosphereConfig {
+			return &clientfx.ChronosphereConfig{
 				APIURL:      "https://test.chronosphere.io",
 				APIToken:    "test-token",
 				LogscaleURL: "https://test.logs.chronosphere.io",

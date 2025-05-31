@@ -19,7 +19,7 @@ import (
 
 // New returns the root command.
 func New() *cobra.Command {
-	flags := &Flags{}
+	flags := &mcpserverfx.Flags{}
 	cmd := &cobra.Command{
 		Use:   "chronomcp",
 		Short: "chronomcp provides an MCP server to AI applications",

@@ -19,6 +19,14 @@ type TransportConfig struct {
 	HTTPTransport  *HTTPTransportConfig  `yaml:"http"`
 }
 
+func (t TransportConfig) Validate() error {
+	if !t.HTTPTransport.IsEnabled() && !t.SSETransport.IsEnabled() && !t.StdioTransport.IsEnabled() {
+		return errors.New("at least one transport must be enabled")
+	}
+
+	return nil
+}
+
 type SSETransportConfig struct {
 	Enabled bool   `yaml:"enabled"`
 	Address string `yaml:"address" validate:"nonzero"`
@@ -63,10 +71,8 @@ func NewTransports(
 	logger *zap.Logger,
 	transportConfig *TransportConfig,
 ) (*Transports, error) {
-	if !transportConfig.StdioTransport.IsEnabled() &&
-		!transportConfig.SSETransport.IsEnabled() &&
-		!transportConfig.HTTPTransport.IsEnabled() {
-		return nil, errors.New("at least one transport must be enabled")
+	if err := transportConfig.Validate(); err != nil {
+		return nil, err
 	}
 
 	s, err := mcpserver.NewServer(opts, logger)

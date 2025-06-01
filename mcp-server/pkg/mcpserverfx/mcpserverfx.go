@@ -27,7 +27,6 @@ type params struct {
 	Config     *Config
 	Logger     *zap.Logger
 	ToolGroups []tools.MCPTools `group:"mcp_tools"`
-	APIConfig  *clientfx.APIConfig
 }
 
 type ToolsConfig struct {
@@ -35,8 +34,19 @@ type ToolsConfig struct {
 }
 
 type Config struct {
-	Transport TransportConfig `yaml:"transport"`
-	Tools     *ToolsConfig    `yaml:"tools"`
+	Transport    TransportConfig             `yaml:"transport"`
+	Tools        *ToolsConfig                `yaml:"tools"`
+	Chronosphere clientfx.ChronosphereConfig `yaml:"chronosphere" validate:"nonnil"`
+}
+
+func (c Config) Validate() error {
+	if err := c.Chronosphere.Validate(); err != nil {
+		return fmt.Errorf("chronosphere config validation failed: %w", err)
+	}
+	if err := c.Transport.Validate(); err != nil {
+		return fmt.Errorf("transport config validation failed: %w", err)
+	}
+	return nil
 }
 
 func invoke(p params) (*Transports, error) {
@@ -53,7 +63,7 @@ func invoke(p params) (*Transports, error) {
 			Logger:        p.Logger,
 			ToolGroups:    p.ToolGroups,
 			DisabledTools: disabledTools,
-			UseLogscale:   p.APIConfig.UseLogscale,
+			UseLogscale:   cfg.Chronosphere.UseLogscale,
 		},
 		p.Logger,
 		&cfg.Transport,

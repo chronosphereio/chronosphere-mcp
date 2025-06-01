@@ -36,9 +36,8 @@ make chronomcp
 This MCP server uses the same authentication methods as chronoctl. By default, the Makefile expects the API token to be stored in `.chronosphere_api_token`.
 
 #### Run the mcp server
-Create a `.chronosphere_api_token` file in the root of the repo with your Chronosphere API token.
 ```sh
-make run-chronomcp CHRONOSPHERE_ORG_NAME=<your org here>
+make run-chronomcp CHRONOSPHERE_ORG_NAME=<your org here> CHRONOSPHERE_API_TOKEN=<your api token here>
 ```
 
 ### Debugging MCP Tools

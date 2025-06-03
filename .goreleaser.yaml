@@ -1,0 +1,93 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: chronomcp
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    main: ./mcp-server
+    binary: chronomcp
+    ldflags:
+      - -s -w
+      - -X github.com/chronosphereio/chronosphere-mcp/pkg/version.Version={{.Version}}
+      - -X github.com/chronosphereio/chronosphere-mcp/pkg/version.BuildDate={{.Date}}
+      - -X github.com/chronosphereio/chronosphere-mcp/pkg/version.GitCommit={{.FullCommit}}
+
+archives:
+  - id: chronomcp
+    files:
+      - README.md
+      - LICENSE*
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  use: github
+  sort: asc
+  abbrev: 0
+  groups:
+    - title: '🚀 Features'
+      regexp: '^.*feat(\(.+\))??!?:.+$'  # uses "!" to indicate a breaking change
+      order: 100
+    - title: '🐛 Bug Fixes'
+      regexp: '^.*fix(\(.+\))??!?:.+$'
+      order: 200
+    - title: '📖 Documentation'
+      regexp: '^.*docs(\(.+\))??!?:.+$'
+      order: 300
+    - title: '🏠 Housekeeping'
+      regexp: '^.*chore(\(.+\))??!?:.+$'
+      order: 400
+    - title: 'Other'
+      order: 999
+  filters:
+    exclude:
+      - '^test:'
+      - '^scripts:'
+      - '^Merge pull request'
+      - '^Merge branch'
+
+release:
+  github:
+    owner: chronosphereio
+    name: chronosphere-mcp
+  draft: false
+  prerelease: auto
+  make_latest: true # update latest release tag.
+  header: |
+    ## What's Changed in {{.Tag}}
+  footer: |
+    ## Installation
+
+    Download binaries from the [releases page]({{.ReleaseURL}}) or install via:
+    ```bash
+    go install github.com/chronosphereio/chronosphere-mcp@{{.Tag}}
+    ```
+
+    **Full Changelog**: {{.ReleaseURL}}/compare/{{.PreviousTag}}...{{.Tag}}
+
+env_files:
+  github_token: ~/.github_release_token

@@ -53,3 +53,27 @@ See [chat/README.md](chat/README.md)
 
 ## Agent (experimental)
 See [agent/README.md](chat/README.md)
+
+
+### Releases
+We use [goreleaser](https://goreleaser.com/) to manage releases.
+
+You'll need a [github token](https://github.com/settings/personal-access-tokens/) and put it in a .github_release_token file.
+The token needs at least the following [permissions](https://goreleaser.com/ci/actions/#token-permissions)
+- `content: write`
+- `issues: write`
+
+To create a new release, first create a tag:
+```sh
+git tag vX.Y.Z
+git push origin vX.Y.Z
+```
+
+Then run the following command to perform a dry run of the release:
+
+```
+```sh
+make release-dry-run
+# verify the release looks good, then run:
+make release
+```

@@ -27,3 +27,11 @@ server:
     logscaleURL: ${CHRONOSPHERE_ORG_NAME:""}.logs.chronosphere.io
     # The API token for LogScale if using LogScale for logs.
     logscaleAPIToken: ${LOGSCALE_API_TOKEN:""}
+
+instrument:
+  logs:
+    level: ${LOG_LEVEL:info}
+    outputPaths:
+      - stderr
+    errorOutputPaths:
+      - stderr

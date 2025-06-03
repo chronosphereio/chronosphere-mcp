@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"go.opentelemetry.io/otel"
+	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
@@ -33,6 +34,7 @@ import (
 var Module = fx.Options(
 	fx.Provide(NewInstrument),
 	fx.Invoke(initializeTracing),
+	fx.Invoke(initializeMetrics),
 )
 
 type Input struct {
@@ -46,6 +48,7 @@ type Result struct {
 
 	Logger         *zap.Logger
 	TracerProvider *trace.TracerProvider
+	MeterProvider  *sdkmetric.MeterProvider
 }
 
 type Config struct {
@@ -85,9 +88,15 @@ func NewInstrument(
 		return Result{}, fmt.Errorf("failed to create tracer provider: %w", err)
 	}
 
+	meterProvider, err := newMeterProvider()
+	if err != nil {
+		return Result{}, fmt.Errorf("failed to create meter provider: %w", err)
+	}
+
 	return Result{
 		Logger:         logger,
 		TracerProvider: traceProvider,
+		MeterProvider:  meterProvider,
 	}, nil
 }
 
@@ -115,6 +124,29 @@ func newTracerProvider() (*trace.TracerProvider, error) {
 	return tp, nil
 }
 
+// newMeterProvider creates a new OpenTelemetry MeterProvider.
+func newMeterProvider() (*sdkmetric.MeterProvider, error) {
+	// Create resource with service information
+	res, err := resource.Merge(
+		resource.Default(),
+		resource.NewWithAttributes(
+			semconv.SchemaURL,
+			semconv.ServiceName("chrono-mcp"),
+			semconv.ServiceVersion(version.Version),
+		),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create resource: %w", err)
+	}
+
+	// Create MeterProvider with default configuration
+	mp := sdkmetric.NewMeterProvider(
+		sdkmetric.WithResource(res),
+	)
+
+	return mp, nil
+}
+
 // initializeTracing sets up the global tracer provider and handles lifecycle.
 func initializeTracing(lc fx.Lifecycle, logger *zap.Logger, tp *trace.TracerProvider) {
 	otel.SetTracerProvider(tp)
@@ -126,6 +158,24 @@ func initializeTracing(lc fx.Lifecycle, logger *zap.Logger, tp *trace.TracerProv
 			logger.Info("Shutting down OpenTelemetry tracer provider")
 			if err := tp.Shutdown(ctx); err != nil {
 				logger.Error("Failed to shutdown OpenTelemetry tracer provider", zap.Error(err))
+				return err
+			}
+			return nil
+		},
+	})
+}
+
+// initializeMetrics sets up the global meter provider and handles lifecycle.
+func initializeMetrics(lc fx.Lifecycle, logger *zap.Logger, mp *sdkmetric.MeterProvider) {
+	otel.SetMeterProvider(mp)
+	logger.Info("OpenTelemetry metrics initialized")
+
+	// Handle shutdown on application stop
+	lc.Append(fx.Hook{
+		OnStop: func(ctx context.Context) error {
+			logger.Info("Shutting down OpenTelemetry meter provider")
+			if err := mp.Shutdown(ctx); err != nil {
+				logger.Error("Failed to shutdown OpenTelemetry meter provider", zap.Error(err))
 				return err
 			}
 			return nil

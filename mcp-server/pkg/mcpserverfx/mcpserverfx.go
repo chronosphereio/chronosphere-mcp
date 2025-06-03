@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 
+	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/trace"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -43,6 +44,7 @@ type params struct {
 	Logger         *zap.Logger
 	ToolGroups     []tools.MCPTools `group:"mcp_tools"`
 	TracerProvider *trace.TracerProvider
+	MeterProvider  *metric.MeterProvider
 }
 
 type ToolsConfig struct {
@@ -81,6 +83,7 @@ func invoke(p params) (*Transports, error) {
 			DisabledTools:  disabledTools,
 			UseLogscale:    cfg.Chronosphere.UseLogscale,
 			TracerProvider: p.TracerProvider,
+			MeterProvider:  p.MeterProvider,
 		},
 		p.Logger,
 		&cfg.Transport,

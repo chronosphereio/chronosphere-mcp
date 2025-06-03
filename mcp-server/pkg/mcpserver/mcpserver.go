@@ -23,6 +23,7 @@ import (
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 
@@ -46,6 +47,7 @@ type Options struct {
 	ToolGroups     []tools.MCPTools
 	UseLogscale    bool
 	TracerProvider trace.TracerProvider
+	MeterProvider  *metric.MeterProvider
 }
 
 func NewServer(
@@ -57,6 +59,7 @@ func NewServer(
 		server.WithResourceCapabilities(true, true),
 		server.WithPromptCapabilities(true),
 		server.WithToolHandlerMiddleware(instrumentfx.ToolTracingMiddleware(opts.TracerProvider)),
+		server.WithToolHandlerMiddleware(instrumentfx.ToolMetricsMiddleware(opts.MeterProvider)),
 		server.WithLogging(),
 	}
 

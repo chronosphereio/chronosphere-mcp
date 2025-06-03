@@ -84,7 +84,7 @@ release:
 
     Download binaries from the [releases page]({{.ReleaseURL}}) or install via:
     ```bash
-    go install github.com/chronosphereio/chronosphere-mcp@{{.Tag}}
+    go install github.com/chronosphereio/chronosphere-mcp/mcp-server@{{.Tag}}
     ```
 
     **Full Changelog**: {{.ReleaseURL}}/compare/{{.PreviousTag}}...{{.Tag}}

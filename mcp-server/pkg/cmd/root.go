@@ -16,19 +16,15 @@
 package cmd
 
 import (
-	"os"
-	"path"
-
-	"github.com/spf13/cobra"
-	"go.uber.org/config"
-	"go.uber.org/fx"
-	"go.uber.org/zap"
-
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/clientfx"
 	pkgconfig "github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/config"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/instrumentfx"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/mcpserverfx"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/toolsfx"
 	"github.com/chronosphereio/chronosphere-mcp/pkg/links"
+	"github.com/spf13/cobra"
+	"go.uber.org/config"
+	"go.uber.org/fx"
 )
 
 // New returns the root command.
@@ -55,9 +51,7 @@ func New() *cobra.Command {
 					return links.NewBuilder(apiConfig.APIURL)
 				}),
 				clientfx.Module,
-				fx.Provide(func() (*zap.Logger, error) {
-					return provideLogger(flags.VerboseLogging)
-				}),
+				instrumentfx.Module,
 				toolsfx.Module,
 				mcpserverfx.Module,
 			)
@@ -67,22 +61,4 @@ func New() *cobra.Command {
 
 	flags.AddFlags(cmd)
 	return cmd
-}
-
-func provideLogger(verboseLogging bool) (*zap.Logger, error) {
-	tmpDir := os.TempDir()
-	loggerCfg := zap.NewProductionConfig()
-	loggerCfg.OutputPaths = []string{"stderr", path.Join(tmpDir, "mcp_server.log")}
-	loggerCfg.ErrorOutputPaths = []string{"stderr", path.Join(tmpDir, "mcp_server_error.log")}
-	if verboseLogging {
-		loggerCfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
-	}
-	logger, err := loggerCfg.Build()
-	if err != nil {
-		return nil, err
-	}
-	logger.Info("starting MCP server with logger",
-		zap.Strings("log", loggerCfg.OutputPaths),
-		zap.Strings("errorLog", loggerCfg.ErrorOutputPaths))
-	return logger, nil
 }

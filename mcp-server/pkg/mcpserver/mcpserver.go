@@ -29,6 +29,7 @@ import (
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/resources"
 	logresources "github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/resources/logs"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools"
+	"github.com/chronosphereio/chronosphere-mcp/pkg/version"
 )
 
 type Server struct {
@@ -51,7 +52,7 @@ func NewServer(
 	s := &Server{
 		server: server.NewMCPServer(
 			"Chronosphere MCP Server",
-			"0.0.1",
+			version.Version,
 			server.WithResourceCapabilities(true, true),
 			server.WithPromptCapabilities(true),
 			server.WithLogging(),

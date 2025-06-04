@@ -16,15 +16,16 @@
 package cmd
 
 import (
+	"github.com/spf13/cobra"
+	"go.uber.org/config"
+	"go.uber.org/fx"
+
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/clientfx"
 	pkgconfig "github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/config"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/instrumentfx"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/mcpserverfx"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/toolsfx"
 	"github.com/chronosphereio/chronosphere-mcp/pkg/links"
-	"github.com/spf13/cobra"
-	"go.uber.org/config"
-	"go.uber.org/fx"
 )
 
 // New returns the root command.

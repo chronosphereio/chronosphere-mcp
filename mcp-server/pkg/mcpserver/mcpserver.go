@@ -23,9 +23,11 @@ import (
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/authcontext"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/instrumentfx"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/resources"
 	logresources "github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/resources/logs"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools"
@@ -39,23 +41,30 @@ type Server struct {
 }
 
 type Options struct {
-	Logger        *zap.Logger
-	DisabledTools map[string]struct{}
-	ToolGroups    []tools.MCPTools
-	UseLogscale   bool
+	Logger         *zap.Logger
+	DisabledTools  map[string]struct{}
+	ToolGroups     []tools.MCPTools
+	UseLogscale    bool
+	TracerProvider trace.TracerProvider
 }
 
 func NewServer(
 	opts Options,
 	logger *zap.Logger,
 ) (*Server, error) {
+	// Build server options
+	serverOptions := []server.ServerOption{
+		server.WithResourceCapabilities(true, true),
+		server.WithPromptCapabilities(true),
+		server.WithToolHandlerMiddleware(instrumentfx.ToolTracingMiddleware(opts.TracerProvider)),
+		server.WithLogging(),
+	}
+
 	s := &Server{
 		server: server.NewMCPServer(
 			"Chronosphere MCP Server",
 			version.Version,
-			server.WithResourceCapabilities(true, true),
-			server.WithPromptCapabilities(true),
-			server.WithLogging(),
+			serverOptions...,
 		),
 		logger: logger,
 		opts:   opts,

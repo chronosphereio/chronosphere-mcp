@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 
+	"go.opentelemetry.io/otel/sdk/trace"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
@@ -38,9 +39,10 @@ type params struct {
 	fx.In
 	LifeCycle fx.Lifecycle
 
-	Config     *Config
-	Logger     *zap.Logger
-	ToolGroups []tools.MCPTools `group:"mcp_tools"`
+	Config         *Config
+	Logger         *zap.Logger
+	ToolGroups     []tools.MCPTools `group:"mcp_tools"`
+	TracerProvider *trace.TracerProvider
 }
 
 type ToolsConfig struct {
@@ -74,10 +76,11 @@ func invoke(p params) (*Transports, error) {
 	}
 	transports, err := NewTransports(
 		mcpserver.Options{
-			Logger:        p.Logger,
-			ToolGroups:    p.ToolGroups,
-			DisabledTools: disabledTools,
-			UseLogscale:   cfg.Chronosphere.UseLogscale,
+			Logger:         p.Logger,
+			ToolGroups:     p.ToolGroups,
+			DisabledTools:  disabledTools,
+			UseLogscale:    cfg.Chronosphere.UseLogscale,
+			TracerProvider: p.TracerProvider,
 		},
 		p.Logger,
 		&cfg.Transport,

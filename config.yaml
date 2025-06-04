@@ -16,7 +16,7 @@ server:
     disabled: []
 
   chronosphere:
-    apiURL: ${CHRONOSPHERE_ORG_NAME:""}.chronosphere.io
+    apiURL: https://${CHRONOSPHERE_ORG_NAME:""}.chronosphere.io
     # The API token for Chronosphere, used to authenticate requests.
     # Leave empty if forwarding bearer token.
     apiToken: ${CHRONOSPHERE_API_TOKEN:""}
@@ -24,7 +24,7 @@ server:
     # Must set logscaleURL and logscaleAPIToken if true.
     useLogscale: ${USE_LOGSCALE:false}
     # The URL for the logscale API if using LogScale for logs.
-    logscaleURL: ${CHRONOSPHERE_ORG_NAME:""}.logs.chronosphere.io
+    logscaleURL: https://${CHRONOSPHERE_ORG_NAME:""}.logs.chronosphere.io
     # The API token for LogScale if using LogScale for logs.
     logscaleAPIToken: ${LOGSCALE_API_TOKEN:""}
 

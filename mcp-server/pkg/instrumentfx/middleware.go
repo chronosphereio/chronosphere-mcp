@@ -21,6 +21,7 @@ import (
 	"github.com/mark3labs/mcp-go/server"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -48,6 +49,46 @@ func ToolTracingMiddleware(tp trace.TracerProvider) server.ToolHandlerMiddleware
 			} else {
 				span.SetStatus(codes.Ok, "tool call completed")
 			}
+			return result, err
+		}
+	}
+}
+
+func ToolMetricsMiddleware(mp metric.MeterProvider) server.ToolHandlerMiddleware {
+	meter := mp.Meter(instrumentationName)
+
+	// Create the toolcall_total counter
+	toolCallCounter, err := meter.Int64Counter(
+		"toolcall_total",
+		metric.WithDescription("Total number of tool calls"),
+		metric.WithUnit("1"),
+	)
+	if err != nil {
+		// If counter creation fails, return a no-op middleware
+		return func(next server.ToolHandlerFunc) server.ToolHandlerFunc {
+			return next
+		}
+	}
+
+	return func(next server.ToolHandlerFunc) server.ToolHandlerFunc {
+		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+			result, err := next(ctx, request)
+
+			// Determine status based on error
+			status := "success"
+			if err != nil {
+				status = "error"
+			}
+
+			// Record the metric with labels
+			toolCallCounter.Add(ctx, 1,
+				metric.WithAttributes(
+					attribute.String("service", "chrono-mcp"),
+					attribute.String("method", request.Method),
+					attribute.String("status", status),
+				),
+			)
+
 			return result, err
 		}
 	}

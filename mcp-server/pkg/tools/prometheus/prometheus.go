@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools"
@@ -52,7 +53,13 @@ func (t *Tools) listPrometheusSeries(ctx context.Context, request mcp.CallToolRe
 		return nil, fmt.Errorf("failed to get series: %s", err)
 	}
 
-	return promJSONResponse(resp, warnings)
+	results := promJSONResponse(resp, warnings)
+	results.ChronosphereLink = t.linkBuilder.Custom("/data/m3/api/v1/series").
+		WithTimeSec("start", timeRange.Start).
+		WithTimeSec("end", timeRange.End).
+		WithParam("match[]", strings.Join(selectors, ",")).
+		String()
+	return results, nil
 }
 
 func (t *Tools) queryPrometheusRange(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
@@ -92,7 +99,9 @@ func (t *Tools) queryPrometheusRange(ctx context.Context, request mcp.CallToolRe
 		return nil, fmt.Errorf("unexpected result from prometheus server")
 	}
 
-	return promJSONResponse(matrix, warnings)
+	result := promJSONResponse(matrix, warnings)
+	result.ChronosphereLink = t.linkBuilder.MetricExplorer().WithQuery(query).WithTimeRange(timeRange.Start, timeRange.End).String()
+	return result, nil
 }
 
 func (t *Tools) renderPrometheusRangeQuery(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
@@ -133,7 +142,8 @@ func (t *Tools) renderPrometheusRangeQuery(ctx context.Context, request mcp.Call
 	}
 
 	return &tools.Result{
-		ImageContent: data,
+		ImageContent:     data,
+		ChronosphereLink: t.linkBuilder.MetricExplorer().WithQuery(query).WithTimeRange(timeRange.Start, timeRange.End).String(),
 	}, nil
 }
 
@@ -149,7 +159,7 @@ func (t *Tools) renderPrometheusPNG(
 }
 
 func (t *Tools) queryPrometheusInstant(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
-	expression, errResult := params.String(request, "expression", true, "")
+	query, errResult := params.String(request, "query", true, "")
 	if errResult != nil {
 		return nil, errResult
 	}
@@ -161,12 +171,15 @@ func (t *Tools) queryPrometheusInstant(ctx context.Context, request mcp.CallTool
 	if err != nil {
 		return nil, err
 	}
-	resp, warnings, err := api.Query(ctx, expression, evalTime)
+	resp, warnings, err := api.Query(ctx, query, evalTime)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query prometheus: %s", err)
 	}
 
-	return promJSONResponse(resp, warnings)
+	result := promJSONResponse(resp, warnings)
+
+	result.ChronosphereLink = t.linkBuilder.MetricExplorer().WithQuery(query).WithEndTime(evalTime).String()
+	return result, nil
 }
 
 func (t *Tools) listPrometheusLabelValues(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
@@ -191,7 +204,13 @@ func (t *Tools) listPrometheusLabelValues(ctx context.Context, request mcp.CallT
 		return nil, fmt.Errorf("failed to get label names: %s", err)
 	}
 
-	return promJSONResponse(resp, warnings)
+	result := promJSONResponse(resp, warnings)
+	result.ChronosphereLink = t.linkBuilder.Custom("/data/m3/api/v1/label/"+labelName+"/values").
+		WithTimeSec("start", timeRange.Start).
+		WithTimeSec("end", timeRange.End).
+		WithParam("match[]", strings.Join(selectors, ",")).
+		String()
+	return result, nil
 }
 
 func (t *Tools) listPrometheusLabelNames(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
@@ -214,7 +233,13 @@ func (t *Tools) listPrometheusLabelNames(ctx context.Context, request mcp.CallTo
 	if err != nil {
 		return nil, fmt.Errorf("failed to get label names: %s", err)
 	}
-	return promJSONResponse(resp, warnings)
+	result := promJSONResponse(resp, warnings)
+	result.ChronosphereLink = t.linkBuilder.Custom("/data/m3/api/v1/labels").
+		WithTimeSec("start", timeRange.Start).
+		WithTimeSec("end", timeRange.End).
+		WithParam("match[]", strings.Join(selectors, ",")).
+		String()
+	return result, nil
 }
 
 func (t *Tools) listPrometheusSeriesMetadata(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
@@ -245,7 +270,7 @@ func (t *Tools) listPrometheusSeriesMetadata(ctx context.Context, request mcp.Ca
 	}, nil
 }
 
-func promJSONResponse(resp any, warnings []string) (*tools.Result, error) {
+func promJSONResponse(resp any, warnings []string) *tools.Result {
 	result := &tools.Result{
 		JSONContent: map[string]any{
 			"result": resp,
@@ -256,5 +281,5 @@ func promJSONResponse(resp any, warnings []string) (*tools.Result, error) {
 			"warnings": warnings,
 		}
 	}
-	return result, nil
+	return result
 }

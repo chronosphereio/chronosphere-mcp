@@ -21,17 +21,19 @@ import (
 
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/pkg/params"
+	"github.com/chronosphereio/chronosphere-mcp/pkg/links"
 )
 
 var _ tools.MCPTools = (*Tools)(nil)
 
 type Tools struct {
-	logger   *zap.Logger
-	renderer *Renderer
+	logger      *zap.Logger
+	renderer    *Renderer
+	linkBuilder *links.Builder
 }
 
 // NewTools creates a new Tools instance.
-func NewTools(api api.Client, logger *zap.Logger) (*Tools, error) {
+func NewTools(api api.Client, logger *zap.Logger, linkBuilder *links.Builder) (*Tools, error) {
 	renderer, err := NewRenderer(RendererOptions{
 		api: api,
 	})
@@ -42,8 +44,9 @@ func NewTools(api api.Client, logger *zap.Logger) (*Tools, error) {
 	logger.Info("prometheus tool configured")
 
 	return &Tools{
-		logger:   logger,
-		renderer: renderer,
+		logger:      logger,
+		renderer:    renderer,
+		linkBuilder: linkBuilder,
 	}, nil
 }
 
@@ -88,7 +91,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 		{
 			Metadata: tools.NewMetadata("query_prometheus_instant",
 				mcp.WithDescription("Evaluates a Prometheus instant query at a single point in time"),
-				mcp.WithString("expression",
+				mcp.WithString("query",
 					mcp.Description("The PromQL expression to query"),
 					mcp.Required(),
 				),

@@ -67,6 +67,7 @@ changelog:
     exclude:
       - '^test:'
       - '^scripts:'
+      - '^ci:'
       - '^Merge pull request'
       - '^Merge branch'
 

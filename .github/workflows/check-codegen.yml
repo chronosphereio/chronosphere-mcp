@@ -6,6 +6,9 @@ on:
   pull_request:
     # No branch targets so this runs on all PRs including stacked ones.
 
+permissions:
+  contents: read
+
 jobs:
   check-codegen:
     name: Verify Generated Code

@@ -28,6 +28,7 @@ archives:
     files:
       - README.md
       - LICENSE*
+      - config.yaml
     name_template: >-
       {{ .ProjectName }}_
       {{- title .Os }}_

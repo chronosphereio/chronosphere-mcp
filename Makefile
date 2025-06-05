@@ -84,7 +84,7 @@ build-mcpgen:
 .PHONY: tools-mcpgen
 tools-gen: build-mcpgen
 	$(tools_bin_path)/mcpgen -spec ./generated/configv1/spec.json -pkg configv1 -target ./mcp-server/pkg/generated/tools/configv1 -allowed-entities \
-		monitors,dashboards,slos
+		monitors,dashboards,slos,notification-policies
 
 .PHONY: lint
 lint: install-tools

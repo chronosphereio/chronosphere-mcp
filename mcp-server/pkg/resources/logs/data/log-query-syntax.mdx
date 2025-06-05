@@ -1,72 +1,38 @@
----
-title: Logging query syntax
-description: Learn about the syntax for querying logs in Chronosphere Observability Platform.
-robots: noindex, nofollow
----
+# Chronosphere Log Query Syntax Guide for LLMs
 
-import { Alert, Icon } from '@/components';
+This guide provides comprehensive syntax reference for constructing log queries in Chronosphere.
 
-{/* -- dri: Adam Locke -- */}
+## Basic Query Structure
 
-# Logging query syntax
-
-Use the logging query language within Logs Explorer to construct search queries for
-retrieving, processing, and analyzing your log data.
-
-Observability Platform provides a lightweight, flexible syntax for querying log data
-in Logs Explorer. This syntax implements predefined keys that accept a comparison
-operator, such as an equals sign `=`, and a value.
-
-```text
+```
 KEY =|!=|=~|!~|: VALUE AND|OR (KEY =|!=|=~|!~|: VALUE) AND|OR "full-text search value"
 AND|OR KEY EXISTS
 ```
 
-The query language supports full-text search using double quotes (`""`) to find logs
-that contain the filter expression anywhere in the log. Longer, more specific
-full-text searches are more optimized and return results faster.
+**Key principles:**
+- Use specific field filters for optimal performance
+- Always include `service` filter when possible for best performance
+- Full-text searches use double quotes and search entire log content
+- Longer, more specific searches perform better
 
-<Alert severity="info">
+## Core Features
 
-For a quick reference of the Chronosphere logging query syntax, use this
-[cheat sheet](/doc-assets/chronosphere_logging_syntax_sheet.pdf).
+- **Nested queries**: Use parentheses `()` for complex queries with multiple conditions
+- **Field search**: Query specific fields with key/value pairs: `key = "value"`
+- **String values**: Use single `'` or double `"` quotes for string values
+- **Full-text search**: Use double quotes `"search text"` to search entire log content
+- **Field existence**: Use `field_name EXISTS` to find logs containing a specific field
 
-</Alert>
+## Queryable Fields
 
-## Features
+**Standard queryable fields:**
+- `service`: Service name (always include for optimal performance)
+- `severity`: Log level (`DEBUG`, `INFO`, `WARN`, `ERROR`, `FATAL`)
+- `message`: Human-readable log message
+- Any custom fields in your log data (e.g., `kubernetes.namespace_name`, `http.status_code`)
 
-The query syntax for Logs Explorer supports the following features:
-
-- **Autocomplete**: Start typing a key to get autocomplete values. Press
-  <kbd>Control+Space</kbd> to display suggestions.
-- **Run shortcut**: Run a query by pressing <kbd>Control+Enter</kbd>
-  (<kbd>Command+Return</kbd> on macOS).
-- **Nested queries**: Use parentheses `()` to establish the order of operations for
-  complex queries.
-- **Field search**: Query on specific fields by entering a key/value pair such as
-  `key = "value"`.
-- **String identification**: Use either single `''` or double `""` quotes to identify
-  strings.
-- **Full-text search**: Express a single value filter expression, such as `"query
-  user token"`, to find logs that contains the filter expression anywhere in the log.
-  Full-text searches must be surrounded by double quotes.
-- **Exists**: Find logs with a specific key by entering `key.label EXISTS` to return
-  any logs containing that key and label combination. For example,
-  `kubernetes.namespace_name EXISTS` returns any logs containing
-  `kubernetes.namespace_name`.
-
-## Keys
-
-Log Explorer supports querying all user-defined keys in your data, in addition to the
-following derived keys:
-
-- `service`: Services that Observability Platform discovers in your log data.
-  Chronosphere recommends always including a filter for `service` in your query for
-  optimal performance.
-- `severity`: Severity of issues, sanitized to the following values: `DEBUG`, `INFO`,
-  `WARN`, `ERROR`, `FATAL`.
-- `message`: Human-readable description of the log, derived from your log data.
-- Custom labels you created for your logs.
+**Special aggregation-only fields:**
+- `sum(_payloadSize)`: Used only in aggregations to measure log size in bytes e.g. `service = "gateway" | summarize sum(_payloadSize) by message` will query logs for the gateway service, group them by unique messages and give a total size of logs for each unique message.
 
 ## Operators
 
@@ -98,7 +64,7 @@ For example, the following query matches any service named `gateway` where the
 `kubernetes.namespace_name` is `test-logging` or `kubernetes.cluster_name` is `test`
 and the log message contains `"insert success"`:
 
-```sql copy
+```sql
 service = "gateway" AND (kubernetes.namespace_name = "test-logging" OR
 kubernetes.cluster_name = "test") AND "insert success"
 ```
@@ -120,10 +86,7 @@ The querying syntax supports the following mathematical operators:
 | `*`      | Multiplication                                                |
 | `/`      | Division                                                      |
 
-This capability is especially useful when [creating monitors](/investigate/alerts/monitors)
-to generate alerts and receive notifications. For example, the following query
-includes a calculation for an alert that returns the ratio of logs without errors to
-total logs in the `nginx` service:
+This is useful for creating monitors and alerts. For example, calculate the ratio of logs without errors to total logs in the `nginx` service:
 
 ```sql copy
 service = "nginx"
@@ -139,11 +102,7 @@ Transformation queries include operators that modify input records by adding,
 removing, or updating fields in the results set. Observability Platform supports the
 following transformation operators you can include in log queries.
 
-<Alert severity="info">
-
-All transformation operators require a pipe (`|`) character in a query.
-
-</Alert>
+**Note:** All transformation operators require a pipe (`|`) character in a query.
 
 #### `limit`
 
@@ -151,7 +110,7 @@ The `limit` operator returns the most recent log events.
 
 **Syntax**
 
-```text copy /QUERY/ /NUMBER/
+```
 QUERY | limit NUMBER
 ```
 
@@ -172,12 +131,11 @@ severity = "WARNING"
 #### `make-series`
 
 The `make-series` operator shapes logs to include in a time chart with an X-axis. Use
-this operator to visualize log queries containing time series data. The operator
-sorts multiple time series in descending order by the last data point value.
+this operator to create time series visualizations. Results are sorted by the last data point value in descending order.
 
 **Syntax**
 
-```text copy /QUERY/ /AGGREGATION/ /TIME/ /EXPRESSION/
+```
 QUERY | make-series AGGREGATION step TIME by EXPRESSION
 ```
 
@@ -204,9 +162,7 @@ descending order. The operator supports sorting by multiple columns, such as
 `service` and `severity`. When sorting by multiple columns, you can specify the sort
 order for each column.
 
-When sorting results that include an aggregation query, use
-[an alias](#alias-function-names) to sort by instead of the aggregation field name.
-Sorting by the alias provides better control and predictability in your queries.
+When sorting aggregated results, use aliases for better control:
 
 For example, the following query retrieves all logs that have a `severity` of
 `WARNING`, aggregates the results in a table, and returns the sum of the
@@ -229,7 +185,7 @@ severity = "WARNING"
 
 **Syntax**
 
-```text copy /QUERY/ /COLUMN/
+```
 QUERY | sort by COLUMN asc|desc [, COLUMN ...]
 ```
 
@@ -258,21 +214,18 @@ this operator to return data in a table with the specified fields as table colum
 If you want to return data in a tabular format and also complete aggregations and
 sorting, use the [`summarize`](#summarize) operator instead.
 
-You can also use the `project()` operator with the [`substring`](#substring) function
-to extract a substring from the source string based on a starting index character
-position. For example,
+Use `project()` with `substring()` to extract parts of strings:
 
 ```sql copy
 severity = "ERROR"
 | project substring(resource.type, 0, 13)
 ```
 
-Use the `project()` operator to select fields and customize columns and rows before
-[downloading log data](/investigate/querying/query-logs#download-logs).
+Use `project()` to select specific fields for output.
 
 **Syntax**
 
-```text copy /QUERY/ /FIELD/
+```
 QUERY | project FIELD [, FIELD]
 ```
 
@@ -306,7 +259,7 @@ results with subsequent clauses, use the [`top-nested`](#top-nested) operator.
 
 **Syntax**
 
-```text copy /QUERY/ /AGGREGATION/ /FIELD/ /EXPRESSION/
+```
 QUERY | summarize AGGREGATION by FIELD EXPRESSION
 ```
 
@@ -380,7 +333,7 @@ values returned for `http.response.endpoints` times the number of values returne
 
 **Syntax**
 
-```text copy /QUERY/ /NUMBER/ /AGGREGATION/ /EXPRESSION/
+```
 QUERY | top-nested NUMBER of EXPRESSION by AGGREGATION asc|desc [, top-nested ...]
 ```
 
@@ -419,14 +372,7 @@ between fields and values:
 | `!~`     | Doesn't match regular expression                              |
 | `:`      | Contains literal string only                                  |
 
-<Alert severity="info">
-
-Queries that use regular expression operators match only on the first 1,024
-characters of a string. These operators won't match any characters in a string that
-exceed 1,024 characters. To change this match limit, contact
-[Chronosphere Support](/support).
-
-</Alert>
+**Important:** Regular expression operators match only the first 1,024 characters of a string.
 
 In the following example, consider that a field name `kubernetes.cluster_name`
 contains the following values: `production-1`, `production-2`, `production-3`,
@@ -478,19 +424,18 @@ You can query array values up to the first level. During ingestion Observability
 Platform flattens multiple level arrays to one level to preserve order. If a key
 precedes the array index, the index must always be at the end.
 
-For example, consider the following array of objects belonging to the `nginx` service
-as they display in Logs Explorer:
+For example, consider the following array of objects belonging to the `nginx` service:
 
-```json copy
+```
 tags:
     0:
-	      application: a
-	      events: b
-	      ingestion: c
+        application: a
+        events: b
+        ingestion: c
     1:
-	      application: d
-	      events: e
-	      ingestion: f
+        application: d
+        events: e
+        ingestion: f
 ```
 
 To return results in the second array position (`1`) that match `events = e`, use the
@@ -600,7 +545,7 @@ To specify a more human-readable and intuitive column name, use
 
 **Syntax**
 
-```text copy /QUERY/ /OPERATOR/ /EXPRESSION/
+```
 QUERY | OPERATOR arg_max(EXPRESSION)
 ```
 
@@ -639,7 +584,7 @@ numeric values.
 
 **Syntax**
 
-```text copy /QUERY/ /OPERATOR/ /EXPRESSION/
+```
 QUERY | OPERATOR avg(EXPRESSION)
 ```
 
@@ -666,7 +611,7 @@ containing numeric values.
 
 **Syntax**
 
-```text copy /QUERY/ /OPERATOR/ /FIELD/ /EXPRESSION/
+```
 QUERY | OPERATOR avgif(FIELD, EXPRESSION)
 ```
 
@@ -693,7 +638,7 @@ function.
 
 **Syntax**
 
-```text copy /QUERY/ /OPERATOR/
+```
 QUERY | OPERATOR count()
 ```
 
@@ -719,7 +664,7 @@ The `countif` function returns a count of rows where the specified filter
 
 **Syntax**
 
-```text copy /QUERY/ /OPERATOR/ /EXPRESSION/
+```
 QUERY | OPERATOR countif(EXPRESSION)
 ```
 
@@ -745,7 +690,7 @@ in events passing through the function.
 
 **Syntax**
 
-```text copy /QUERY/ /OPERATOR/ /FIELD/
+```
 QUERY | OPERATOR dcount(FIELD)
 ```
 
@@ -770,16 +715,11 @@ The `dcountif` function calculates an estimated number of distinct values where 
 specified `EXPRESSION` filter evaluates to `true`. Use this function to estimate the
 cardinality of large data sets.
 
-<Alert severity="info">
-
-The `dcountif` function trades accuracy for performance, and might return a result
-that varies between executions.
-
-</Alert>
+**Note:** The `dcountif` function trades accuracy for performance and may return slightly different results between executions.
 
 **Syntax**
 
-```text copy /QUERY/ /OPERATOR/ /FIELD/ /EXPRESSION/
+```
 QUERY | OPERATOR dcountif(FIELD, EXPRESSION)
 ```
 
@@ -805,7 +745,7 @@ The `min` function returns the minimum value of the specified field.
 
 **Syntax**
 
-```text copy /QUERY/ /OPERATOR/ /FIELD/
+```
 QUERY | OPERATOR min(FIELD)
 ```
 
@@ -831,7 +771,7 @@ where the `EXPRESSION` filter evaluates to `true`.
 
 **Syntax**
 
-```text copy /QUERY/ /OPERATOR/ /FIELD/ /EXPRESSION/
+```
 QUERY | OPERATOR minif(FIELD, EXPRESSION)
 ```
 
@@ -857,8 +797,8 @@ The `max` function returns the maximum value of the specified field.
 
 **Syntax**
 
-```text copy /QUERY/ /OPERATOR/ /FIELD/
-QUERY | OPERATOR min(FIELD)
+```
+QUERY | OPERATOR max(FIELD)
 ```
 
 **Arguments**
@@ -883,7 +823,7 @@ where the `EXPRESSION` filter evaluates to `true`.
 
 **Syntax**
 
-```text copy /QUERY/ /OPERATOR/ /FIELD/ /EXPRESSION/
+```
 QUERY | OPERATOR maxif(FIELD, EXPRESSION)
 ```
 
@@ -916,7 +856,7 @@ and `EXPRESSION` defines the calculation that this function operates on.
 
 **Syntax**
 
-```text copy /QUERY/ /AGGREGATION/ /EXPRESSION/ /NUMBER/ /TIME/ /FIELD/
+```
 QUERY | moving_average(AGGREGATION(EXPRESSION), NUMBER) step TIME by FIELD
 ```
 
@@ -949,7 +889,7 @@ The `percentile` function returns the specified percentile value of a filter
 
 **Syntax**
 
-```text copy /QUERY/ /OPERATOR/ /EXPRESSION/ /NUMBER/
+```
 QUERY | OPERATOR percentile(EXPRESSION, NUMBER)
 ```
 
@@ -976,7 +916,7 @@ starting index character position.
 
 **Syntax**
 
-```text copy /QUERY/ /OPERATOR/ /FIELD/ /START_INDEX/ /LENGTH/
+```
 QUERY | OPERATOR by substring(FIELD, START_INDEX, LENGTH)
 ```
 
@@ -1021,7 +961,7 @@ passing through the function.
 
 **Syntax**
 
-```text copy /QUERY/ /OPERATOR/ /EXPRESSION/
+```
 QUERY | OPERATOR sum(EXPRESSION)
 ```
 
@@ -1047,7 +987,7 @@ The `sumif` function computes the sum of values for the specified field where th
 
 **Syntax**
 
-```text copy /QUERY/ /OPERATOR/ /FIELD/ /EXPRESSION/
+```
 QUERY | OPERATOR sumif(FIELD, EXPRESSION)
 ```
 
@@ -1070,11 +1010,11 @@ kubernetes.cluster =~ "^production-*"
 
 ### `sum(_payloadSize)`
 
-The `sum(_payloadSize)` function calculates the size of the log payload in bytes.
+The `sum(_payloadSize)` function calculates the total size of log payloads in bytes. This is useful for understanding log volume and storage usage.
 
 **Syntax**
 
-```text copy /QUERY/ /OPERATOR/ /FIELD/
+```
 QUERY | OPERATOR sum(_payloadSize) by FIELD
 ```
 

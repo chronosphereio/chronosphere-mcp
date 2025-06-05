@@ -55,5 +55,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 		configv1.ListDashboards(t.client, t.logger),
 		configv1.GetSlo(t.client, t.logger),
 		configv1.ListSlos(t.client, t.logger),
+		configv1.ListNotificationPolicies(t.client, t.logger),
+		configv1.GetNotificationPolicy(t.client, t.logger),
 	}
 }

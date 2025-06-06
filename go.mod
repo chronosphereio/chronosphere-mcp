@@ -16,11 +16,11 @@ require (
 	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.10.0
 	github.com/tmc/langchaingo v0.1.13
-	go.opentelemetry.io/otel v1.36.0
-	go.opentelemetry.io/otel/metric v1.36.0
-	go.opentelemetry.io/otel/sdk v1.36.0
-	go.opentelemetry.io/otel/sdk/metric v1.36.0
-	go.opentelemetry.io/otel/trace v1.36.0
+	go.opentelemetry.io/otel v1.35.0
+	go.opentelemetry.io/otel/metric v1.35.0
+	go.opentelemetry.io/otel/sdk v1.35.0
+	go.opentelemetry.io/otel/sdk/metric v1.35.0
+	go.opentelemetry.io/otel/trace v1.35.0
 	go.uber.org/config v1.4.0
 	go.uber.org/fx v1.15.0
 	go.uber.org/zap v1.27.0

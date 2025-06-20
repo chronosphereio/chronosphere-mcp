@@ -184,7 +184,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				resp, err := t.api.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
 					Context:   ctx,
 					LabelName: ptr.To(labelName),
-					Field:     ptr.To(string(models.DataunstableEventFieldLABELNAMEEVENTFIELD)),
+					Field:     ptr.To(string(models.DataunstableEventFieldLABELVALUEEVENTFIELD)),
 				})
 				if err != nil {
 					return nil, fmt.Errorf("failed to list label values for events: %s", err)

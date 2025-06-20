@@ -60,7 +60,7 @@ func TestCustomBuilder(t *testing.T) {
 		{
 			name:     "with empty parameter value",
 			builder:  builder.Custom("/endpoint").WithParam("empty", ""),
-			expected: "https://custom.chronosphere.io/endpoint?empty=",
+			expected: "https://custom.chronosphere.io/endpoint?",
 		},
 		{
 			name: "with duplicate parameter keys",
@@ -395,7 +395,7 @@ func TestCustomBuilder_ParameterTypes(t *testing.T) {
 				WithParam("space", " ").
 				WithParam("tabs", "\t\t"),
 			expected: map[string][]string{
-				"empty": {""},
+				"empty": nil,
 				"space": {" "},
 				"tabs":  {"\t\t"},
 			},

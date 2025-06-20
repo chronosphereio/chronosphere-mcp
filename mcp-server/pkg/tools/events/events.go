@@ -29,24 +29,28 @@ import (
 	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/models"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/pkg/params"
+	"github.com/chronosphereio/chronosphere-mcp/pkg/links"
 )
 
 var _ tools.MCPTools = (*Tools)(nil)
 
 type Tools struct {
-	logger *zap.Logger
-	api    *dataunstable.DataUnstableAPI
+	logger      *zap.Logger
+	api         *dataunstable.DataUnstableAPI
+	linkBuilder *links.Builder
 }
 
 func NewTools(
 	api *dataunstable.DataUnstableAPI,
 	logger *zap.Logger,
+	linkBuilder *links.Builder,
 ) (*Tools, error) {
 	logger.Info("events tool configured")
 
 	return &Tools{
-		logger: logger,
-		api:    api,
+		logger:      logger,
+		api:         api,
+		linkBuilder: linkBuilder,
 	}, nil
 }
 
@@ -88,6 +92,10 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				}
 				return &tools.Result{
 					JSONContent: resp,
+					ChronosphereLink: t.linkBuilder.EventExplorer().
+						WithQuery(query).
+						WithTimeRange(timeRange.Start, timeRange.End).
+						String(),
 				}, nil
 			},
 		},
@@ -164,7 +172,8 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 
 				eventsMetadata.LensServiceNames = resp.Payload.Values
 				return &tools.Result{
-					JSONContent: eventsMetadata,
+					JSONContent:      eventsMetadata,
+					ChronosphereLink: t.linkBuilder.EventExplorer().String(),
 				}, nil
 			},
 		},
@@ -191,6 +200,8 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				}
 				return &tools.Result{
 					JSONContent: resp,
+					ChronosphereLink: t.linkBuilder.Custom("/api/unstable/data/events:field-values").
+						WithParam("field", "LABEL_VALUE_EVENT_FIELD").WithParam("label_name", labelName).String(),
 				}, nil
 			},
 		},

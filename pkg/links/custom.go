@@ -38,6 +38,9 @@ func (b *CustomBuilder) WithParam(key, value string) *CustomBuilder {
 	if b.params == nil {
 		b.params = url.Values{}
 	}
+	if value == "" {
+		return b
+	}
 	b.params.Add(key, value)
 	return b
 }

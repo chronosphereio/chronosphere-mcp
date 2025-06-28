@@ -2,7 +2,7 @@ tools_bin_path            := $(abspath ./_tools/bin)
 server_bin_path           := $(abspath ./bin/chronomcp)
 agent_bin_path           := $(abspath ./bin/agent)
 
-CONFIG_FILE ?= config.httGp.yaml
+CONFIG_FILE ?= config.http.yaml
 AGENT_CONFIG_FILE ?= agent.yaml
 ENV_FILE ?= .env
 LIBRECHAT_CONFIG ?= librechat.yaml

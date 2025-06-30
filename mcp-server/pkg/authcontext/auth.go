@@ -19,16 +19,25 @@ import "context"
 
 type sessionAPITokenKey struct{}
 
-// SetSessionAPIToken sets the session API token in the context.
-func SetSessionAPIToken(ctx context.Context, token string) context.Context {
-	return context.WithValue(ctx, sessionAPITokenKey{}, token)
+type SessionCredentials struct {
+	APIToken          string
+	AccessTokenCookie string
+}
+
+func (s SessionCredentials) IsEmpty() bool {
+	return s.APIToken == "" && s.AccessTokenCookie == ""
+}
+
+// SetSessionCredentials sets the session credentials in the context.
+func SetSessionCredentials(ctx context.Context, credentials SessionCredentials) context.Context {
+	return context.WithValue(ctx, sessionAPITokenKey{}, credentials)
 }
 
 // FetchSessionAPIToken retrieves the session API token from the context.
-func FetchSessionAPIToken(ctx context.Context) string {
-	sessionAPIToken, ok := ctx.Value(sessionAPITokenKey{}).(string)
+func FetchSessionAPIToken(ctx context.Context) SessionCredentials {
+	credentials, ok := ctx.Value(sessionAPITokenKey{}).(SessionCredentials)
 	if !ok {
-		return ""
+		return SessionCredentials{}
 	}
-	return sessionAPIToken
+	return credentials
 }

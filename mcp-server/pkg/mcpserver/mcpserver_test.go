@@ -116,7 +116,9 @@ func TestLoggingTool_mustHandle(t *testing.T) {
 				tool:   tt.tool,
 			}
 
-			ctx := authcontext.SetSessionAPIToken(context.Background(), tt.sessionAPIToken)
+			ctx := authcontext.SetSessionCredentials(context.Background(), authcontext.SessionCredentials{
+				APIToken: tt.sessionAPIToken,
+			})
 			result := lt.mustHandle(ctx, mcp.CallToolRequest{})
 
 			assert.Equal(t, len(tt.expectedContent), len(result.Content), "content length mismatch")

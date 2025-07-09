@@ -19,6 +19,8 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/config"
 	"go.uber.org/fx"
+	"go.uber.org/fx/fxevent"
+	"go.uber.org/zap"
 
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/clientfx"
 	pkgconfig "github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/config"
@@ -42,6 +44,9 @@ func New() *cobra.Command {
 		},
 		Run: func(*cobra.Command, []string) {
 			app := fx.New(
+				fx.WithLogger(func(logger *zap.Logger) fxevent.Logger {
+					return &fxevent.ZapLogger{Logger: logger}
+				}),
 				fx.Provide(func() (config.Provider, error) {
 					return pkgconfig.ParseFile(flags.ConfigFilePath)
 				}),

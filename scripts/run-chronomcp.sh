@@ -15,4 +15,4 @@ if [ -z "${CHRONOSPHERE_ORG_NAME:-}" ]; then
 fi
 
 echo "Starting MCP server..."
-${binary} -c "${CONFIG_FILE}" --verbose
+${binary} -c "${CONFIG_FILE}"

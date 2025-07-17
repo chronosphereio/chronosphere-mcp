@@ -18,6 +18,7 @@ package mcpserverfx
 import (
 	"fmt"
 
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools"
 	"go.uber.org/config"
 	"go.uber.org/fx"
 	"gopkg.in/validator.v2"
@@ -34,6 +35,7 @@ type configResult struct {
 	fx.Out
 
 	Config       *Config
+	ToolsConfig  *tools.Config
 	Chronosphere *clientfx.ChronosphereConfig
 }
 
@@ -55,6 +57,7 @@ func parseConfig(cfgProvider config.Provider, flags *Flags) (configResult, error
 
 	return configResult{
 		Config:       &cfg,
+		ToolsConfig:  cfg.Tools,
 		Chronosphere: &cfg.Chronosphere,
 	}, nil
 }

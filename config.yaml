@@ -14,6 +14,9 @@ server:
   tools:
     # List of tools to disable if you don't want to serve them to the client/host.
     disabled: []
+    # Classic dashboards are a legacy dashboard format. Enable this if you still use
+    # classic dashboards.
+    enableClassicDashboards: false
 
   chronosphere:
     apiURL: https://${CHRONOSPHERE_ORG_NAME:""}.chronosphere.io

@@ -22,6 +22,11 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
+type Config struct {
+	Disabled                []string `yaml:"disabled"`
+	EnableClassicDashboards bool     `yaml:"enable_classic_dashboards"`
+}
+
 type Result struct {
 	// Exactly 1 of these *Content fields should be populated if this is not an error response.
 	ImageContent []byte

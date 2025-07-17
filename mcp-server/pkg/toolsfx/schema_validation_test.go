@@ -48,6 +48,9 @@ func getAllTools(t *testing.T) []tools.MCPTool {
 				LogscaleURL: "https://test.logs.chronosphere.io",
 			}
 		}),
+		fx.Provide(func() *tools.Config {
+			return &tools.Config{}
+		}),
 		// Provide links builder
 		fx.Provide(func() *links.Builder {
 			return &links.Builder{}

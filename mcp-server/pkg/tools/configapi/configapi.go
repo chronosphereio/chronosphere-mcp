@@ -29,17 +29,20 @@ var _ tools.MCPTools = (*Tools)(nil)
 type Tools struct {
 	logger *zap.Logger
 	client *configv1client.ConfigV1API
+	config *tools.Config
 }
 
 func NewTools(
 	client *configv1client.ConfigV1API,
 	logger *zap.Logger,
+	config *tools.Config,
 ) (*Tools, error) {
 	logger.Info("events tool configured")
 
 	return &Tools{
 		logger: logger,
 		client: client,
+		config: config,
 	}, nil
 }
 
@@ -48,7 +51,7 @@ func (t *Tools) GroupName() string {
 }
 
 func (t *Tools) MCPTools() []tools.MCPTool {
-	return []tools.MCPTool{
+	mcpTools := []tools.MCPTool{
 		configv1.GetMonitor(t.client, t.logger),
 		configv1.ListMonitors(t.client, t.logger),
 		configv1.GetDashboard(t.client, t.logger),
@@ -60,4 +63,11 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 		configv1.ListRecordingRules(t.client, t.logger),
 		configv1.GetRecordingRule(t.client, t.logger),
 	}
+	if t.config.EnableClassicDashboards {
+		mcpTools = append(mcpTools,
+			configv1.GetGrafanaDashboard(t.client, t.logger),
+			configv1.ListGrafanaDashboards(t.client, t.logger),
+		)
+	}
+	return mcpTools
 }

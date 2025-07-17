@@ -47,13 +47,9 @@ type params struct {
 	MeterProvider  *metric.MeterProvider
 }
 
-type ToolsConfig struct {
-	Disabled []string `yaml:"disabled"`
-}
-
 type Config struct {
 	Transport    TransportConfig             `yaml:"transport"`
-	Tools        *ToolsConfig                `yaml:"tools"`
+	Tools        *tools.Config               `yaml:"tools"`
 	Chronosphere clientfx.ChronosphereConfig `yaml:"chronosphere" validate:"nonnil"`
 }
 

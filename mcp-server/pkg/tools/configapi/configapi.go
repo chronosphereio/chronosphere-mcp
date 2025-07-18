@@ -71,8 +71,8 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 	}
 	if t.config.EnableClassicDashboards {
 		mcpTools = append(mcpTools,
-			configv1.GetGrafanaDashboard(t.client, t.logger),
-			configv1.ListGrafanaDashboards(t.client, t.logger),
+			configv1.GetClassicDashboard(t.client, t.logger),
+			configv1.ListClassicDashboards(t.client, t.logger),
 		)
 	}
 	return mcpTools

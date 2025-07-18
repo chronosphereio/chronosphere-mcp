@@ -8,16 +8,16 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1"
-	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/grafana_dashboard"
+	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/classic_dashboard"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/pkg/params"
 	"github.com/chronosphereio/chronosphere-mcp/pkg/ptr"
 )
 
-func GetGrafanaDashboard(api *configv1.ConfigV1API, logger *zap.Logger) tools.MCPTool {
+func GetClassicDashboard(api *configv1.ConfigV1API, logger *zap.Logger) tools.MCPTool {
 	return tools.MCPTool{
-		Metadata: tools.NewMetadata("get_grafana_dashboard",
-			mcp.WithDescription("Get grafana-dashboards resource"),
+		Metadata: tools.NewMetadata("get_classic_dashboard",
+			mcp.WithDescription("Get classic-dashboards resource"),
 
 			mcp.WithString("slug",
 				mcp.Description(""),
@@ -30,15 +30,15 @@ func GetGrafanaDashboard(api *configv1.ConfigV1API, logger *zap.Logger) tools.MC
 				return nil, err
 			}
 
-			queryParams := &grafana_dashboard.ReadGrafanaDashboardParams{
+			queryParams := &classic_dashboard.ReadClassicDashboardParams{
 				Context: ctx,
 
 				Slug: slug,
 			}
 
-			resp, err := api.GrafanaDashboard.ReadGrafanaDashboard(queryParams)
+			resp, err := api.ClassicDashboard.ReadClassicDashboard(queryParams)
 			if err != nil {
-				return nil, fmt.Errorf("failed to call ReadGrafanaDashboard: %s", err)
+				return nil, fmt.Errorf("failed to call ReadClassicDashboard: %s", err)
 			}
 			return &tools.Result{
 				JSONContent: resp,
@@ -47,17 +47,17 @@ func GetGrafanaDashboard(api *configv1.ConfigV1API, logger *zap.Logger) tools.MC
 	}
 }
 
-func ListGrafanaDashboards(api *configv1.ConfigV1API, logger *zap.Logger) tools.MCPTool {
+func ListClassicDashboards(api *configv1.ConfigV1API, logger *zap.Logger) tools.MCPTool {
 	return tools.MCPTool{
-		Metadata: tools.NewMetadata("list_grafana_dashboards",
-			mcp.WithDescription("List grafana-dashboards resources"),
+		Metadata: tools.NewMetadata("list_classic_dashboards",
+			mcp.WithDescription("List classic-dashboards resources"),
 
 			params.WithStringArray("bucket_slugs",
-				mcp.Description("Filters results by bucket_slug, where any GrafanaDashboard with a matching bucket_slug in the given list (and matches all other filters) is returned."),
+				mcp.Description("Filters results by bucket_slug, where any ClassicDashboard with a matching bucket_slug in the given list (and matches all other filters) is returned."),
 			),
 
 			params.WithStringArray("collection_slugs",
-				mcp.Description("Filters results by collection_slug, where any GrafanaDashboard with a matching collection_slug in the given list (and matches all other filters) is returned."),
+				mcp.Description("Filters results by collection_slug, where any ClassicDashboard with a matching collection_slug in the given list (and matches all other filters) is returned."),
 			),
 
 			mcp.WithBoolean("include_dashboard_json",
@@ -65,7 +65,7 @@ func ListGrafanaDashboards(api *configv1.ConfigV1API, logger *zap.Logger) tools.
 			),
 
 			params.WithStringArray("names",
-				mcp.Description("Filters results by name, where any GrafanaDashboard with a matching name in the given list (and matches all other filters) is returned."),
+				mcp.Description("Filters results by name, where any ClassicDashboard with a matching name in the given list (and matches all other filters) is returned."),
 			),
 
 			mcp.WithNumber("page_max_size",
@@ -77,7 +77,7 @@ func ListGrafanaDashboards(api *configv1.ConfigV1API, logger *zap.Logger) tools.
 			),
 
 			params.WithStringArray("slugs",
-				mcp.Description("Filters results by slug, where any GrafanaDashboard with a matching slug in the given list (and matches all other filters) is returned."),
+				mcp.Description("Filters results by slug, where any ClassicDashboard with a matching slug in the given list (and matches all other filters) is returned."),
 			),
 		),
 		Handler: func(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
@@ -116,7 +116,7 @@ func ListGrafanaDashboards(api *configv1.ConfigV1API, logger *zap.Logger) tools.
 				return nil, err
 			}
 
-			queryParams := &grafana_dashboard.ListGrafanaDashboardsParams{
+			queryParams := &classic_dashboard.ListClassicDashboardsParams{
 				Context: ctx,
 
 				BucketSlugs: bucketSlugs,
@@ -134,9 +134,9 @@ func ListGrafanaDashboards(api *configv1.ConfigV1API, logger *zap.Logger) tools.
 				Slugs: slugs,
 			}
 
-			resp, err := api.GrafanaDashboard.ListGrafanaDashboards(queryParams)
+			resp, err := api.ClassicDashboard.ListClassicDashboards(queryParams)
 			if err != nil {
-				return nil, fmt.Errorf("failed to call ListGrafanaDashboards: %s", err)
+				return nil, fmt.Errorf("failed to call ListClassicDashboards: %s", err)
 			}
 			return &tools.Result{
 				JSONContent: resp,

@@ -52,18 +52,20 @@ func (t *Tools) GroupName() string {
 
 func (t *Tools) MCPTools() []tools.MCPTool {
 	mcpTools := []tools.MCPTool{
-		configv1.GetDropRule(t.client, t.logger),
-		configv1.ListDropRules(t.client, t.logger),
-		configv1.GetMonitor(t.client, t.logger),
-		configv1.ListMonitors(t.client, t.logger),
 		configv1.GetDashboard(t.client, t.logger),
 		configv1.ListDashboards(t.client, t.logger),
+		configv1.GetDropRule(t.client, t.logger),
+		configv1.ListDropRules(t.client, t.logger),
+		configv1.GetMappingRule(t.client, t.logger),
+		configv1.ListMappingRules(t.client, t.logger),
+		configv1.GetMonitor(t.client, t.logger),
+		configv1.ListMonitors(t.client, t.logger),
+		configv1.GetNotificationPolicy(t.client, t.logger),
+		configv1.ListNotificationPolicies(t.client, t.logger),
+		configv1.GetRecordingRule(t.client, t.logger),
+		configv1.ListRecordingRules(t.client, t.logger),
 		configv1.GetSlo(t.client, t.logger),
 		configv1.ListSlos(t.client, t.logger),
-		configv1.ListNotificationPolicies(t.client, t.logger),
-		configv1.GetNotificationPolicy(t.client, t.logger),
-		configv1.ListRecordingRules(t.client, t.logger),
-		configv1.GetRecordingRule(t.client, t.logger),
 	}
 	if t.config.EnableClassicDashboards {
 		mcpTools = append(mcpTools,

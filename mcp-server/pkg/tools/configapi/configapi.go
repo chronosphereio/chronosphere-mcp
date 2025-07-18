@@ -64,6 +64,8 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 		configv1.ListNotificationPolicies(t.client, t.logger),
 		configv1.GetRecordingRule(t.client, t.logger),
 		configv1.ListRecordingRules(t.client, t.logger),
+		configv1.GetRollupRule(t.client, t.logger),
+		configv1.ListRollupRules(t.client, t.logger),
 		configv1.GetSlo(t.client, t.logger),
 		configv1.ListSlos(t.client, t.logger),
 	}

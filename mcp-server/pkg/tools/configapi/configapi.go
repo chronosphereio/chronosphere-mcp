@@ -52,6 +52,8 @@ func (t *Tools) GroupName() string {
 
 func (t *Tools) MCPTools() []tools.MCPTool {
 	mcpTools := []tools.MCPTool{
+		configv1.GetDropRule(t.client, t.logger),
+		configv1.ListDropRules(t.client, t.logger),
 		configv1.GetMonitor(t.client, t.logger),
 		configv1.ListMonitors(t.client, t.logger),
 		configv1.GetDashboard(t.client, t.logger),

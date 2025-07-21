@@ -22,11 +22,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/prometheus/common/model"
+
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/pkg/params"
-	"github.com/mark3labs/mcp-go/mcp"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
-	"github.com/prometheus/common/model"
 )
 
 func (t *Tools) listPrometheusSeries(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
@@ -195,6 +196,15 @@ func (t *Tools) listPrometheusLabelValues(ctx context.Context, request mcp.CallT
 	if err != nil {
 		return nil, err
 	}
+	limit, err := params.Int(request, "limit", false, 100)
+	if err != nil {
+		return nil, err
+	}
+	offset, err := params.Int(request, "offset", false, 0)
+	if err != nil {
+		return nil, err
+	}
+
 	api, err := t.renderer.DataAPI()
 	if err != nil {
 		return nil, err
@@ -204,12 +214,39 @@ func (t *Tools) listPrometheusLabelValues(ctx context.Context, request mcp.CallT
 		return nil, fmt.Errorf("failed to get label names: %s", err)
 	}
 
-	result := promJSONResponse(resp, warnings)
+	// Apply client-side pagination
+	var paginatedResp model.LabelValues
+	if limit > 0 || offset > 0 {
+		totalValues := len(resp)
+		start := offset
+		if start > totalValues {
+			start = totalValues
+		}
+		end := totalValues
+		if limit > 0 && start+limit < totalValues {
+			end = start + limit
+		}
+		paginatedResp = resp[start:end]
+	} else {
+		paginatedResp = resp
+	}
+
+	result := promJSONResponse(paginatedResp, warnings)
 	result.ChronosphereLink = t.linkBuilder.Custom("/data/m3/api/v1/label/"+labelName+"/values").
 		WithTimeSec("start", timeRange.Start).
 		WithTimeSec("end", timeRange.End).
 		WithParam("match[]", strings.Join(selectors, ",")).
 		String()
+
+	// Add pagination metadata
+	if result.Meta == nil {
+		result.Meta = make(map[string]any)
+	}
+	result.Meta["total"] = len(resp)
+	result.Meta["offset"] = offset
+	result.Meta["limit"] = limit
+	result.Meta["returned"] = len(paginatedResp)
+
 	return result, nil
 }
 

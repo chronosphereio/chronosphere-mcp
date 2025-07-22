@@ -30,6 +30,27 @@ import (
 	"github.com/chronosphereio/chronosphere-mcp/pkg/links"
 )
 
+func allModules(flags *mcpserverfx.Flags) []fx.Option {
+	return []fx.Option{
+		fx.WithLogger(func(logger *zap.Logger) fxevent.Logger {
+			return &fxevent.ZapLogger{Logger: logger}
+		}),
+		fx.Provide(func() (config.Provider, error) {
+			return pkgconfig.ParseFile(flags.ConfigFilePath)
+		}),
+		fx.Provide(func() *mcpserverfx.Flags {
+			return flags
+		}),
+		fx.Provide(func(apiConfig *clientfx.ChronosphereConfig) *links.Builder {
+			return links.NewBuilder(apiConfig.APIURL)
+		}),
+		clientfx.Module,
+		instrumentfx.Module,
+		toolsfx.Module,
+		mcpserverfx.Module,
+	}
+}
+
 // New returns the root command.
 func New() *cobra.Command {
 	flags := &mcpserverfx.Flags{}
@@ -43,24 +64,7 @@ func New() *cobra.Command {
 			cmd.SilenceUsage = true
 		},
 		Run: func(*cobra.Command, []string) {
-			app := fx.New(
-				fx.WithLogger(func(logger *zap.Logger) fxevent.Logger {
-					return &fxevent.ZapLogger{Logger: logger}
-				}),
-				fx.Provide(func() (config.Provider, error) {
-					return pkgconfig.ParseFile(flags.ConfigFilePath)
-				}),
-				fx.Provide(func() *mcpserverfx.Flags {
-					return flags
-				}),
-				fx.Provide(func(apiConfig *clientfx.ChronosphereConfig) *links.Builder {
-					return links.NewBuilder(apiConfig.APIURL)
-				}),
-				clientfx.Module,
-				instrumentfx.Module,
-				toolsfx.Module,
-				mcpserverfx.Module,
-			)
+			app := fx.New(allModules(flags)...)
 			app.Run()
 		},
 	}

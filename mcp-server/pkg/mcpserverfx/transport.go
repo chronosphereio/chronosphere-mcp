@@ -114,7 +114,7 @@ func (t *Transports) Start(ctx context.Context) {
 			defer t.wg.Done()
 			t.logger.Info("serving stdio transport")
 			if err := t.server.StdioServer().Listen(ctx, os.Stdin, os.Stdout); err != nil {
-				t.logger.Error("error serving stdio transport", zap.Error(err))
+				t.logger.DPanic("error serving stdio transport", zap.Error(err))
 			}
 		}()
 	}
@@ -128,7 +128,7 @@ func (t *Transports) Start(ctx context.Context) {
 				zap.String("address", t.sse.Address),
 				zap.String("baseURL", t.sse.BaseURL))
 			if err := t.sseServer.Start(t.sse.Address); err != nil {
-				t.logger.Error("error serving sse transport", zap.Error(err))
+				t.logger.DPanic("error serving sse transport", zap.Error(err))
 			}
 		}()
 	}

@@ -174,7 +174,8 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 	return []tools.MCPTool{
 		{
 			Metadata: tools.NewMetadata("list_logs",
-				mcp.WithDescription(`List logs from a query. Since log results are quite large, will only receive the first page of logs. use the pageToken to fetch the next page. Consult the Log Query Syntax resource for more details on query syntax`),
+				mcp.WithDescription(`Deprecated: Use query_logs_range instead.
+List logs from a query. Since log results are quite large, will only receive the first page of logs. use the pageToken to fetch the next page. Consult the Log Query Syntax resource for more details on query syntax`),
 				withLogQueryParam(),
 				params.WithTimeRange(),
 				mcp.WithNumber("page_max_size",
@@ -232,12 +233,27 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 		},
 		{
 			Metadata: tools.NewMetadata("query_logs_range",
-				mcp.WithDescription(`Execute a range query for logs. This endpoint is more efficient and returns logs as either time series or grid data. By default, only the timestamp, message, severity and service fields are returned, you may want to request other properties by using the "project" function e.g. "<query> | project logID,timestamp,message,severity,service". Since log results are quite large, will only receive the first page of logs. use the pageToken to fetch the next page. Consult the Log Query Syntax resource for more details on query syntax`),
+				mcp.WithDescription(`Execute a range query for logs.
+This endpoint returns logs as either timeSeries or gridData. It may return a large amount of data,
+so be careful putting the result of this direction into context. Use offset and limit parameters to
+limit the amount of data returned.
+
+By default, only the timestamp, message, severity and service fields are returned, 
+you may want to request other properties by using the "project" function e.g. 
+
+"<query> | project logID,timestamp,message,severity,service"
+
+Since log results are quite large, will only receive the first page of logs. use the pageToken to fetch
+the next page. Consult the Log Query Syntax resource for more details on query syntax`),
 				withLogQueryParam(),
 				params.WithTimeRange(),
 				mcp.WithString("page_token",
 					mcp.Description("Page token to fetch the next page of logs. An empty token identifies the first page."),
 				),
+				mcp.WithNumber("limit",
+					mcp.Description("limit the number of results to return")),
+				mcp.WithNumber("offset",
+					mcp.Description("skip `offset` number of results before returning")),
 			),
 			Handler: func(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
 				query, err := params.String(request, "query", true, "")
@@ -251,6 +267,15 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				}
 
 				pageToken, err := params.String(request, "page_token", false, "")
+				if err != nil {
+					return nil, err
+				}
+
+				limit, err := params.Int(request, "limit", false, 0)
+				if err != nil {
+					return nil, err
+				}
+				offset, err := params.Int(request, "offset", false, 0)
 				if err != nil {
 					return nil, err
 				}
@@ -269,6 +294,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					return nil, fmt.Errorf("failed to get range query: %s", err)
 				}
 
+				resp.Payload, _ = trimLogEntries(resp.Payload, limit, offset)
 				jsonContent := t.createCompactSummary(ctx, query, timeRange, resp.Payload)
 
 				return &tools.Result{
@@ -472,6 +498,73 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 			// TODO: Implement autocomplete requests.
 		},
 	}
+}
+
+// trimLogEntries trims log entries to at most `limit` rows with an offset. It returns a trimmed payload along with the total number of entries trimmed.
+func trimLogEntries(payload *models.DataunstableGetRangeQueryResponse, limit int, offset int) (*models.DataunstableGetRangeQueryResponse, int) {
+	if payload == nil || (limit == 0 && offset == 0) {
+		return payload, 0
+	}
+
+	trimmed := &models.DataunstableGetRangeQueryResponse{
+		Metadata: payload.Metadata,
+	}
+
+	totalTrimmed := 0
+
+	if payload.GridData != nil {
+		trimmed.GridData = &models.DataunstableLogQueryGridData{
+			Columns: payload.GridData.Columns,
+		}
+
+		totalRows := len(payload.GridData.Rows)
+		if offset >= totalRows {
+			trimmed.GridData.Rows = []*models.DataunstableRow{}
+			totalTrimmed = totalRows
+		} else {
+			end := totalRows
+			if limit > 0 {
+				end = offset + limit
+				if end > totalRows {
+					end = totalRows
+				}
+			}
+			trimmed.GridData.Rows = payload.GridData.Rows[offset:end]
+			totalTrimmed = offset + (totalRows - end)
+		}
+	} else if payload.TimeSeriesData != nil {
+		trimmed.TimeSeriesData = &models.DataunstableLogQueryTimeSeriesData{
+			GroupByDimensionNames: payload.TimeSeriesData.GroupByDimensionNames,
+			Series:                make([]*models.LogQueryTimeSeriesDataLogQueryTimeSeries, len(payload.TimeSeriesData.Series)),
+		}
+
+		for i, series := range payload.TimeSeriesData.Series {
+			trimmedSeries := &models.LogQueryTimeSeriesDataLogQueryTimeSeries{
+				AggregationName:        series.AggregationName,
+				GroupByDimensionValues: series.GroupByDimensionValues,
+			}
+
+			totalBuckets := len(series.Buckets)
+			if offset >= totalBuckets {
+				trimmedSeries.Buckets = []*models.LogQueryTimeSeriesLogQueryTimeSeriesBucket{}
+				totalTrimmed += totalBuckets
+			} else {
+				end := totalBuckets
+				if limit > 0 {
+					end = offset + limit
+					if end > totalBuckets {
+						end = totalBuckets
+					}
+				}
+				trimmedSeries.Buckets = series.Buckets[offset:end]
+				totalTrimmed += offset + (totalBuckets - end)
+			}
+
+			trimmed.TimeSeriesData.Series[i] = trimmedSeries
+		}
+	}
+
+	return trimmed, totalTrimmed
 }
 
 func withLogQueryParam() mcp.ToolOption {

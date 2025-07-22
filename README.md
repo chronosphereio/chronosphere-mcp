@@ -1,10 +1,27 @@
-# MCP Server
+# Chronosphere MCP Server
 MCP server for Chronosphere. Serves tools for fetching logs, metrics, traces, events as well as select entities.
 
-This project is a work in progress. Many features are not yet implemented and features may be added, changed or removed without warning.
+This project uses [semver](https://semver.org/) for release versions. We have not graduated to 1.0, so breaking
+changes may occur for minor version bumps.
 
 ## MCP config with popular hosts (claude desktop, cursor)
+### Remote Server
+The easiest way to use the MCP server is using our remote hosted server:
 
+```json
+{
+    "mcpServers": {
+        "chronosphere": {
+            "url": "https://<org name>.chronosphere.io/api/mcp/mcp",
+            "headers": {
+                "Authorization": "Bearer <chronosphere api token>"
+            }
+        }
+    }
+}
+```
+
+### Building from source
 First build the binary
 ```sh
 make chronomcp
@@ -27,7 +44,6 @@ make chronomcp
   }
 }
 ```
-
 
 ## Developing
 ### Running the server

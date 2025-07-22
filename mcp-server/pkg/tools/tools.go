@@ -24,7 +24,7 @@ import (
 
 type Config struct {
 	Disabled                []string `yaml:"disabled"`
-	EnableClassicDashboards bool     `yaml:"enable_classic_dashboards"`
+	EnableClassicDashboards bool     `yaml:"enableClassicDashboards"`
 }
 
 type Result struct {

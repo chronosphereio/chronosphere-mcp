@@ -64,12 +64,8 @@ The MCP project provides an inspector useful for directly calling tools APIs. To
 1. Run `npx @modelcontextprotocol/inspector node build/index.js`.
 1. Open http://localhost:6274/#resources , fill in `http://0.0.0.0:8081/mcp` in the URL, with transport type Streamable HTTP.
 
-## Librechat agent (experimental)
-See [chat/README.md](chat/README.md)
-
 ## Agent (experimental)
 See [agent/README.md](chat/README.md)
-
 
 ### Releases
 We use [goreleaser](https://goreleaser.com/) to manage releases.

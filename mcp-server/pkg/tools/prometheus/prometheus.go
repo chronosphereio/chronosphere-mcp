@@ -23,11 +23,11 @@ import (
 	"time"
 
 	"github.com/mark3labs/mcp-go/mcp"
+	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/pkg/params"
-	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
 func (t *Tools) listPrometheusSeries(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
@@ -77,6 +77,14 @@ func (t *Tools) queryPrometheusRange(ctx context.Context, request mcp.CallToolRe
 	if err != nil {
 		return nil, err
 	}
+	limit, err := params.Int(request, "limit", false, 100)
+	if err != nil {
+		return nil, err
+	}
+	offset, err := params.Int(request, "offset", false, 0)
+	if err != nil {
+		return nil, err
+	}
 
 	step := time.Duration(stepSeconds) * time.Second
 	if step <= 0 {
@@ -100,8 +108,35 @@ func (t *Tools) queryPrometheusRange(ctx context.Context, request mcp.CallToolRe
 		return nil, fmt.Errorf("unexpected result from prometheus server")
 	}
 
-	result := promJSONResponse(matrix, warnings)
+	// Apply client-side pagination to time series
+	var paginatedMatrix model.Matrix
+	if limit > 0 || offset > 0 {
+		totalSeries := len(matrix)
+		start := offset
+		if start > totalSeries {
+			start = totalSeries
+		}
+		end := totalSeries
+		if limit > 0 && start+limit < totalSeries {
+			end = start + limit
+		}
+		paginatedMatrix = matrix[start:end]
+	} else {
+		paginatedMatrix = matrix
+	}
+
+	result := promJSONResponse(paginatedMatrix, warnings)
 	result.ChronosphereLink = t.linkBuilder.MetricExplorer().WithQuery(query).WithTimeRange(timeRange.Start, timeRange.End).String()
+
+	// Add pagination metadata
+	if result.Meta == nil {
+		result.Meta = make(map[string]any)
+	}
+	result.Meta["total_series"] = len(matrix)
+	result.Meta["offset"] = offset
+	result.Meta["limit"] = limit
+	result.Meta["returned_series"] = len(paginatedMatrix)
+
 	return result, nil
 }
 

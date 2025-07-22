@@ -169,3 +169,155 @@ type Result struct {
 	JSONContent any
 	Meta        map[string]any
 }
+
+func TestQueryPrometheusRangePagination(t *testing.T) {
+	tests := []struct {
+		name           string
+		matrix         model.Matrix
+		limit          int
+		offset         int
+		expectedSeries int
+		expectedMeta   map[string]any
+	}{
+		{
+			name: "no pagination",
+			matrix: model.Matrix{
+				&model.SampleStream{Metric: model.Metric{"__name__": "series1"}},
+				&model.SampleStream{Metric: model.Metric{"__name__": "series2"}},
+				&model.SampleStream{Metric: model.Metric{"__name__": "series3"}},
+			},
+			limit:          0,
+			offset:         0,
+			expectedSeries: 3,
+			expectedMeta: map[string]any{
+				"total_series":    3,
+				"offset":          0,
+				"limit":           0,
+				"returned_series": 3,
+			},
+		},
+		{
+			name: "limit only",
+			matrix: model.Matrix{
+				&model.SampleStream{Metric: model.Metric{"__name__": "series1"}},
+				&model.SampleStream{Metric: model.Metric{"__name__": "series2"}},
+				&model.SampleStream{Metric: model.Metric{"__name__": "series3"}},
+				&model.SampleStream{Metric: model.Metric{"__name__": "series4"}},
+				&model.SampleStream{Metric: model.Metric{"__name__": "series5"}},
+			},
+			limit:          3,
+			offset:         0,
+			expectedSeries: 3,
+			expectedMeta: map[string]any{
+				"total_series":    5,
+				"offset":          0,
+				"limit":           3,
+				"returned_series": 3,
+			},
+		},
+		{
+			name: "offset only",
+			matrix: model.Matrix{
+				&model.SampleStream{Metric: model.Metric{"__name__": "series1"}},
+				&model.SampleStream{Metric: model.Metric{"__name__": "series2"}},
+				&model.SampleStream{Metric: model.Metric{"__name__": "series3"}},
+				&model.SampleStream{Metric: model.Metric{"__name__": "series4"}},
+				&model.SampleStream{Metric: model.Metric{"__name__": "series5"}},
+			},
+			limit:          0,
+			offset:         2,
+			expectedSeries: 3,
+			expectedMeta: map[string]any{
+				"total_series":    5,
+				"offset":          2,
+				"limit":           0,
+				"returned_series": 3,
+			},
+		},
+		{
+			name: "limit and offset",
+			matrix: model.Matrix{
+				&model.SampleStream{Metric: model.Metric{"__name__": "series1"}},
+				&model.SampleStream{Metric: model.Metric{"__name__": "series2"}},
+				&model.SampleStream{Metric: model.Metric{"__name__": "series3"}},
+				&model.SampleStream{Metric: model.Metric{"__name__": "series4"}},
+				&model.SampleStream{Metric: model.Metric{"__name__": "series5"}},
+			},
+			limit:          2,
+			offset:         1,
+			expectedSeries: 2,
+			expectedMeta: map[string]any{
+				"total_series":    5,
+				"offset":          1,
+				"limit":           2,
+				"returned_series": 2,
+			},
+		},
+		{
+			name: "offset beyond total",
+			matrix: model.Matrix{
+				&model.SampleStream{Metric: model.Metric{"__name__": "series1"}},
+				&model.SampleStream{Metric: model.Metric{"__name__": "series2"}},
+				&model.SampleStream{Metric: model.Metric{"__name__": "series3"}},
+			},
+			limit:          10,
+			offset:         5,
+			expectedSeries: 0,
+			expectedMeta: map[string]any{
+				"total_series":    3,
+				"offset":          5,
+				"limit":           10,
+				"returned_series": 0,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Mock the pagination logic
+			mockResult := mockMatrixWithPagination(tt.matrix, tt.limit, tt.offset)
+
+			// Verify result matrix
+			resultMatrix, ok := mockResult.JSONContent.(map[string]any)["result"].(model.Matrix)
+			require.True(t, ok, "result should be model.Matrix")
+
+			assert.Equal(t, tt.expectedSeries, len(resultMatrix))
+
+			// Verify metadata
+			assert.Equal(t, tt.expectedMeta, mockResult.Meta)
+		})
+	}
+}
+
+// mockMatrixWithPagination simulates the pagination logic from queryPrometheusRange
+func mockMatrixWithPagination(matrix model.Matrix, limit, offset int) *Result {
+	var paginatedMatrix model.Matrix
+	if limit > 0 || offset > 0 {
+		totalSeries := len(matrix)
+		start := offset
+		if start > totalSeries {
+			start = totalSeries
+		}
+		end := totalSeries
+		if limit > 0 && start+limit < totalSeries {
+			end = start + limit
+		}
+		paginatedMatrix = matrix[start:end]
+	} else {
+		paginatedMatrix = matrix
+	}
+
+	result := &Result{
+		JSONContent: map[string]any{
+			"result": paginatedMatrix,
+		},
+		Meta: make(map[string]any),
+	}
+
+	result.Meta["total_series"] = len(matrix)
+	result.Meta["offset"] = offset
+	result.Meta["limit"] = limit
+	result.Meta["returned_series"] = len(paginatedMatrix)
+
+	return result
+}

@@ -119,7 +119,18 @@ Returns raw time series data - use query_prometheus_instant for single point-in-
 		},
 		{
 			Metadata: tools.NewMetadata("list_prometheus_series",
-				mcp.WithDescription("Returns the list of time series that match a certain label set."),
+				mcp.WithDescription(`Returns the complete time series (full label sets with all key-value pairs) that match the given selectors. Each result shows the exact combination of labels for an active time series. Use this tool only when you need to see the actual label combinations that exist.
+
+IMPORTANT: This tool returns a lot of data and can overwhelm context windows. For most use cases, prefer:
+- list_prometheus_label_names with selector {__name__="metric_name"} to find what labels are available on a metric
+- list_prometheus_label_values to find what values a specific label has
+- cardinality_estimate() function in query tools to estimate series count without returning all data
+
+Use list_prometheus_series only when you specifically need to see exact label combinations, such as debugging specific series or finding unusual label patterns.
+
+Example usage:
+- Find specific series combinations: ["{__name__=\"http_requests_total\", service=\"api\"}"]
+- Debug label patterns: ["{job=\"kubernetes-pods\"}"] (use sparingly)`),
 				params.WithStringArray("selectors",
 					mcp.Description("Repeated series selector arguments that select the series to return. At least one selector must be provided."),
 					mcp.Required(),

@@ -75,7 +75,15 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 		},
 		{
 			Metadata: tools.NewMetadata("query_prometheus_range",
-				mcp.WithDescription("Evaluates a Prometheus expression query over a range of time"),
+				mcp.WithDescription(`Executes a Prometheus PromQL query over a specified time range and returns time series data points as JSON.
+
+Supports standard PromQL syntax plus Chronosphere custom functions:
+- cardinality_estimate(vector): Estimates element count in vector, useful for understanding metric cardinality. Example: cardinality_estimate(http_requests_total) by (service)
+- head_avg/head_max/head_min/head_sum(query, n): Returns top n series by aggregation value. Example: head_avg(cpu_usage{}, 5) for top 5 CPU users
+- tail_avg/tail_max/tail_min/tail_sum(query, n): Returns bottom n series by aggregation value. Example: tail_avg(memory_usage{}, 3) for lowest memory users  
+- sum_per_second(range_vector): Calculates per-second rate for delta counters. Example: sum_per_second(http_request_count{}[5m])
+
+Returns raw time series data - use query_prometheus_instant for single point-in-time values.`),
 				mcp.WithString("query",
 					mcp.Description("Prometheus PromQL expression query string"),
 					mcp.Required(),

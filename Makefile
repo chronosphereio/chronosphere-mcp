@@ -31,6 +31,9 @@ swagger-gen: install-tools
 	rm -rf generated/stateunstable/stateunstable
 	rm -rf generated/stateunstable/models
 	$(tools_bin_path)/swagger generate client -f generated/stateunstable/spec.json -t generated/stateunstable -c stateunstable
+	rm -rf generated/datav1/datav1
+	rm -rf generated/datav1/models
+	$(tools_bin_path)/swagger generate client -f generated/datav1/spec.json -t generated/datav1 -c datav1
 
 .PHONY: swagger-serve-dataunstable
 swagger-serve-dataunstable:

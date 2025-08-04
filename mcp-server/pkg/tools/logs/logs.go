@@ -173,65 +173,6 @@ func (t *Tools) createCompactSummary(ctx context.Context, query string, timeRang
 func (t *Tools) MCPTools() []tools.MCPTool {
 	return []tools.MCPTool{
 		{
-			Metadata: tools.NewMetadata("list_logs",
-				mcp.WithDescription(`Deprecated: Use query_logs_range instead.
-List logs from a query. Since log results are quite large, will only receive the first page of logs. use the pageToken to fetch the next page. Consult the Log Query Syntax resource for more details on query syntax`),
-				withLogQueryParam(),
-				params.WithTimeRange(),
-				mcp.WithNumber("page_max_size",
-					mcp.Description("Maximum number of logs to return. Default is 10. Use page toke to fetch more pages."),
-					mcp.DefaultNumber(10)),
-				mcp.WithString("page_token",
-					mcp.Description("Page token to fetch the next page of logs"),
-				),
-			),
-			Handler: func(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
-				query, err := params.String(request, "query", true, "")
-				if err != nil {
-					return nil, err
-				}
-
-				timeRange, err := params.ParseTimeRange(request)
-				if err != nil {
-					return nil, err
-				}
-
-				pageSize, err := params.Int(request, "page_max_size", false, 10)
-				if err != nil {
-					return nil, err
-				}
-
-				pageToken, err := params.String(request, "page_token", false, "")
-				if err != nil {
-					return nil, err
-				}
-
-				queryParams := &data_unstable.ListLogsParams{
-					Context:                 ctx,
-					LogFilterQuery:          &query,
-					LogFilterHappenedAfter:  (*strfmt.DateTime)(&timeRange.Start),
-					LogFilterHappenedBefore: (*strfmt.DateTime)(&timeRange.End),
-					PageMaxSize:             ptr.To(int64(pageSize)),
-					PageToken:               &pageToken,
-				}
-				t.logger.Info("list logs", zap.Any("params", queryParams))
-
-				resp, err := t.api.DataUnstable.ListLogs(queryParams)
-				if err != nil {
-					return nil, fmt.Errorf("failed to list logs: %s", err)
-				}
-
-				// TODO: summarize logs before returning.
-				return &tools.Result{
-					JSONContent: resp,
-					ChronosphereLink: t.linkBuilder.LogExplorer().
-						WithQuery(query).
-						WithTimeRange(timeRange.Start, timeRange.End).
-						String(),
-				}, nil
-			},
-		},
-		{
 			Metadata: tools.NewMetadata("query_logs_range",
 				mcp.WithDescription(`Execute a range query for logs.
 This endpoint returns logs as either timeSeries or gridData. It may return a large amount of data,

@@ -23,9 +23,9 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 	"go.uber.org/zap"
 
-	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/dataunstable"
-	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/dataunstable/data_unstable"
-	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/models"
+	"github.com/chronosphereio/chronosphere-mcp/generated/datav1/datav1"
+	"github.com/chronosphereio/chronosphere-mcp/generated/datav1/datav1/version1"
+	"github.com/chronosphereio/chronosphere-mcp/generated/datav1/models"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/pkg/params"
 )
@@ -34,11 +34,11 @@ var _ tools.MCPTools = (*Tools)(nil)
 
 type Tools struct {
 	logger *zap.Logger
-	api    *dataunstable.DataUnstableAPI
+	api    *datav1.DataV1API
 }
 
 func NewTools(
-	api *dataunstable.DataUnstableAPI,
+	api *datav1.DataV1API,
 	logger *zap.Logger,
 ) (*Tools, error) {
 	logger.Info("events tool configured")
@@ -93,7 +93,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					return nil, fmt.Errorf("trace_ids can not be used with service or operation")
 				}
 
-				queryParams := &data_unstable.ListTracesParams{
+				queryParams := &version1.ListTracesParams{
 					Context: ctx,
 					Body: &models.Datav1ListTracesRequest{
 						StartTime: strfmt.DateTime(timeRange.Start),
@@ -103,9 +103,17 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 
 				if len(traceIDs) > 0 {
 					queryParams.Body.TraceIds = traceIDs
-					queryParams.Body.QueryType = "TRACE_IDS"
+					queryParams.Body.QueryType = struct {
+						models.ListTracesRequestQueryType
+					}{
+						models.ListTracesRequestQueryTypeTRACEIDS,
+					}
 				} else {
-					queryParams.Body.QueryType = "SERVICE_OPERATION"
+					queryParams.Body.QueryType = struct {
+						models.ListTracesRequestQueryType
+					}{
+						models.ListTracesRequestQueryTypeSERVICEOPERATION,
+					}
 				}
 
 				if service != "" {
@@ -115,7 +123,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					queryParams.Body.Operation = operation
 				}
 
-				resp, err := t.api.DataUnstable.ListTraces(queryParams)
+				resp, err := t.api.Version1.ListTraces(queryParams, nil)
 				if err != nil {
 					return nil, fmt.Errorf("failed to list traces: %s", err)
 				}

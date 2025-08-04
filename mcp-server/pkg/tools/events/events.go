@@ -19,38 +19,43 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/dataunstable"
-	"github.com/chronosphereio/chronosphere-mcp/pkg/ptr"
 	"github.com/go-openapi/strfmt"
 	"github.com/mark3labs/mcp-go/mcp"
 	"go.uber.org/zap"
 
+	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/dataunstable"
 	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/dataunstable/data_unstable"
 	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/models"
+	"github.com/chronosphereio/chronosphere-mcp/generated/datav1/datav1"
+	"github.com/chronosphereio/chronosphere-mcp/generated/datav1/datav1/version1"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/pkg/params"
 	"github.com/chronosphereio/chronosphere-mcp/pkg/links"
+	"github.com/chronosphereio/chronosphere-mcp/pkg/ptr"
 )
 
 var _ tools.MCPTools = (*Tools)(nil)
 
 type Tools struct {
-	logger      *zap.Logger
-	api         *dataunstable.DataUnstableAPI
-	linkBuilder *links.Builder
+	logger          *zap.Logger
+	dataV1API       *datav1.DataV1API
+	dataUnstableAPI *dataunstable.DataUnstableAPI
+	linkBuilder     *links.Builder
 }
 
 func NewTools(
-	api *dataunstable.DataUnstableAPI,
+	dataV1API *datav1.DataV1API,
+	dataUnstableAPI *dataunstable.DataUnstableAPI,
 	logger *zap.Logger,
 	linkBuilder *links.Builder,
 ) (*Tools, error) {
 	logger.Info("events tool configured")
 
 	return &Tools{
-		logger:      logger,
-		api:         api,
-		linkBuilder: linkBuilder,
+		logger:          logger,
+		dataV1API:       dataV1API,
+		dataUnstableAPI: dataUnstableAPI,
+		linkBuilder:     linkBuilder,
 	}, nil
 }
 
@@ -77,7 +82,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					return nil, err
 				}
 
-				queryParams := &data_unstable.ListEventsParams{
+				queryParams := &version1.ListEventsParams{
 					Context:        ctx,
 					HappenedAfter:  (*strfmt.DateTime)(ptr.To(timeRange.Start)),
 					HappenedBefore: (*strfmt.DateTime)(ptr.To(timeRange.End)),
@@ -86,7 +91,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					queryParams.Query = ptr.To(query)
 				}
 
-				resp, err := t.api.DataUnstable.ListEvents(queryParams)
+				resp, err := t.dataV1API.Version1.ListEvents(queryParams, nil)
 				if err != nil {
 					return nil, fmt.Errorf("failed to list events: %s", err)
 				}
@@ -104,7 +109,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				mcp.WithDescription("List properties you can query on events"),
 			),
 			Handler: func(ctx context.Context, _ mcp.CallToolRequest) (*tools.Result, error) {
-				resp, err := t.api.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
+				resp, err := t.dataUnstableAPI.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
 					Context: ctx,
 					Field:   ptr.To(string(models.DataunstableEventFieldCATEGORYEVENTFIELD)),
 				})
@@ -122,7 +127,17 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				}
 				eventsMetadata.Categories = resp.Payload.Values
 
-				resp, err = t.api.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
+				resp, err = t.dataUnstableAPI.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
+					Context: ctx,
+					Field:   ptr.To(string(models.DataunstableEventFieldLABELNAMEEVENTFIELD)),
+				})
+				if err != nil {
+					return nil, fmt.Errorf("failed to get label names for events: %s", err)
+				}
+
+				eventsMetadata.LabelNames = resp.Payload.Values
+
+				resp, err = t.dataUnstableAPI.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
 					Context: ctx,
 					Field:   ptr.To(string(models.DataunstableEventFieldSOURCEEVENTFIELD)),
 				})
@@ -132,7 +147,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 
 				eventsMetadata.Sources = resp.Payload.Values
 
-				resp, err = t.api.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
+				resp, err = t.dataUnstableAPI.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
 					Context: ctx,
 					Field:   ptr.To(string(models.DataunstableEventFieldTYPEEVENTFIELD)),
 				})
@@ -142,7 +157,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 
 				eventsMetadata.Types = resp.Payload.Values
 
-				resp, err = t.api.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
+				resp, err = t.dataUnstableAPI.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
 					Context: ctx,
 					Field:   ptr.To(string(models.DataunstableEventFieldLABELNAMEEVENTFIELD)),
 				})
@@ -152,22 +167,12 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 
 				eventsMetadata.LabelNames = resp.Payload.Values
 
-				resp, err = t.api.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
-					Context: ctx,
-					Field:   ptr.To(string(models.DataunstableEventFieldLABELNAMEEVENTFIELD)),
-				})
-				if err != nil {
-					return nil, fmt.Errorf("failed to get label names for events: %s", err)
-				}
-
-				eventsMetadata.LabelNames = resp.Payload.Values
-
-				resp, err = t.api.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
+				resp, err = t.dataUnstableAPI.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
 					Context: ctx,
 					Field:   ptr.To(string(models.DataunstableEventFieldLENSSERVICEEVENTFIELD)),
 				})
 				if err != nil {
-					return nil, fmt.Errorf("failed to get label names for events: %s", err)
+					return nil, fmt.Errorf("failed to get lens service names for events: %s", err)
 				}
 
 				eventsMetadata.LensServiceNames = resp.Payload.Values
@@ -190,7 +195,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					return nil, err
 				}
 
-				resp, err := t.api.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
+				resp, err := t.dataUnstableAPI.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
 					Context:   ctx,
 					LabelName: ptr.To(labelName),
 					Field:     ptr.To(string(models.DataunstableEventFieldLABELVALUEEVENTFIELD)),

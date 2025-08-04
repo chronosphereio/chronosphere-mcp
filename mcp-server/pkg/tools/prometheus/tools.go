@@ -141,7 +141,22 @@ Example usage:
 		},
 		{
 			Metadata: tools.NewMetadata("list_prometheus_label_values",
-				mcp.WithDescription("returns the list of all label values that (optionally) match a set of selectors and/or were present during a given time range."),
+				mcp.WithDescription(`Returns the list of values for a specific label name, optionally filtered by selectors. Use this tool when you know the label name and want to discover what values it has across your metrics.
+
+Common use cases:
+- Find metric names for a service: label_name="__name__" with selectors=["{service=\"api\"}"]
+- Find all HTTP status codes: label_name="status" with selectors=["{__name__=\"http_requests_total\"}"]
+- Discover all services: label_name="service" (optionally with additional selectors)
+- Find all methods for an API: label_name="method" with selectors=["{service=\"api\"}"]
+- Get all Kubernetes namespaces: label_name="kubernetes_namespace"
+
+Example usage:
+- Metrics for a service: label_name="__name__", selectors=["{service=\"web-server\"}"]
+- HTTP status codes: label_name="status", selectors=["{__name__=\"http_requests_total\"}"]
+- Available services: label_name="service", selectors=["{job=\"kubernetes-pods\"}"]
+- API endpoints: label_name="endpoint", selectors=["{service=\"web-api\"}"]
+
+Supports pagination with limit/offset. To find what label names are available first, use list_prometheus_label_names.`),
 				mcp.WithString("label_name",
 					mcp.Description("The label name for which values should be returned. Required."),
 					mcp.Required(),
@@ -163,7 +178,14 @@ Example usage:
 		},
 		{
 			Metadata: tools.NewMetadata("list_prometheus_label_names",
-				mcp.WithDescription("returns the list of all label names that (optionally) match a set of selectors and/or were present during a given time range."),
+				mcp.WithDescription(`Returns the list of label names (keys) available on metrics that match the given selectors. Use this tool when you need to discover what labels are available on specific metrics or services.
+
+Example usage:
+- Labels on a metric: selectors=["{__name__=\"http_requests_total\"}"]
+- Labels for a service: selectors=["{service=\"web-server\"}"]
+- Labels in a namespace: selectors=["{kubernetes_namespace=\"production\"}"]
+
+This returns only the label keys (e.g., "method", "status", "service"). To get the values for a specific label, use list_prometheus_label_values.`),
 				params.WithStringArray("selectors",
 					mcp.Description("Repeated series selector argument that selects the series to return. This is an array of strings. Optional."),
 				),

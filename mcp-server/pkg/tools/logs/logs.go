@@ -27,6 +27,7 @@ import (
 	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/dataunstable"
 	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/dataunstable/data_unstable"
 	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/models"
+	"github.com/chronosphereio/chronosphere-mcp/generated/datav1/datav1"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/pkg/params"
 	"github.com/chronosphereio/chronosphere-mcp/pkg/links"
@@ -36,18 +37,25 @@ import (
 var _ tools.MCPTools = (*Tools)(nil)
 
 type Tools struct {
-	logger      *zap.Logger
-	api         *dataunstable.DataUnstableAPI
-	linkBuilder *links.Builder
+	logger          *zap.Logger
+	dataV1API       *datav1.DataV1API
+	dataUnstableAPI *dataunstable.DataUnstableAPI
+	linkBuilder     *links.Builder
 }
 
-func NewTools(api *dataunstable.DataUnstableAPI, logger *zap.Logger, linkBuilder *links.Builder) (*Tools, error) {
+func NewTools(
+	dataV1API *datav1.DataV1API,
+	dataUnstableAPI *dataunstable.DataUnstableAPI,
+	logger *zap.Logger,
+	linkBuilder *links.Builder,
+) (*Tools, error) {
 	logger.Info("logging tool configured")
 
 	return &Tools{
-		logger:      logger,
-		api:         api,
-		linkBuilder: linkBuilder,
+		logger:          logger,
+		dataV1API:       dataV1API,
+		dataUnstableAPI: dataUnstableAPI,
+		linkBuilder:     linkBuilder,
 	}, nil
 }
 
@@ -81,7 +89,7 @@ func (t *Tools) createCompactSummary(ctx context.Context, query string, timeRang
 		LogFilterHappenedBefore: (*strfmt.DateTime)(&timeRange.End),
 		Limit:                   ptr.To(int64(50)), // Limit to 50 fields to avoid overwhelming
 	}
-	if fieldResp, fieldErr := t.api.DataUnstable.ListLogFieldNames(fieldParams); fieldErr == nil && fieldResp.Payload != nil {
+	if fieldResp, fieldErr := t.dataUnstableAPI.DataUnstable.ListLogFieldNames(fieldParams); fieldErr == nil && fieldResp.Payload != nil {
 		if fieldResp.Payload.Suggestions != nil {
 			// Extract field names from suggestions
 			fieldNames := make([]string, len(fieldResp.Payload.Suggestions))
@@ -230,7 +238,7 @@ the next page. Consult the Log Query Syntax resource for more details on query s
 				}
 				t.logger.Info("get range query", zap.Any("params", queryParams))
 
-				resp, err := t.api.DataUnstable.GetRangeQuery(queryParams)
+				resp, err := t.dataUnstableAPI.DataUnstable.GetRangeQuery(queryParams)
 				if err != nil {
 					return nil, fmt.Errorf("failed to get range query: %s", err)
 				}
@@ -264,7 +272,7 @@ the next page. Consult the Log Query Syntax resource for more details on query s
 					LogFilterQuery: ptr.To(fmt.Sprintf(`logID=%q`, id)),
 				}
 
-				resp, err := t.api.DataUnstable.ListLogs(queryParams)
+				resp, err := t.dataUnstableAPI.DataUnstable.ListLogs(queryParams)
 				if err != nil {
 					return nil, fmt.Errorf("failed to query log by ID: %s", err)
 				}
@@ -308,13 +316,13 @@ the next page. Consult the Log Query Syntax resource for more details on query s
 					LogFilterQuery:          &query,
 					LogFilterHappenedAfter:  (*strfmt.DateTime)(&timeRange.Start),
 					LogFilterHappenedBefore: (*strfmt.DateTime)(&timeRange.End),
-					StepSize:                ptr.To(fmt.Sprintf("%f.0s", stepSize.Seconds())),
+					StepSize:                ptr.To(fmt.Sprintf("%.1fs", stepSize.Seconds())),
 					GroupByFieldNames:       groupBy,
 				}
 
 				t.logger.Info("get log histogram", zap.Any("params", queryParams))
 
-				resp, err := t.api.DataUnstable.GetLogHistogram(queryParams)
+				resp, err := t.dataUnstableAPI.DataUnstable.GetLogHistogram(queryParams)
 				if err != nil {
 					return nil, fmt.Errorf("failed to get log histogram: %s", err)
 				}
@@ -335,16 +343,15 @@ the next page. Consult the Log Query Syntax resource for more details on query s
 				params.WithTimeRange(),
 				mcp.WithNumber("limit",
 					mcp.Description("Maximum number of field names to return. Default is 100."),
-					mcp.DefaultNumber(100),
 				),
 			),
 			Handler: func(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
-				query, err := params.String(request, "query", false, "")
+				timeRange, err := params.ParseTimeRange(request)
 				if err != nil {
 					return nil, err
 				}
 
-				timeRange, err := params.ParseTimeRange(request)
+				query, err := params.String(request, "query", false, "")
 				if err != nil {
 					return nil, err
 				}
@@ -362,9 +369,7 @@ the next page. Consult the Log Query Syntax resource for more details on query s
 					Limit:                   ptr.To(int64(limit)),
 				}
 
-				t.logger.Info("list log field names", zap.Any("params", queryParams))
-
-				resp, err := t.api.DataUnstable.ListLogFieldNames(queryParams)
+				resp, err := t.dataUnstableAPI.DataUnstable.ListLogFieldNames(queryParams)
 				if err != nil {
 					return nil, fmt.Errorf("failed to list log field names: %s", err)
 				}
@@ -385,19 +390,19 @@ the next page. Consult the Log Query Syntax resource for more details on query s
 				params.WithTimeRange(),
 				mcp.WithString("field_name",
 					mcp.Description("Field name for listing values"),
+					mcp.Required(),
 				),
 				mcp.WithNumber("limit",
 					mcp.Description("Maximum number of field values to return. Default is 100."),
-					mcp.DefaultNumber(100),
 				),
 			),
 			Handler: func(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
-				query, err := params.String(request, "query", false, "")
+				timeRange, err := params.ParseTimeRange(request)
 				if err != nil {
 					return nil, err
 				}
 
-				timeRange, err := params.ParseTimeRange(request)
+				query, err := params.String(request, "query", false, "")
 				if err != nil {
 					return nil, err
 				}
@@ -421,9 +426,7 @@ the next page. Consult the Log Query Syntax resource for more details on query s
 					Limit:                   ptr.To(int64(limit)),
 				}
 
-				t.logger.Info("list log field values", zap.Any("params", queryParams))
-
-				resp, err := t.api.DataUnstable.ListLogFieldValues(queryParams)
+				resp, err := t.dataUnstableAPI.DataUnstable.ListLogFieldValues(queryParams)
 				if err != nil {
 					return nil, fmt.Errorf("failed to list log field values: %s", err)
 				}
@@ -436,7 +439,6 @@ the next page. Consult the Log Query Syntax resource for more details on query s
 						String(),
 				}, nil
 			},
-			// TODO: Implement autocomplete requests.
 		},
 	}
 }

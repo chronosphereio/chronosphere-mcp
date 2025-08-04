@@ -26,6 +26,7 @@ import (
 
 	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1"
 	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/dataunstable"
+	"github.com/chronosphereio/chronosphere-mcp/generated/datav1/datav1"
 	"github.com/chronosphereio/chronosphere-mcp/generated/stateunstable/stateunstable"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/clientfx/logscale"
 )
@@ -66,6 +67,7 @@ type Provider struct {
 	PrometheusData api.Client `fx:"PrometheusData"`
 	ConfigV1       *configv1.ConfigV1API
 	DataUnstable   *dataunstable.DataUnstableAPI
+	DataV1         *datav1.DataV1API
 	StateUnstable  *stateunstable.StateUnstableAPI
 	LogScale       logscale.Client `fx:"logscaleClient"`
 }
@@ -94,6 +96,7 @@ func NewProvider(apiConfig *ChronosphereConfig) (Provider, error) {
 		PrometheusData: promClient,
 		ConfigV1:       configv1.New(t, strfmt.Default),
 		DataUnstable:   dataunstable.New(t, strfmt.Default),
+		DataV1:         datav1.New(t, strfmt.Default),
 		StateUnstable:  stateunstable.New(t, strfmt.Default),
 		LogScale:       logscaleClient,
 	}, nil

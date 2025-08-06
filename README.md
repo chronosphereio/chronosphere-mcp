@@ -64,6 +64,49 @@ The MCP project provides an inspector useful for directly calling tools APIs. To
 1. Run `npx @modelcontextprotocol/inspector node build/index.js`.
 1. Open http://localhost:6274/#resources , fill in `http://0.0.0.0:8081/mcp` in the URL, with transport type Streamable HTTP.
 
+## Available Tools
+
+| Group | Tool Name | Description |
+|-------|-----------|-------------|
+| configapi | get_classic_dashboard | Get classic-dashboards resource |
+| configapi | get_dashboard | Get dashboards resource |
+| configapi | get_drop_rule | Get drop-rules resource |
+| configapi | get_mapping_rule | Get mapping-rules resource |
+| configapi | get_monitor | Get monitors resource |
+| configapi | get_notification_policy | Get notification-policies resource |
+| configapi | get_recording_rule | Get recording-rules resource |
+| configapi | get_rollup_rule | Get rollup-rules resource |
+| configapi | get_slo | Get slos resource |
+| configapi | list_classic_dashboards | List classic-dashboards resources |
+| configapi | list_dashboards | List dashboards resources |
+| configapi | list_drop_rules | List drop-rules resources |
+| configapi | list_mapping_rules | List mapping-rules resources |
+| configapi | list_monitors | List monitors resources |
+| configapi | list_notification_policies | List notification-policies resources |
+| configapi | list_recording_rules | List recording-rules resources |
+| configapi | list_rollup_rules | List rollup-rules resources |
+| configapi | list_slos | List slos resources |
+| events | get_events_metadata | List properties you can query on events |
+| events | list_events | List events from a given query |
+| events | list_events_label_values | List values for a given label name |
+| logs | get_log | Get a full log message by its ID. The ID is the unique identifier for the log. |
+| logs | get_log_histogram | Get histogram of logs from a given query |
+| logs | list_log_field_names | List field names of logs |
+| logs | list_log_field_values | List field values of logs |
+| logs | query_logs_range | Execute a range query for logs. This endpoint returns logs as either timeSeries or gridData. It may return a large amount of data, so be careful putting the result of this direction into context. U... |
+| logscale | query_logscale | Query LogScale repository with a given query string. LogScale uses its own query language for searching and analyzing logs. |
+| metrics | list_prometheus_label_names | Returns the list of label names (keys) available on metrics that match the given selectors. Use this tool when you need to discover what labels are available on specific metrics or services. Exampl... |
+| metrics | list_prometheus_label_values | Returns the list of values for a specific label name, optionally filtered by selectors. Use this tool when you know the label name and want to discover what values it has across your metrics. Commo... |
+| metrics | list_prometheus_series | Returns the complete time series (full label sets with all key-value pairs) that match the given selectors. Each result shows the exact combination of labels for an active time series. Use this too... |
+| metrics | list_prometheus_series_metadata |  |
+| metrics | query_prometheus_instant | Evaluates a Prometheus instant query at a single point in time |
+| metrics | query_prometheus_range | Executes a Prometheus PromQL query over a specified time range and returns time series data points as JSON. Supports standard PromQL syntax plus Chronosphere custom functions: - cardinality_estimat... |
+| metrics | render_prometheus_range_query | Evaluates a Prometheus expression query over a range of time and renders it as a PNG image. |
+| monitors | list_monitor_statuses | Lists the current status of monitors in Chronosphere. Returns monitor statuses with alert states and optional signal and series details. |
+| traces | list_traces | List traces from a given query |
+
+*Note: To regenerate this table after tool updates, run: `make tools-gen && go run scripts/generate-tools-table.go`*
+
 ## Agent (experimental)
 See [agent/README.md](chat/README.md)
 

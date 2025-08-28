@@ -19,8 +19,8 @@ import (
 // swagger:model AnalyzeAlertsRequestStringMatcher
 type AnalyzeAlertsRequestStringMatcher struct {
 
-	// List of values for operations that work with multiple values (ANY_OF, NONE_OF)
-	ListValues []string `json:"list_values"`
+	// Multiple values for operations that work with multiple values (ANY_OF, NONE_OF)
+	MultiValue []string `json:"multi_value"`
 
 	// The type of matching operation to perform
 	Operation AnalyzeAlertsRequestStringMatcherOperation `json:"operation,omitempty"`

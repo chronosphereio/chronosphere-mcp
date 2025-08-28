@@ -81,12 +81,12 @@
           "type": "string",
           "title": "Single value for operations that work with one value (EQUAL, REGEX_EQUAL, CONTAINS, etc.)"
         },
-        "list_values": {
+        "multi_value": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "title": "List of values for operations that work with multiple values (ANY_OF, NONE_OF)"
+          "title": "Multiple values for operations that work with multiple values (ANY_OF, NONE_OF)"
         }
       },
       "description": "StringMatcher provides advanced string matching operations.\nUsed throughout the API for flexible filtering of string fields."

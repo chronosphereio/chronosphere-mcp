@@ -3,6 +3,367 @@
     "application/json"
   ],
   "definitions": {
+    "AnalyzeAlertsRequestAlertFilter": {
+      "type": "object",
+      "properties": {
+        "monitor_slug": {
+          "$ref": "#/definitions/AnalyzeAlertsRequestStringMatcher",
+          "description": "Optional: limit considered alerts to those from a specific monitor."
+        },
+        "signals": {
+          "$ref": "#/definitions/AnalyzeAlertsRequestLabelsMatcher",
+          "description": "Optional: limit considered alerts to those having the given signals."
+        },
+        "monitor_labels": {
+          "$ref": "#/definitions/AnalyzeAlertsRequestLabelsMatcher",
+          "description": "Optional: limit considered alerts to those having the given monitor labels."
+        },
+        "notification_policy_slug": {
+          "$ref": "#/definitions/AnalyzeAlertsRequestStringMatcher",
+          "description": "Optional: limit considered alerts to those from a specific notification policy."
+        },
+        "is_muted": {
+          "type": "boolean",
+          "title": "Filter alerts by mute status"
+        }
+      },
+      "description": "AlertFilter contains semantic filter options for alert analysis queries (list, aggregate, etc).\nIMPORTANT: ALL fields in this message now use AND semantics when combined.\nTo achieve OR semantics between criteria, use multiple AlertFilter instances\nwith alert_filters_combine_mode = OR in the request."
+    },
+    "AnalyzeAlertsRequestAlertFiltersCombineMode": {
+      "type": "string",
+      "enum": [
+        "ALERT_FILTERS_OR"
+      ],
+      "description": "- ALERT_FILTERS_OR: At least one filter must match",
+      "title": "AlertFiltersCombineMode specifies how multiple AlertFilters are combined"
+    },
+    "AnalyzeAlertsRequestLabelMatcher": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "title": "The label key to match against"
+        },
+        "value": {
+          "$ref": "#/definitions/AnalyzeAlertsRequestStringMatcher",
+          "title": "String matcher to apply to the label value"
+        }
+      },
+      "description": "LabelMatcher provides label matching with advanced string operations.\nCombines a specific label key with flexible value matching."
+    },
+    "AnalyzeAlertsRequestLabelsMatcher": {
+      "type": "object",
+      "properties": {
+        "labels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/AnalyzeAlertsRequestLabelMatcher"
+          },
+          "title": "List of label matchers to apply"
+        },
+        "min_matches": {
+          "type": "integer",
+          "format": "int32",
+          "title": "Minimum number of label matches required for this matcher to be satisfied.\nIf not set, defaults to requiring at least one match when labels are specified."
+        }
+      },
+      "description": "LabelsMatcher provides label matching with general per-label matching operations."
+    },
+    "AnalyzeAlertsRequestStringMatcher": {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "$ref": "#/definitions/AnalyzeAlertsRequestStringMatcherOperation",
+          "title": "The type of matching operation to perform"
+        },
+        "single_value": {
+          "type": "string",
+          "title": "Single value for operations that work with one value (EQUAL, REGEX_EQUAL, CONTAINS, etc.)"
+        },
+        "list_values": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "List of values for operations that work with multiple values (ANY_OF, NONE_OF)"
+        }
+      },
+      "description": "StringMatcher provides advanced string matching operations.\nUsed throughout the API for flexible filtering of string fields."
+    },
+    "AnalyzeAlertsRequestStringMatcherOperation": {
+      "type": "string",
+      "enum": [
+        "EQUAL",
+        "REGEX_EQUAL",
+        "CONTAINS",
+        "NOT_EQUAL",
+        "NOT_REGEX_EQUAL",
+        "NOT_CONTAINS",
+        "ANY_OF",
+        "NONE_OF"
+      ],
+      "description": "StringMatcherOperation defines the type of string matching operation.\n\n - EQUAL: Exact string equality\n - REGEX_EQUAL: Regular expression matching\n - CONTAINS: String contains (substring match)\n - NOT_EQUAL: Not equal to string\n - NOT_REGEX_EQUAL: Does not match regular expression\n - NOT_CONTAINS: Does not contain (no substring match)\n - ANY_OF: Matches any of the provided values\n - NONE_OF: Matches none of the provided values"
+    },
+    "AnalyzeAlertsRequestTimeFilter": {
+      "type": "object",
+      "properties": {
+        "start_time": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Start time for the filter (inclusive)"
+        },
+        "end_time": {
+          "type": "string",
+          "format": "date-time",
+          "title": "End time for the filter (exclusive)"
+        },
+        "duration_seconds": {
+          "type": "integer",
+          "format": "int32",
+          "title": "Alternative to end_time: specify duration in seconds from start_time"
+        }
+      },
+      "description": "TimeFilter provides a time range for filtering alert events."
+    },
+    "AnalyzeAlertsResponseAlert": {
+      "type": "object",
+      "properties": {
+        "alert_id": {
+          "type": "string",
+          "title": "Unique identifier for this alert instance"
+        },
+        "monitor_slug": {
+          "type": "string",
+          "title": "Slug of the monitor that generated this alert"
+        },
+        "monitor_name": {
+          "type": "string",
+          "title": "Human-readable name of the monitor"
+        },
+        "signal": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/dataunstableAnalyzeAlertsResponseLabel"
+          },
+          "description": "If configured, key-value pairs (labels, from telemetry) that semantically characterize the alert further."
+        },
+        "monitor_labels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/dataunstableAnalyzeAlertsResponseLabel"
+          },
+          "title": "Labels attached to the monitor that generated this alert"
+        },
+        "is_muted": {
+          "type": "boolean",
+          "title": "Whether this alert is currently muted"
+        },
+        "start_time": {
+          "type": "string",
+          "format": "date-time",
+          "title": "When this alert first triggered"
+        },
+        "end_time": {
+          "type": "string",
+          "format": "date-time",
+          "title": "When this alert resolved (if it has resolved)"
+        },
+        "notification_policy_slug": {
+          "type": "string",
+          "title": "Slug of the notification policy handling this alert"
+        },
+        "notification_policy_name": {
+          "type": "string",
+          "title": "Human-readable name of the notification policy"
+        },
+        "ownership_context": {
+          "$ref": "#/definitions/AnalyzeAlertsResponseOwnershipContext",
+          "title": "Ownership context for the monitor"
+        },
+        "severity_history": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/AnalyzeAlertsResponseSeverityChangeHistoryEntry"
+          },
+          "title": "Historical record of severity changes throughout the alert lifecycle"
+        },
+        "mute_history": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/AnalyzeAlertsResponseMuteActionHistoryEntry"
+          },
+          "title": "Historical record of mute/unmute actions"
+        },
+        "notifier_history": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/AnalyzeAlertsResponseNotifierHistoryEntry"
+          },
+          "title": "Historical record of notification attempts"
+        },
+        "monitor_label_match_count": {
+          "type": "integer",
+          "format": "int32",
+          "title": "Number of monitor labels that matched the filter criteria (if monitor_labels filter was provided)"
+        },
+        "signal_match_count": {
+          "type": "integer",
+          "format": "int32",
+          "title": "Number of signals that matched the filter criteria (if signals filter was provided)"
+        },
+        "slo_metadata": {
+          "$ref": "#/definitions/AnalyzeAlertsResponseSloMetadata",
+          "title": "SLO metadata if this alert is from an SLO-generated monitor"
+        },
+        "signals_hash": {
+          "type": "string",
+          "format": "int64",
+          "title": "Hash of signals for grouping alerts with identical signal combinations."
+        },
+        "tenant_id": {
+          "type": "string",
+          "title": "Tenant identifier for the alert"
+        }
+      },
+      "description": "Alert represents a logical alert with its lifecycle and history.\nThis type is specific to analytical access patterns in this package.\nContains complete alert metadata, timing, and historical events."
+    },
+    "AnalyzeAlertsResponseMuteActionHistoryEntry": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "title": "The action taken: \"MUTED\" or \"UNMUTED\""
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "title": "When this action occurred"
+        },
+        "user": {
+          "type": "string",
+          "title": "User who performed the action"
+        }
+      },
+      "description": "MuteActionHistoryEntry represents a mute/unmute action during the alert lifecycle.\nTracks when an alert was manually muted or unmuted."
+    },
+    "AnalyzeAlertsResponseNotifierHistoryEntry": {
+      "type": "object",
+      "properties": {
+        "severity": {
+          "type": "string",
+          "title": "Severity level when this notification was sent"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "title": "When this notification was sent"
+        },
+        "notifier_slug": {
+          "type": "string",
+          "title": "Slug of the notifier that sent this notification"
+        }
+      },
+      "description": "NotifierHistoryEntry represents a notifier send attempt during the alert lifecycle.\nTracks all notification attempts made for this alert."
+    },
+    "AnalyzeAlertsResponseOwnershipContext": {
+      "type": "object",
+      "properties": {
+        "entity_group_id": {
+          "type": "string",
+          "title": "Entity group that owns the monitor"
+        },
+        "collection_id": {
+          "type": "string",
+          "title": "Collection that contains the monitor"
+        }
+      },
+      "description": "OwnershipContext contains ownership information for the monitor.\nProvides hierarchical ownership context from entity groups and collections."
+    },
+    "AnalyzeAlertsResponseSeverityChangeHistoryEntry": {
+      "type": "object",
+      "properties": {
+        "severity": {
+          "type": "string",
+          "title": "The new severity level (e.g., \"critical\", \"warning\")"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "title": "When this severity change occurred"
+        }
+      },
+      "description": "SeverityChangeHistoryEntry represents a severity change during the alert lifecycle.\nTracks when an alert's severity level changed over time."
+    },
+    "AnalyzeAlertsResponseSloMetadata": {
+      "type": "object",
+      "properties": {
+        "slug": {
+          "type": "string",
+          "title": "SLO slug identifier"
+        },
+        "name": {
+          "type": "string",
+          "title": "Human-readable SLO name"
+        }
+      },
+      "description": "SloMetadata contains metadata about an SLO-generated monitor.\nOnly present when the alert originates from an SLO monitor."
+    },
+    "dataunstableAnalyzeAlertsRequest": {
+      "type": "object",
+      "properties": {
+        "time_filter": {
+          "$ref": "#/definitions/AnalyzeAlertsRequestTimeFilter",
+          "title": "Time range filter (required)"
+        },
+        "alert_filters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/AnalyzeAlertsRequestAlertFilter"
+          },
+          "title": "Semantic filters to apply to alerts"
+        },
+        "alert_filters_combine_mode": {
+          "$ref": "#/definitions/AnalyzeAlertsRequestAlertFiltersCombineMode",
+          "title": "How to combine multiple alert filters (AND vs OR)"
+        }
+      },
+      "description": "AnalyzeAlertsRequest is the request for the AnalyzeAlerts API.\nRetrieves alerts (aggregated by alert_id) within a given time range that match the provided filters."
+    },
+    "dataunstableAnalyzeAlertsResponse": {
+      "type": "object",
+      "properties": {
+        "alerts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/AnalyzeAlertsResponseAlert"
+          },
+          "title": "List of alerts matching the filter criteria"
+        }
+      },
+      "description": "AnalyzeAlertsResponse is the response for the AnalyzeAlerts API.\nReturns a list of alerts matching the request criteria."
+    },
+    "dataunstableAnalyzeAlertsResponseLabel": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "The name of the label (e.g., \"team\", \"environment\")"
+        },
+        "value": {
+          "type": "string",
+          "title": "The value of the label (e.g., \"platform\", \"production\")"
+        }
+      },
+      "description": "Label represents a key-value pair associated with a monitor.\nMonitor labels provide metadata about the monitor that generated the alert."
+    },
     "EventBucketGroup": {
       "description": "A single group of events within a bucket.",
       "properties": {
@@ -3284,6 +3645,40 @@
             }
           }
         },
+        "tags": [
+          "DataUnstable"
+        ]
+      }
+    },
+    "/api/unstable/data/alerts:analyze": {
+      "post": {
+        "summary": "Alerts",
+        "operationId": "AnalyzeAlerts",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/dataunstableAnalyzeAlertsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "AnalyzeAlertsRequest is the request for the AnalyzeAlerts API.\nRetrieves alerts (aggregated by alert_id) within a given time range that match the provided filters.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/dataunstableAnalyzeAlertsRequest"
+            }
+          }
+        ],
         "tags": [
           "DataUnstable"
         ]

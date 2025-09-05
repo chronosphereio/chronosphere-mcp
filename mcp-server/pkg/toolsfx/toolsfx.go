@@ -19,6 +19,7 @@ import (
 	"go.uber.org/fx"
 
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/alertsanalysis"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/configapi"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/events"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/logs"
@@ -30,6 +31,7 @@ import (
 
 var Module = fx.Provide(
 	annotateAsTool(
+		alertsanalysis.NewTools,
 		configapi.NewTools,
 		events.NewTools,
 		logs.NewTools,

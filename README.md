@@ -1,5 +1,5 @@
 # Chronosphere MCP Server
-MCP server for Chronosphere. Serves tools for fetching logs, metrics, traces, events as well as select entities.
+MCP server for [Chronosphere](https://chronosphere.io). Serves tools for fetching logs, metrics, traces, events as well as select entities.
 
 This project uses [semver](https://semver.org/) for release versions. We have not graduated to 1.0, so breaking
 changes may occur for minor version bumps.

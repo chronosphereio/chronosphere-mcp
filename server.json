@@ -1,0 +1,41 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
+  "name": "io.github.chronosphereio/chronosphere-mcp",
+  "description": "MCP Server for Chronosphere observability platform",
+  "website_url": "https://chronosphere.io",
+  "status": "active",
+  "repository": {
+    "url": "https://github.com/chronosphereio/chronosphere-mcp",
+    "source": "github"
+  },
+  "version": "0.3.3",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://{CHRONOSPHERE_ORG_NAME}.chronosphere.io/api/mcp/mcp",
+      "headers": [
+        {
+          "name": "Authorization",
+          "description": "The auth header containing the service account token or personal access token for Chronosphere",
+          "value": "Bearer {CHRONOSPHERE_API_TOKEN}",
+          "is_required": true,
+          "is_secret": true
+        }
+      ],
+      "variables": [
+        {
+          "name": "CHRONOSPHERE_ORG_NAME",
+          "description": "The name of the Chronosphere organization or subdomain",
+          "is_required": true,
+          "is_secret": false
+        },
+        {
+          "name": "CHRONOSPHERE_API_TOKEN",
+          "description": "The service account token or personal access token for Chronosphere",
+          "is_required": true,
+          "is_secret": true
+        }
+      ]
+    }
+  ]
+}

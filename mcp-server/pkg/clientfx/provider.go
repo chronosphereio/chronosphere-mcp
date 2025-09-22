@@ -42,7 +42,7 @@ type ChronosphereConfig struct {
 	APIURL           string `yaml:"apiURL" validate:"nonzero"`
 	APIToken         string `yaml:"apiToken"`
 	UseLogscale      bool   `yaml:"useLogscale"`
-	LogscaleURL      string `yaml:"logscaleURL" validate:"nonzero"`
+	LogscaleURL      string `yaml:"logscaleURL"`
 	LogscaleAPIToken string `yaml:"logscaleAPIToken"`
 }
 
@@ -83,15 +83,19 @@ func NewProvider(apiConfig *ChronosphereConfig) (Provider, error) {
 		return Provider{}, fmt.Errorf("could not create Prometheus data client: %v", err)
 	}
 
-	rt := newRoundTripper(http.DefaultTransport, _component, apiConfig.LogscaleAPIToken)
-	logscaleClient, err := logscale.New(&logscale.Options{
-		URL:       apiConfig.LogscaleURL,
-		APIToken:  apiConfig.LogscaleAPIToken,
-		Transport: rt,
-	})
-	if err != nil {
-		return Provider{}, fmt.Errorf("could not create LogScale client: %w", err)
+	var logscaleClient logscale.Client
+	if apiConfig.UseLogscale {
+		rt := newRoundTripper(http.DefaultTransport, _component, apiConfig.LogscaleAPIToken)
+		logscaleClient, err = logscale.New(&logscale.Options{
+			URL:       apiConfig.LogscaleURL,
+			APIToken:  apiConfig.LogscaleAPIToken,
+			Transport: rt,
+		})
+		if err != nil {
+			return Provider{}, fmt.Errorf("could not create LogScale client: %w", err)
+		}
 	}
+
 	return Provider{
 		PrometheusData: promClient,
 		ConfigV1:       configv1.New(t, strfmt.Default),

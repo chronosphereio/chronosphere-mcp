@@ -47,6 +47,10 @@ func parseConfig(cfgProvider config.Provider, flags *Flags) (configResult, error
 
 	mergeConfig(&cfg, flags)
 
+	if cfg.Tools == nil {
+		cfg.Tools = &tools.Config{}
+	}
+
 	if err := validator.Validate(cfg); err != nil {
 		return configResult{}, fmt.Errorf("failed to validate config: %w", err)
 	}

@@ -13,20 +13,23 @@ func TestFxStartup(t *testing.T) {
 		configFile string
 	}{
 		{
-			configFile: "config.yaml",
+			configFile: "../../../config.yaml",
 		},
 		{
-			configFile: "config.http.yaml",
+			configFile: "../../../config.http.yaml",
 		},
 		{
-			configFile: "config.sse.yaml",
+			configFile: "../../../config.sse.yaml",
+		},
+		{
+			configFile: "testdata/config.nil-tools.yaml",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.configFile, func(t *testing.T) {
 			flags := &mcpserverfx.Flags{
-				ConfigFilePath: "../../../" + tt.configFile,
+				ConfigFilePath: tt.configFile,
 			}
 			app := fxtest.New(t, allModules(flags)...).RequireStart()
 			// It can take a small amount of time for the http server to start up, so wait a second

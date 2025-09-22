@@ -1,0 +1,19 @@
+server:
+  transport:
+    stdio:
+      enabled: true
+
+  # Intentionally omitting tools section to test nil handling
+
+  chronosphere:
+    apiURL: https://${CHRONOSPHERE_ORG_NAME:""}.chronosphere.io
+    apiToken: ${CHRONOSPHERE_API_TOKEN:""}
+    useLogscale: false
+
+instrument:
+  logs:
+    level: ${LOG_LEVEL:info}
+    outputPaths:
+      - stderr
+    errorOutputPaths:
+      - stderr

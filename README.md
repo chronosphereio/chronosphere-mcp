@@ -8,6 +8,17 @@ changes may occur for minor version bumps.
 ### Remote Server
 The easiest way to use the MCP server is using our remote hosted server:
 
+### Auth
+You can use either a [Chronosphere API token](https://docs.chronosphere.io/tooling/api-info#create-an-api-token) or OAuth
+with the Chronosphere MCP server. To use MCP with OAuth, the MCP client must support OAuth. 
+
+OAuth support is new and have not been tested with all clients. If it does not work for you, please raise the issue to
+Chronosphere support in slack with the following information:
+1. MCP client you're using (e.g. VS code, codex, cursor, etc)
+2. What steps you took to attempt authentication
+3. What error you're seeing.
+
+#### Cursor/VSCode
 ```json
 {
     "mcpServers": {
@@ -20,6 +31,32 @@ The easiest way to use the MCP server is using our remote hosted server:
     }
 }
 ```
+
+This configuration should work for Cursor and VSCode. Leave out the `headers` section to use OAuth instead of a Chronosphere API token.
+
+More details for VSCode [here](https://code.visualstudio.com/docs/copilot/customization/mcp-servers) and Cursor [here](https://cursor.com/docs/context/mcp)
+
+#### Claude code
+Adding chronosphere MCP server to claude code
+```shell
+claude mcp add -t http -H "Authorization: ${CHRONOSPHERE_API_TOKEN}" chronosphere "https://${CHRONOSPHERE_ORG_NAME}.chronosphere.io/api/mcp/mcp"
+```
+
+You can leave out the Authorization header if you are using OAuth. Once you're in claude type `/mcp` and select the server to login to trigger the OAuth flow.
+
+More details [here](https://docs.claude.com/en/docs/claude-code/mcp)
+
+#### Codex CLI
+```
+experimental_use_rmcp_client = true
+[mcp_servers.chronosphere]
+url = "https://<org_name>.chronosphere.io/api/mcp/mcp"
+bearer_token = "<chronosphere api token>"
+```
+
+For oauth login, you must enable `experimental_use_rmcp_client = true` and then run `codex mcp login chronosphere`
+
+More details [here](https://github.com/openai/codex/blob/main/docs/config.md#mcp_servers)
 
 ### Building from source
 First build the binary

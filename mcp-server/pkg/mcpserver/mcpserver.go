@@ -179,6 +179,14 @@ func (t *loggingTool) mustHandle(ctx context.Context, request mcp.CallToolReques
 		return &toolResult
 	}
 
+	if resp.TextContent != "" {
+		toolResult.Content = append(toolResult.Content, mcp.NewTextContent(resp.TextContent))
+		if len(resp.Meta) > 0 {
+			toolResult.Meta = resp.Meta
+		}
+		return &toolResult
+	}
+
 	resultBytes, err := json.Marshal(resp.JSONContent)
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Errorf("failed to serialize content: %s", err).Error())

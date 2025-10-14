@@ -106,6 +106,36 @@ func TestLoggingTool_mustHandle(t *testing.T) {
 			},
 			expectedMeta: map[string]any{"meta-key": "meta-value"},
 		},
+		{
+			name:            "response with text content",
+			sessionAPIToken: "test-token",
+			tool: tools.MCPTool{
+				Handler: func(_ context.Context, _ mcp.CallToolRequest) (*tools.Result, error) {
+					return &tools.Result{
+						TextContent: "CSV formatted data\nrow1,col1,col2\nrow2,val1,val2",
+					}, nil
+				},
+			},
+			expectedContent: []mcp.Content{
+				mcp.NewTextContent("CSV formatted data\nrow1,col1,col2\nrow2,val1,val2"),
+			},
+		},
+		{
+			name:            "response with text content and metadata",
+			sessionAPIToken: "test-token",
+			tool: tools.MCPTool{
+				Handler: func(_ context.Context, _ mcp.CallToolRequest) (*tools.Result, error) {
+					return &tools.Result{
+						TextContent: "CSV data",
+						Meta:        map[string]any{"total_series": 10},
+					}, nil
+				},
+			},
+			expectedContent: []mcp.Content{
+				mcp.NewTextContent("CSV data"),
+			},
+			expectedMeta: map[string]any{"total_series": 10},
+		},
 	}
 
 	for _, tt := range tests {

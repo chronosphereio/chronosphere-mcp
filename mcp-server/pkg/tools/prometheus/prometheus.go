@@ -18,7 +18,10 @@ package prometheus
 import (
 	"bytes"
 	"context"
+	"encoding/csv"
 	"fmt"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -125,17 +128,24 @@ func (t *Tools) queryPrometheusRange(ctx context.Context, request mcp.CallToolRe
 		paginatedMatrix = matrix
 	}
 
-	result := promJSONResponse(paginatedMatrix, warnings)
-	result.ChronosphereLink = t.linkBuilder.MetricExplorer().WithQuery(query).WithTimeRange(timeRange.Start, timeRange.End).String()
+	// Format as CSV
+	csvContent := formatMatrixAsCSV(paginatedMatrix)
 
-	// Add pagination metadata
-	if result.Meta == nil {
-		result.Meta = make(map[string]any)
+	result := &tools.Result{
+		TextContent:      csvContent,
+		ChronosphereLink: t.linkBuilder.MetricExplorer().WithQuery(query).WithTimeRange(timeRange.Start, timeRange.End).String(),
+		Meta: map[string]any{
+			"total_series":    len(matrix),
+			"offset":          offset,
+			"limit":           limit,
+			"returned_series": len(paginatedMatrix),
+		},
 	}
-	result.Meta["total_series"] = len(matrix)
-	result.Meta["offset"] = offset
-	result.Meta["limit"] = limit
-	result.Meta["returned_series"] = len(paginatedMatrix)
+
+	// Add warnings if present
+	if len(warnings) > 0 {
+		result.Meta["warnings"] = warnings
+	}
 
 	return result, nil
 }
@@ -354,4 +364,123 @@ func promJSONResponse(resp any, warnings []string) *tools.Result {
 		}
 	}
 	return result
+}
+
+// formatMatrixAsCSV converts a Prometheus matrix to a compact CSV format.
+// The format consists of two sections:
+// 1. Series metadata table - maps series IDs to their label sets
+// 2. Time series data table - timestamps with values for each series
+func formatMatrixAsCSV(matrix model.Matrix) string {
+	if len(matrix) == 0 {
+		return "# No data\n"
+	}
+
+	var buf bytes.Buffer
+
+	// Section 1: Series Metadata
+	// Collect all unique label names across all series
+	labelNamesSet := make(map[model.LabelName]struct{})
+	for _, series := range matrix {
+		for labelName := range series.Metric {
+			labelNamesSet[labelName] = struct{}{}
+		}
+	}
+
+	// Sort label names for consistent output
+	labelNames := make([]model.LabelName, 0, len(labelNamesSet))
+	for labelName := range labelNamesSet {
+		labelNames = append(labelNames, labelName)
+	}
+	sort.Slice(labelNames, func(i, j int) bool {
+		return labelNames[i] < labelNames[j]
+	})
+
+	// Write series metadata section header
+	buf.WriteString("# Series Metadata\n")
+
+	// Create CSV writer for metadata
+	csvWriter := csv.NewWriter(&buf)
+
+	// Write metadata header row
+	metadataHeader := make([]string, 0, len(labelNames)+1)
+	metadataHeader = append(metadataHeader, "series_id")
+	for _, labelName := range labelNames {
+		metadataHeader = append(metadataHeader, string(labelName))
+	}
+	//nolint:errcheck // writing to bytes.Buffer won't fail unless we're out of memory.
+	csvWriter.Write(metadataHeader)
+
+	// Write metadata rows
+	for i, series := range matrix {
+		row := make([]string, 0, len(labelNames)+1)
+		row = append(row, strconv.Itoa(i+1))
+		for _, labelName := range labelNames {
+			if value, ok := series.Metric[labelName]; ok {
+				row = append(row, string(value))
+			} else {
+				row = append(row, "") // empty for missing labels
+			}
+		}
+		//nolint:errcheck // writing to bytes.Buffer won't fail unless we're going to OOM.
+		csvWriter.Write(row)
+	}
+	csvWriter.Flush()
+
+	// Section 2: Time Series Data
+	// Collect all unique timestamps
+	timestampsSet := make(map[int64]struct{})
+	for _, series := range matrix {
+		for _, sample := range series.Values {
+			timestampsSet[int64(sample.Timestamp)] = struct{}{}
+		}
+	}
+
+	// Sort timestamps
+	timestamps := make([]int64, 0, len(timestampsSet))
+	for ts := range timestampsSet {
+		timestamps = append(timestamps, ts)
+	}
+	sort.Slice(timestamps, func(i, j int) bool {
+		return timestamps[i] < timestamps[j]
+	})
+
+	// Create a map for quick value lookup: seriesIdx -> timestamp -> value
+	valueMap := make([]map[int64]model.SampleValue, len(matrix))
+	for i, series := range matrix {
+		valueMap[i] = make(map[int64]model.SampleValue)
+		for _, sample := range series.Values {
+			valueMap[i][int64(sample.Timestamp)] = sample.Value
+		}
+	}
+
+	// Write time series data section header
+	buf.WriteString("\n# Time Series Data\n")
+
+	// Write data header row
+	dataHeader := make([]string, 0, len(matrix)+1)
+	dataHeader = append(dataHeader, "timestamp")
+	for i := range matrix {
+		dataHeader = append(dataHeader, "series_"+strconv.Itoa(i+1))
+	}
+	//nolint:errcheck // writing to bytes.Buffer never fails
+	csvWriter.Write(dataHeader)
+
+	// Write data rows
+	for _, ts := range timestamps {
+		row := make([]string, 0, len(matrix)+1)
+		// Convert timestamp from milliseconds to seconds with fractional part
+		row = append(row, strconv.FormatFloat(float64(ts)/1000.0, 'f', 3, 64))
+		for i := range matrix {
+			if value, ok := valueMap[i][ts]; ok {
+				row = append(row, value.String())
+			} else {
+				row = append(row, "") // empty for missing values
+			}
+		}
+		//nolint:errcheck
+		csvWriter.Write(row)
+	}
+	csvWriter.Flush()
+
+	return buf.String()
 }

@@ -31,6 +31,7 @@ type Result struct {
 	// Exactly 1 of these *Content fields should be populated if this is not an error response.
 	ImageContent []byte
 	JSONContent  any
+	TextContent  string
 
 	// Optional.
 	Meta map[string]any

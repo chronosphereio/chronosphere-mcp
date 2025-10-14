@@ -168,6 +168,7 @@ func mockLabelValuesWithPagination(resp model.LabelValues, limit, offset int) *R
 // Result is a local copy for testing
 type Result struct {
 	JSONContent any
+	TextContent string
 	Meta        map[string]any
 }
 
@@ -553,6 +554,158 @@ func TestFormatMatrixAsCSV_RealWorldExample(t *testing.T) {
 	// The original JSON from the user was thousands of characters
 	// Our CSV should be significantly smaller
 	assert.Less(t, len(result), 1000, "CSV output should be compact")
+}
+
+func TestListPrometheusSeriesPagination(t *testing.T) {
+	tests := []struct {
+		name           string
+		labelSets      []model.LabelSet
+		limit          int
+		offset         int
+		expectedSeries int
+		expectedMeta   map[string]any
+	}{
+		{
+			name: "no pagination",
+			labelSets: []model.LabelSet{
+				{"__name__": "series1"},
+				{"__name__": "series2"},
+				{"__name__": "series3"},
+			},
+			limit:          0,
+			offset:         0,
+			expectedSeries: 3,
+			expectedMeta: map[string]any{
+				"total_series":    3,
+				"offset":          0,
+				"limit":           0,
+				"returned_series": 3,
+			},
+		},
+		{
+			name: "limit only",
+			labelSets: []model.LabelSet{
+				{"__name__": "series1"},
+				{"__name__": "series2"},
+				{"__name__": "series3"},
+				{"__name__": "series4"},
+				{"__name__": "series5"},
+			},
+			limit:          3,
+			offset:         0,
+			expectedSeries: 3,
+			expectedMeta: map[string]any{
+				"total_series":    5,
+				"offset":          0,
+				"limit":           3,
+				"returned_series": 3,
+			},
+		},
+		{
+			name: "offset only",
+			labelSets: []model.LabelSet{
+				{"__name__": "series1"},
+				{"__name__": "series2"},
+				{"__name__": "series3"},
+				{"__name__": "series4"},
+				{"__name__": "series5"},
+			},
+			limit:          0,
+			offset:         2,
+			expectedSeries: 3,
+			expectedMeta: map[string]any{
+				"total_series":    5,
+				"offset":          2,
+				"limit":           0,
+				"returned_series": 3,
+			},
+		},
+		{
+			name: "limit and offset",
+			labelSets: []model.LabelSet{
+				{"__name__": "series1"},
+				{"__name__": "series2"},
+				{"__name__": "series3"},
+				{"__name__": "series4"},
+				{"__name__": "series5"},
+			},
+			limit:          2,
+			offset:         1,
+			expectedSeries: 2,
+			expectedMeta: map[string]any{
+				"total_series":    5,
+				"offset":          1,
+				"limit":           2,
+				"returned_series": 2,
+			},
+		},
+		{
+			name: "offset beyond total",
+			labelSets: []model.LabelSet{
+				{"__name__": "series1"},
+				{"__name__": "series2"},
+				{"__name__": "series3"},
+			},
+			limit:          10,
+			offset:         5,
+			expectedSeries: 0,
+			expectedMeta: map[string]any{
+				"total_series":    3,
+				"offset":          5,
+				"limit":           10,
+				"returned_series": 0,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Mock the pagination logic
+			mockResult := mockLabelSetsWithPagination(tt.labelSets, tt.limit, tt.offset)
+
+			// Count lines in CSV output (header + data rows)
+			lines := strings.Split(strings.TrimSpace(mockResult.TextContent), "\n")
+			// Subtract 1 for header row
+			actualSeries := len(lines) - 1
+			if actualSeries < 0 {
+				actualSeries = 0
+			}
+
+			assert.Equal(t, tt.expectedSeries, actualSeries)
+			assert.Equal(t, tt.expectedMeta, mockResult.Meta)
+		})
+	}
+}
+
+// mockLabelSetsWithPagination simulates the pagination logic from listPrometheusSeries
+func mockLabelSetsWithPagination(labelSets []model.LabelSet, limit, offset int) *Result {
+	var paginatedResp []model.LabelSet
+	if limit > 0 || offset > 0 {
+		totalSeries := len(labelSets)
+		start := offset
+		if start > totalSeries {
+			start = totalSeries
+		}
+		end := totalSeries
+		if limit > 0 && start+limit < totalSeries {
+			end = start + limit
+		}
+		paginatedResp = labelSets[start:end]
+	} else {
+		paginatedResp = labelSets
+	}
+
+	csvContent := formatLabelSetsAsCSV(paginatedResp)
+
+	return &Result{
+		TextContent: csvContent,
+		Meta: map[string]any{
+			"total_series":    len(labelSets),
+			"offset":          offset,
+			"limit":           limit,
+			"returned_series": len(paginatedResp),
+		},
+	}
 }
 
 func TestFormatLabelSetsAsCSV(t *testing.T) {

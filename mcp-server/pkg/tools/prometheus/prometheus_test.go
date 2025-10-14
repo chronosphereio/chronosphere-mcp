@@ -554,3 +554,87 @@ func TestFormatMatrixAsCSV_RealWorldExample(t *testing.T) {
 	// Our CSV should be significantly smaller
 	assert.Less(t, len(result), 1000, "CSV output should be compact")
 }
+
+func TestFormatLabelSetsAsCSV(t *testing.T) {
+	tests := []struct {
+		name      string
+		labelSets []model.LabelSet
+		expected  string
+	}{
+		{
+			name:      "empty label sets",
+			labelSets: []model.LabelSet{},
+			expected:  "# No series found\n",
+		},
+		{
+			name: "single series",
+			labelSets: []model.LabelSet{
+				{
+					"__name__": "http_requests_total",
+					"method":   "GET",
+					"status":   "200",
+				},
+			},
+			expected: `__name__,method,status
+http_requests_total,GET,200
+`,
+		},
+		{
+			name: "multiple series with same labels",
+			labelSets: []model.LabelSet{
+				{
+					"__name__": "http_requests_total",
+					"method":   "GET",
+					"status":   "200",
+				},
+				{
+					"__name__": "http_requests_total",
+					"method":   "POST",
+					"status":   "201",
+				},
+			},
+			expected: `__name__,method,status
+http_requests_total,GET,200
+http_requests_total,POST,201
+`,
+		},
+		{
+			name: "series with different label sets",
+			labelSets: []model.LabelSet{
+				{
+					"__name__": "http_requests_total",
+					"method":   "GET",
+					"status":   "200",
+				},
+				{
+					"__name__": "http_requests_total",
+					"method":   "POST",
+					// status is missing
+				},
+			},
+			expected: `__name__,method,status
+http_requests_total,GET,200
+http_requests_total,POST,
+`,
+		},
+		{
+			name: "labels with special characters",
+			labelSets: []model.LabelSet{
+				{
+					"__name__": "test_metric",
+					"label":    "value,with,commas",
+				},
+			},
+			expected: `__name__,label
+test_metric,"value,with,commas"
+`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := formatLabelSetsAsCSV(tt.labelSets)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}

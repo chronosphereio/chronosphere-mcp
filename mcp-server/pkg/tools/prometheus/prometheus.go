@@ -48,6 +48,15 @@ func (t *Tools) listPrometheusSeries(ctx context.Context, request mcp.CallToolRe
 		return nil, err
 	}
 
+	limit, err := params.Int(request, "limit", false, 100)
+	if err != nil {
+		return nil, err
+	}
+	offset, err := params.Int(request, "offset", false, 0)
+	if err != nil {
+		return nil, err
+	}
+
 	api, err := t.renderer.DataAPI()
 	if err != nil {
 		return nil, err
@@ -57,8 +66,25 @@ func (t *Tools) listPrometheusSeries(ctx context.Context, request mcp.CallToolRe
 		return nil, fmt.Errorf("failed to get series: %s", err)
 	}
 
+	// Apply client-side pagination
+	var paginatedResp []model.LabelSet
+	if limit > 0 || offset > 0 {
+		totalSeries := len(resp)
+		start := offset
+		if start > totalSeries {
+			start = totalSeries
+		}
+		end := totalSeries
+		if limit > 0 && start+limit < totalSeries {
+			end = start + limit
+		}
+		paginatedResp = resp[start:end]
+	} else {
+		paginatedResp = resp
+	}
+
 	// Format as CSV
-	csvContent := formatLabelSetsAsCSV(resp)
+	csvContent := formatLabelSetsAsCSV(paginatedResp)
 
 	result := &tools.Result{
 		TextContent: csvContent,
@@ -67,13 +93,17 @@ func (t *Tools) listPrometheusSeries(ctx context.Context, request mcp.CallToolRe
 			WithTimeSec("end", timeRange.End).
 			WithParam("match[]", strings.Join(selectors, ",")).
 			String(),
+		Meta: map[string]any{
+			"total_series":    len(resp),
+			"offset":          offset,
+			"limit":           limit,
+			"returned_series": len(paginatedResp),
+		},
 	}
 
 	// Add warnings if present
 	if len(warnings) > 0 {
-		result.Meta = map[string]any{
-			"warnings": warnings,
-		}
+		result.Meta["warnings"] = warnings
 	}
 
 	return result, nil

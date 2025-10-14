@@ -130,12 +130,22 @@ Use list_prometheus_series only when you specifically need to see exact label co
 
 Example usage:
 - Find specific series combinations: ["{__name__=\"http_requests_total\", service=\"api\"}"]
-- Debug label patterns: ["{job=\"kubernetes-pods\"}"] (use sparingly)`),
+- Debug label patterns: ["{job=\"kubernetes-pods\"}"] (use sparingly)
+
+Supports pagination with limit/offset to manage large result sets.`),
 				params.WithStringArray("selectors",
 					mcp.Description("Repeated series selector arguments that select the series to return. At least one selector must be provided."),
 					mcp.Required(),
 				),
 				params.WithTimeRange(),
+				mcp.WithNumber("limit",
+					mcp.Description("Maximum number of series to return. Default is 100. Set to 0 for no limit."),
+					mcp.DefaultNumber(100),
+				),
+				mcp.WithNumber("offset",
+					mcp.Description("Number of series to skip before returning results. Default is 0."),
+					mcp.DefaultNumber(0),
+				),
 			),
 			Handler: t.listPrometheusSeries,
 		},

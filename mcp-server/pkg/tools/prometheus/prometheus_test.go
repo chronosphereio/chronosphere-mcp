@@ -15,6 +15,7 @@
 package prometheus
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/prometheus/common/model"
@@ -320,4 +321,236 @@ func mockMatrixWithPagination(matrix model.Matrix, limit, offset int) *Result {
 	result.Meta["returned_series"] = len(paginatedMatrix)
 
 	return result
+}
+
+func TestFormatMatrixAsCSV(t *testing.T) {
+	tests := []struct {
+		name     string
+		matrix   model.Matrix
+		expected string
+	}{
+		{
+			name:     "empty matrix",
+			matrix:   model.Matrix{},
+			expected: "# No data\n",
+		},
+		{
+			name: "single series single timestamp",
+			matrix: model.Matrix{
+				&model.SampleStream{
+					Metric: model.Metric{
+						"__name__": "test_metric",
+						"label1":   "value1",
+					},
+					Values: []model.SamplePair{
+						{Timestamp: 1000000, Value: 42},
+					},
+				},
+			},
+			expected: `# Series Metadata
+series_id,__name__,label1
+1,test_metric,value1
+
+# Time Series Data
+timestamp,series_1
+1000.000,42
+`,
+		},
+		{
+			name: "multiple series multiple timestamps",
+			matrix: model.Matrix{
+				&model.SampleStream{
+					Metric: model.Metric{
+						"__name__": "metric1",
+						"env":      "prod",
+					},
+					Values: []model.SamplePair{
+						{Timestamp: 1000000, Value: 10},
+						{Timestamp: 2000000, Value: 20},
+					},
+				},
+				&model.SampleStream{
+					Metric: model.Metric{
+						"__name__": "metric2",
+						"env":      "dev",
+					},
+					Values: []model.SamplePair{
+						{Timestamp: 1000000, Value: 30},
+						{Timestamp: 2000000, Value: 40},
+					},
+				},
+			},
+			expected: `# Series Metadata
+series_id,__name__,env
+1,metric1,prod
+2,metric2,dev
+
+# Time Series Data
+timestamp,series_1,series_2
+1000.000,10,30
+2000.000,20,40
+`,
+		},
+		{
+			name: "series with missing values (sparse data)",
+			matrix: model.Matrix{
+				&model.SampleStream{
+					Metric: model.Metric{
+						"__name__": "metric1",
+					},
+					Values: []model.SamplePair{
+						{Timestamp: 1000000, Value: 10},
+						{Timestamp: 3000000, Value: 30},
+					},
+				},
+				&model.SampleStream{
+					Metric: model.Metric{
+						"__name__": "metric2",
+					},
+					Values: []model.SamplePair{
+						{Timestamp: 2000000, Value: 20},
+						{Timestamp: 3000000, Value: 40},
+					},
+				},
+			},
+			expected: `# Series Metadata
+series_id,__name__
+1,metric1
+2,metric2
+
+# Time Series Data
+timestamp,series_1,series_2
+1000.000,10,
+2000.000,,20
+3000.000,30,40
+`,
+		},
+		{
+			name: "series with different label sets",
+			matrix: model.Matrix{
+				&model.SampleStream{
+					Metric: model.Metric{
+						"__name__": "http_requests",
+						"method":   "GET",
+						"status":   "200",
+					},
+					Values: []model.SamplePair{
+						{Timestamp: 1000000, Value: 100},
+					},
+				},
+				&model.SampleStream{
+					Metric: model.Metric{
+						"__name__": "http_requests",
+						"method":   "POST",
+						// status is missing
+					},
+					Values: []model.SamplePair{
+						{Timestamp: 1000000, Value: 50},
+					},
+				},
+			},
+			expected: `# Series Metadata
+series_id,__name__,method,status
+1,http_requests,GET,200
+2,http_requests,POST,
+
+# Time Series Data
+timestamp,series_1,series_2
+1000.000,100,50
+`,
+		},
+		{
+			name: "labels with special characters",
+			matrix: model.Matrix{
+				&model.SampleStream{
+					Metric: model.Metric{
+						"__name__": "test",
+						"label":    "value,with,commas",
+					},
+					Values: []model.SamplePair{
+						{Timestamp: 1000000, Value: 1},
+					},
+				},
+			},
+			expected: `# Series Metadata
+series_id,__name__,label
+1,test,"value,with,commas"
+
+# Time Series Data
+timestamp,series_1
+1000.000,1
+`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := formatMatrixAsCSV(tt.matrix)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+// TestFormatMatrixAsCSV_RealWorldExample tests with data similar to the user's example
+func TestFormatMatrixAsCSV_RealWorldExample(t *testing.T) {
+	matrix := model.Matrix{
+		&model.SampleStream{
+			Metric: model.Metric{
+				"__name__":                   "disabled_metrics_total",
+				"chronosphere_k8s_cluster":   "prod-eu-a",
+				"chronosphere_k8s_namespace": "global",
+				"chronosphere_namespace":     "global",
+				"chronosphere_owner":         "infra",
+				"chronosphere_service":       "descheduler",
+				"environment":                "production",
+				"instance":                   "global/descheduler-high-utilization-cd75d8b99-nl866",
+				"job":                        "global/descheduler-high-utilization/0",
+			},
+			Values: []model.SamplePair{
+				{Timestamp: 1760474193915, Value: 0},
+				{Timestamp: 1760474253915, Value: 0},
+			},
+		},
+		&model.SampleStream{
+			Metric: model.Metric{
+				"__name__":                   "disabled_metrics_total",
+				"chronosphere_k8s_cluster":   "prod-eu-a",
+				"chronosphere_k8s_namespace": "global",
+				"chronosphere_namespace":     "global",
+				"chronosphere_owner":         "infra",
+				"chronosphere_service":       "descheduler",
+				"environment":                "production",
+				"instance":                   "global/descheduler-tsc-policies-c79bcb666-pfjg7",
+				"job":                        "global/descheduler-tsc-policies/0",
+			},
+			Values: []model.SamplePair{
+				{Timestamp: 1760474193915, Value: 0},
+				{Timestamp: 1760474253915, Value: 0},
+			},
+		},
+	}
+
+	result := formatMatrixAsCSV(matrix)
+
+	// Verify structure
+	assert.True(t, strings.Contains(result, "# Series Metadata"))
+	assert.True(t, strings.Contains(result, "# Time Series Data"))
+
+	// Verify all label names are present
+	assert.True(t, strings.Contains(result, "__name__"))
+	assert.True(t, strings.Contains(result, "chronosphere_k8s_cluster"))
+	assert.True(t, strings.Contains(result, "instance"))
+
+	// Verify series IDs
+	assert.True(t, strings.Contains(result, "series_1"))
+	assert.True(t, strings.Contains(result, "series_2"))
+
+	// Verify timestamps (converted to seconds)
+	assert.True(t, strings.Contains(result, "1760474193.915"))
+	assert.True(t, strings.Contains(result, "1760474253.915"))
+
+	// Verify it's much more compact than JSON
+	// The original JSON from the user was thousands of characters
+	// Our CSV should be significantly smaller
+	assert.Less(t, len(result), 1000, "CSV output should be compact")
 }

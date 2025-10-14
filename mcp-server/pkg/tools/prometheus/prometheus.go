@@ -57,13 +57,26 @@ func (t *Tools) listPrometheusSeries(ctx context.Context, request mcp.CallToolRe
 		return nil, fmt.Errorf("failed to get series: %s", err)
 	}
 
-	results := promJSONResponse(resp, warnings)
-	results.ChronosphereLink = t.linkBuilder.Custom("/data/m3/api/v1/series").
-		WithTimeSec("start", timeRange.Start).
-		WithTimeSec("end", timeRange.End).
-		WithParam("match[]", strings.Join(selectors, ",")).
-		String()
-	return results, nil
+	// Format as CSV
+	csvContent := formatLabelSetsAsCSV(resp)
+
+	result := &tools.Result{
+		TextContent: csvContent,
+		ChronosphereLink: t.linkBuilder.Custom("/data/m3/api/v1/series").
+			WithTimeSec("start", timeRange.Start).
+			WithTimeSec("end", timeRange.End).
+			WithParam("match[]", strings.Join(selectors, ",")).
+			String(),
+	}
+
+	// Add warnings if present
+	if len(warnings) > 0 {
+		result.Meta = map[string]any{
+			"warnings": warnings,
+		}
+	}
+
+	return result, nil
 }
 
 func (t *Tools) queryPrometheusRange(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
@@ -478,6 +491,61 @@ func formatMatrixAsCSV(matrix model.Matrix) string {
 			}
 		}
 		//nolint:errcheck
+		csvWriter.Write(row)
+	}
+	csvWriter.Flush()
+
+	return buf.String()
+}
+
+// formatLabelSetsAsCSV converts Prometheus label sets to CSV format.
+// Each row represents one series with its complete label set.
+func formatLabelSetsAsCSV(labelSets []model.LabelSet) string {
+	if len(labelSets) == 0 {
+		return "# No series found\n"
+	}
+
+	var buf bytes.Buffer
+
+	// Collect all unique label names across all series
+	labelNamesSet := make(map[model.LabelName]struct{})
+	for _, labelSet := range labelSets {
+		for labelName := range labelSet {
+			labelNamesSet[labelName] = struct{}{}
+		}
+	}
+
+	// Sort label names for consistent output
+	labelNames := make([]model.LabelName, 0, len(labelNamesSet))
+	for labelName := range labelNamesSet {
+		labelNames = append(labelNames, labelName)
+	}
+	sort.Slice(labelNames, func(i, j int) bool {
+		return labelNames[i] < labelNames[j]
+	})
+
+	// Create CSV writer
+	csvWriter := csv.NewWriter(&buf)
+
+	// Write header row
+	header := make([]string, 0, len(labelNames))
+	for _, labelName := range labelNames {
+		header = append(header, string(labelName))
+	}
+	//nolint:errcheck // writing to bytes.Buffer won't fail unless we're out of memory
+	csvWriter.Write(header)
+
+	// Write data rows
+	for _, labelSet := range labelSets {
+		row := make([]string, 0, len(labelNames))
+		for _, labelName := range labelNames {
+			if value, ok := labelSet[labelName]; ok {
+				row = append(row, string(value))
+			} else {
+				row = append(row, "") // empty for missing labels
+			}
+		}
+		//nolint:errcheck // writing to bytes.Buffer won't fail unless we're out of memory
 		csvWriter.Write(row)
 	}
 	csvWriter.Flush()

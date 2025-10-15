@@ -19,17 +19,17 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/models"
+	"github.com/chronosphereio/chronosphere-mcp/generated/datav1/models"
 )
 
 func TestTrimLogEntries(t *testing.T) {
 	tests := []struct {
 		name         string
-		payload      *models.DataunstableGetRangeQueryResponse
+		payload      *models.Datav1QueryLogsRangeResponse
 		limit        int
 		offset       int
 		wantTrimmed  int
-		validateFunc func(t *testing.T, result *models.DataunstableGetRangeQueryResponse)
+		validateFunc func(t *testing.T, result *models.Datav1QueryLogsRangeResponse)
 	}{
 		{
 			name:        "nil payload",
@@ -37,82 +37,87 @@ func TestTrimLogEntries(t *testing.T) {
 			limit:       10,
 			offset:      0,
 			wantTrimmed: 0,
-			validateFunc: func(t *testing.T, result *models.DataunstableGetRangeQueryResponse) {
+			validateFunc: func(t *testing.T, result *models.Datav1QueryLogsRangeResponse) {
 				assert.Nil(t, result)
 			},
 		},
 		{
 			name: "zero limit and offset returns original",
-			payload: &models.DataunstableGetRangeQueryResponse{
-				GridData: &models.DataunstableLogQueryGridData{
-					Rows: []*models.DataunstableRow{{}, {}, {}},
+			payload: &models.Datav1QueryLogsRangeResponse{
+				GridData: &models.QueryLogsRangeResponseGridData{
+					Rows: []*models.QueryLogsRangeResponseRow{{}, {}, {}},
 				},
 			},
 			limit:       0,
 			offset:      0,
 			wantTrimmed: 0,
-			validateFunc: func(t *testing.T, result *models.DataunstableGetRangeQueryResponse) {
+			validateFunc: func(t *testing.T, result *models.Datav1QueryLogsRangeResponse) {
 				assert.Equal(t, 3, len(result.GridData.Rows))
 			},
 		},
 		{
 			name: "grid data - limit without offset",
-			payload: &models.DataunstableGetRangeQueryResponse{
-				GridData: &models.DataunstableLogQueryGridData{
-					Columns: []*models.DataunstableColumnMeta{{Name: "col1"}},
-					Rows:    []*models.DataunstableRow{{}, {}, {}, {}, {}},
+			payload: &models.Datav1QueryLogsRangeResponse{
+				GridData: &models.QueryLogsRangeResponseGridData{
+					Columns: []*models.QueryLogsRangeResponseColumnMeta{{Name: "col1"}},
+					Rows:    []*models.QueryLogsRangeResponseRow{{}, {}, {}, {}, {}},
 				},
-				Metadata: &models.GetRangeQueryResponseRangeQueryMetadata{},
+				Metadata: struct {
+					models.QueryLogsRangeResponseMetadata
+				}{},
 			},
 			limit:       3,
 			offset:      0,
 			wantTrimmed: 2,
-			validateFunc: func(t *testing.T, result *models.DataunstableGetRangeQueryResponse) {
+			validateFunc: func(t *testing.T, result *models.Datav1QueryLogsRangeResponse) {
 				assert.NotNil(t, result.GridData)
 				assert.Equal(t, 3, len(result.GridData.Rows))
 				assert.Equal(t, 1, len(result.GridData.Columns))
-				assert.NotNil(t, result.Metadata)
 			},
 		},
 		{
 			name: "grid data - offset and limit",
-			payload: &models.DataunstableGetRangeQueryResponse{
-				GridData: &models.DataunstableLogQueryGridData{
-					Rows: []*models.DataunstableRow{{}, {}, {}, {}, {}},
+			payload: &models.Datav1QueryLogsRangeResponse{
+				GridData: &models.QueryLogsRangeResponseGridData{
+					Rows: []*models.QueryLogsRangeResponseRow{{}, {}, {}, {}, {}},
 				},
 			},
 			limit:       2,
 			offset:      2,
 			wantTrimmed: 3,
-			validateFunc: func(t *testing.T, result *models.DataunstableGetRangeQueryResponse) {
+			validateFunc: func(t *testing.T, result *models.Datav1QueryLogsRangeResponse) {
 				assert.Equal(t, 2, len(result.GridData.Rows))
 			},
 		},
 		{
 			name: "grid data - offset beyond total rows",
-			payload: &models.DataunstableGetRangeQueryResponse{
-				GridData: &models.DataunstableLogQueryGridData{
-					Rows: []*models.DataunstableRow{{}, {}, {}},
+			payload: &models.Datav1QueryLogsRangeResponse{
+				GridData: &models.QueryLogsRangeResponseGridData{
+					Rows: []*models.QueryLogsRangeResponseRow{{}, {}, {}},
 				},
 			},
 			limit:       5,
 			offset:      10,
 			wantTrimmed: 3,
-			validateFunc: func(t *testing.T, result *models.DataunstableGetRangeQueryResponse) {
+			validateFunc: func(t *testing.T, result *models.Datav1QueryLogsRangeResponse) {
 				assert.Equal(t, 0, len(result.GridData.Rows))
 			},
 		},
 		{
 			name: "time series data - limit without offset",
-			payload: &models.DataunstableGetRangeQueryResponse{
-				TimeSeriesData: &models.DataunstableLogQueryTimeSeriesData{
-					GroupByDimensionNames: []string{"dim1"},
-					Series: []*models.LogQueryTimeSeriesDataLogQueryTimeSeries{
-						{
-							AggregationName:        "count",
-							GroupByDimensionValues: []string{"val1"},
-							Buckets: []*models.LogQueryTimeSeriesLogQueryTimeSeriesBucket{
-								{}, {}, {}, {}, {},
+			payload: &models.Datav1QueryLogsRangeResponse{
+				TimeSeriesData: struct {
+					models.QueryLogsRangeResponseTimeSeriesData
+				}{
+					QueryLogsRangeResponseTimeSeriesData: models.QueryLogsRangeResponseTimeSeriesData{
+						GroupByDimensionNames: []string{"dim1"},
+						Series: []*models.TimeSeriesDataTimeSeries{
+							{
+								AggregationName:        "count",
+								GroupByDimensionValues: []string{"val1"},
+								Buckets: []*models.TimeSeriesBucket{
+									{}, {}, {}, {}, {},
+								},
 							},
 						},
 					},
@@ -121,7 +126,7 @@ func TestTrimLogEntries(t *testing.T) {
 			limit:       3,
 			offset:      0,
 			wantTrimmed: 2,
-			validateFunc: func(t *testing.T, result *models.DataunstableGetRangeQueryResponse) {
+			validateFunc: func(t *testing.T, result *models.Datav1QueryLogsRangeResponse) {
 				assert.NotNil(t, result.TimeSeriesData)
 				assert.Equal(t, 1, len(result.TimeSeriesData.Series))
 				assert.Equal(t, 3, len(result.TimeSeriesData.Series[0].Buckets))
@@ -130,17 +135,21 @@ func TestTrimLogEntries(t *testing.T) {
 		},
 		{
 			name: "time series data - multiple series",
-			payload: &models.DataunstableGetRangeQueryResponse{
-				TimeSeriesData: &models.DataunstableLogQueryTimeSeriesData{
-					Series: []*models.LogQueryTimeSeriesDataLogQueryTimeSeries{
-						{
-							Buckets: []*models.LogQueryTimeSeriesLogQueryTimeSeriesBucket{
-								{}, {}, {}, {},
+			payload: &models.Datav1QueryLogsRangeResponse{
+				TimeSeriesData: struct {
+					models.QueryLogsRangeResponseTimeSeriesData
+				}{
+					QueryLogsRangeResponseTimeSeriesData: models.QueryLogsRangeResponseTimeSeriesData{
+						Series: []*models.TimeSeriesDataTimeSeries{
+							{
+								Buckets: []*models.TimeSeriesBucket{
+									{}, {}, {}, {},
+								},
 							},
-						},
-						{
-							Buckets: []*models.LogQueryTimeSeriesLogQueryTimeSeriesBucket{
-								{}, {}, {},
+							{
+								Buckets: []*models.TimeSeriesBucket{
+									{}, {}, {},
+								},
 							},
 						},
 					},
@@ -149,7 +158,7 @@ func TestTrimLogEntries(t *testing.T) {
 			limit:       2,
 			offset:      1,
 			wantTrimmed: 3,
-			validateFunc: func(t *testing.T, result *models.DataunstableGetRangeQueryResponse) {
+			validateFunc: func(t *testing.T, result *models.Datav1QueryLogsRangeResponse) {
 				assert.Equal(t, 2, len(result.TimeSeriesData.Series))
 				assert.Equal(t, 2, len(result.TimeSeriesData.Series[0].Buckets))
 				assert.Equal(t, 2, len(result.TimeSeriesData.Series[1].Buckets))
@@ -157,19 +166,22 @@ func TestTrimLogEntries(t *testing.T) {
 		},
 		{
 			name: "preserve metadata",
-			payload: &models.DataunstableGetRangeQueryResponse{
-				Metadata: &models.GetRangeQueryResponseRangeQueryMetadata{
-					LimitEnforced: true,
+			payload: &models.Datav1QueryLogsRangeResponse{
+				Metadata: struct {
+					models.QueryLogsRangeResponseMetadata
+				}{
+					QueryLogsRangeResponseMetadata: models.QueryLogsRangeResponseMetadata{
+						LimitEnforced: true,
+					},
 				},
-				GridData: &models.DataunstableLogQueryGridData{
-					Rows: []*models.DataunstableRow{{}, {}},
+				GridData: &models.QueryLogsRangeResponseGridData{
+					Rows: []*models.QueryLogsRangeResponseRow{{}, {}},
 				},
 			},
 			limit:       1,
 			offset:      0,
 			wantTrimmed: 1,
-			validateFunc: func(t *testing.T, result *models.DataunstableGetRangeQueryResponse) {
-				assert.NotNil(t, result.Metadata)
+			validateFunc: func(t *testing.T, result *models.Datav1QueryLogsRangeResponse) {
 				assert.True(t, result.Metadata.LimitEnforced)
 			},
 		},

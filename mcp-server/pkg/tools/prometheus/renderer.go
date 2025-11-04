@@ -54,20 +54,23 @@ func NewRenderer(
 
 // RenderSeries renders a time series graph for the given series.
 func (r *Renderer) RenderSeries(w io.Writer, series model.Matrix, ws, hs int, legend bool) error {
-	plot := plot.New()
-	plot.Legend.Top = true
+	p := plot.New()
+	p.Legend.Top = true
 
 	pts := formatSeriesForRender(series, legend)
 
-	if err := plotutil.AddLinePoints(plot, pts...); err != nil {
+	if err := plotutil.AddLinePoints(p, pts...); err != nil {
 		return err
 	}
 
-	plot.Y.Max = plot.Y.Max * 1.2
+	// Configure X-axis with ISO 8601 timestamp formatter
+	p.X.Tick.Marker = &timeTickMarker{}
+
+	p.Y.Max = p.Y.Max * 1.2
 	c := vgimg.New(vg.Length(ws), vg.Length(hs))
 	cpng := vgimg.PngCanvas{Canvas: c}
 	cv := draw.New(cpng)
-	plot.Draw(cv)
+	p.Draw(cv)
 
 	_, err := cpng.WriteTo(w)
 	return err
@@ -75,22 +78,25 @@ func (r *Renderer) RenderSeries(w io.Writer, series model.Matrix, ws, hs int, le
 
 // Render renders a time series graph for the given query and time range.
 func (r *Renderer) Render(ctx context.Context, w io.Writer, query string, start, end time.Time, ws, hs int, legend bool) error {
-	plot := plot.New()
-	plot.Legend.Top = true
+	p := plot.New()
+	p.Legend.Top = true
 	timeseries, err := r.queryRange(ctx, query, start, end, legend)
 	if err != nil {
 		return err
 	}
 
-	if err := plotutil.AddLinePoints(plot, timeseries...); err != nil {
+	if err := plotutil.AddLinePoints(p, timeseries...); err != nil {
 		return err
 	}
 
-	plot.Y.Max = plot.Y.Max * 1.2
+	// Configure X-axis with ISO 8601 timestamp formatter
+	p.X.Tick.Marker = &timeTickMarker{}
+
+	p.Y.Max = p.Y.Max * 1.2
 	c := vgimg.New(vg.Length(ws), vg.Length(hs))
 	cpng := vgimg.PngCanvas{Canvas: c}
 	cv := draw.New(cpng)
-	plot.Draw(cv)
+	p.Draw(cv)
 
 	_, err = cpng.WriteTo(w)
 	return err
@@ -124,7 +130,8 @@ func formatSeriesForRender(series model.Matrix, legend bool) []any {
 		pts := make(plotter.XYs, len(s.Values))
 		for j, sample := range s.Values {
 			pts[j].Y = float64(sample.Value)
-			pts[j].X = float64(sample.Timestamp.Unix()) / 60
+			// Store Unix timestamp directly for proper time axis formatting
+			pts[j].X = float64(sample.Timestamp.Unix())
 		}
 		if legend {
 			plotters = append(plotters, formatMetric(s.Metric))
@@ -143,4 +150,57 @@ func formatMetric(m model.Metric) string {
 		i++
 	}
 	return strings.Join(values, "|")
+}
+
+// timeTickMarker implements plot.Ticker to format X-axis ticks as ISO 8601 timestamps
+type timeTickMarker struct{}
+
+// Ticks returns tick marks for the given min and max values
+func (t *timeTickMarker) Ticks(min, max float64) []plot.Tick {
+	// Calculate a reasonable number of ticks based on the time range
+	timeRange := max - min
+	var tickCount int
+	var format string
+
+	switch {
+	case timeRange < 3600: // Less than 1 hour
+		tickCount = 6
+		format = "15:04:05" // HH:MM:SS
+	case timeRange < 86400: // Less than 1 day
+		tickCount = 8
+		format = "15:04" // HH:MM
+	case timeRange < 604800: // Less than 1 week
+		tickCount = 7
+		format = "01-02 15:04" // MM-DD HH:MM
+	default: // 1 week or more
+		tickCount = 10
+		format = "2006-01-02" // YYYY-MM-DD
+	}
+
+	ticks := make([]plot.Tick, 0, tickCount)
+	step := (max - min) / float64(tickCount-1)
+
+	for i := 0; i < tickCount; i++ {
+		val := min + float64(i)*step
+		timestamp := time.Unix(int64(val), 0).UTC()
+		ticks = append(ticks, plot.Tick{
+			Value: val,
+			Label: timestamp.Format(format),
+		})
+	}
+
+	// Add minor ticks between major ticks for better readability
+	minorStep := step / 5
+	for i := 0; i < tickCount-1; i++ {
+		baseVal := min + float64(i)*step
+		for j := 1; j < 5; j++ {
+			minorVal := baseVal + float64(j)*minorStep
+			ticks = append(ticks, plot.Tick{
+				Value: minorVal,
+				Label: "",
+			})
+		}
+	}
+
+	return ticks
 }

@@ -63,8 +63,12 @@ func (r *Renderer) RenderSeries(w io.Writer, series model.Matrix, ws, hs int, le
 		return err
 	}
 
-	// Configure X-axis with ISO 8601 timestamp formatter
+	// Configure X-axis with ISO 8601 timestamp formatter and label
 	p.X.Tick.Marker = &timeTickMarker{}
+	p.X.Label.Text = "Time (UTC)"
+
+	// Configure Y-axis label
+	p.Y.Label.Text = detectYAxisLabel(series)
 
 	p.Y.Max = p.Y.Max * 1.2
 	c := vgimg.New(vg.Length(ws), vg.Length(hs))
@@ -80,17 +84,37 @@ func (r *Renderer) RenderSeries(w io.Writer, series model.Matrix, ws, hs int, le
 func (r *Renderer) Render(ctx context.Context, w io.Writer, query string, start, end time.Time, ws, hs int, legend bool) error {
 	p := plot.New()
 	p.Legend.Top = true
-	timeseries, err := r.queryRange(ctx, query, start, end, legend)
+
+	// Query the data
+	api, err := r.DataAPI()
 	if err != nil {
 		return err
 	}
+	resp, _, err := api.QueryRange(ctx, query, v1.Range{
+		Start: start,
+		End:   end,
+		Step:  60 * time.Second,
+	})
+	if err != nil {
+		return err
+	}
+	matrix, ok := resp.(model.Matrix)
+	if !ok {
+		return errors.New("expected matrix")
+	}
+
+	timeseries := formatSeriesForRender(matrix, legend)
 
 	if err := plotutil.AddLinePoints(p, timeseries...); err != nil {
 		return err
 	}
 
-	// Configure X-axis with ISO 8601 timestamp formatter
+	// Configure X-axis with ISO 8601 timestamp formatter and label
 	p.X.Tick.Marker = &timeTickMarker{}
+	p.X.Label.Text = "Time (UTC)"
+
+	// Configure Y-axis label
+	p.Y.Label.Text = detectYAxisLabel(matrix)
 
 	p.Y.Max = p.Y.Max * 1.2
 	c := vgimg.New(vg.Length(ws), vg.Length(hs))
@@ -102,25 +126,45 @@ func (r *Renderer) Render(ctx context.Context, w io.Writer, query string, start,
 	return err
 }
 
-// returns name, plotter.XYer, name1, plotter.XYer ...
-func (r *Renderer) queryRange(ctx context.Context, query string, start, end time.Time, legend bool) ([]interface{}, error) {
-	api, err := r.DataAPI()
-	if err != nil {
-		return nil, err
+// detectYAxisLabel attempts to detect an appropriate Y-axis label from the metric data
+func detectYAxisLabel(series model.Matrix) string {
+	if len(series) == 0 {
+		return "Value"
 	}
-	resp, _, err := api.QueryRange(ctx, query, v1.Range{
-		Start: start,
-		End:   end,
-		Step:  60 * time.Second,
-	})
-	if err != nil {
-		return nil, err
+
+	// Get the first metric's __name__ label to determine the metric type
+	firstMetric := series[0].Metric
+	metricName := string(firstMetric["__name__"])
+
+	// Common metric patterns and their units
+	switch {
+	case strings.Contains(metricName, "_bytes"):
+		return "Bytes"
+	case strings.Contains(metricName, "_seconds"):
+		return "Seconds"
+	case strings.Contains(metricName, "_milliseconds"):
+		return "Milliseconds"
+	case strings.Contains(metricName, "_ratio") || strings.Contains(metricName, "_percent"):
+		return "Ratio"
+	case strings.Contains(metricName, "_total") || strings.Contains(metricName, "_count"):
+		return "Count"
+	case strings.Contains(metricName, "_requests"):
+		return "Requests"
+	case strings.Contains(metricName, "cpu"):
+		return "CPU Usage"
+	case strings.Contains(metricName, "memory"):
+		return "Memory"
+	case strings.Contains(metricName, "latency"):
+		return "Latency"
+	case strings.Contains(metricName, "_rate"):
+		return "Rate"
+	default:
+		// If we have a metric name, use it as the label
+		if metricName != "" {
+			return metricName
+		}
+		return "Value"
 	}
-	matrix, ok := resp.(model.Matrix)
-	if !ok {
-		return nil, errors.New("expected matrix")
-	}
-	return formatSeriesForRender(matrix, legend), nil
 }
 
 func formatSeriesForRender(series model.Matrix, legend bool) []any {
@@ -146,7 +190,7 @@ func formatMetric(m model.Metric) string {
 	values := make([]string, len(ls))
 	i := 0
 	for _, v := range ls {
-		values[i] = strings.Replace(string(v), "\n", " ", -1)
+		values[i] = strings.ReplaceAll(string(v), "\n", " ")
 		i++
 	}
 	return strings.Join(values, "|")

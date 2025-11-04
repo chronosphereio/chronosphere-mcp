@@ -17,6 +17,7 @@ package prometheus
 import (
 	"context"
 	"errors"
+	"image/color"
 	"io"
 	"sort"
 	"strings"
@@ -27,7 +28,6 @@ import (
 	"github.com/prometheus/common/model"
 	"gonum.org/v1/plot"
 	"gonum.org/v1/plot/plotter"
-	"gonum.org/v1/plot/plotutil"
 	"gonum.org/v1/plot/vg"
 	"gonum.org/v1/plot/vg/draw"
 	"gonum.org/v1/plot/vg/vgimg"
@@ -52,14 +52,116 @@ func NewRenderer(
 	}, nil
 }
 
+// Dark theme colors - professional and easy on the eyes
+var (
+	darkBackground   = color.RGBA{R: 30, G: 30, B: 30, A: 255}      // Dark gray background
+	darkGridColor    = color.RGBA{R: 60, G: 60, B: 60, A: 255}      // Subtle grid lines
+	darkTextColor    = color.RGBA{R: 220, G: 220, B: 220, A: 255}   // Light gray text
+	darkSeriesColors = []color.Color{
+		color.RGBA{R: 99, G: 179, B: 237, A: 255},   // Light blue
+		color.RGBA{R: 46, G: 204, B: 113, A: 255},   // Green
+		color.RGBA{R: 241, G: 196, B: 15, A: 255},   // Yellow
+		color.RGBA{R: 231, G: 76, B: 60, A: 255},    // Red
+		color.RGBA{R: 155, G: 89, B: 182, A: 255},   // Purple
+		color.RGBA{R: 52, G: 152, B: 219, A: 255},   // Blue
+		color.RGBA{R: 26, G: 188, B: 156, A: 255},   // Teal
+		color.RGBA{R: 230, G: 126, B: 34, A: 255},   // Orange
+		color.RGBA{R: 236, G: 240, B: 241, A: 255},  // Light gray
+		color.RGBA{R: 149, G: 165, B: 166, A: 255},  // Gray
+	}
+)
+
+// applyDarkTheme applies a modern dark theme to the plot
+func applyDarkTheme(p *plot.Plot) {
+	// Set background color
+	p.BackgroundColor = darkBackground
+
+	// Configure title styling
+	p.Title.TextStyle.Color = darkTextColor
+	p.Title.TextStyle.Font.Size = vg.Points(14)
+
+	// Configure X-axis styling
+	p.X.Label.TextStyle.Color = darkTextColor
+	p.X.Label.TextStyle.Font.Size = vg.Points(11)
+	p.X.Tick.Label.Color = darkTextColor
+	p.X.Tick.Label.Font.Size = vg.Points(9)
+	p.X.Tick.LineStyle.Color = darkGridColor
+	p.X.LineStyle.Color = darkTextColor
+
+	// Configure Y-axis styling
+	p.Y.Label.TextStyle.Color = darkTextColor
+	p.Y.Label.TextStyle.Font.Size = vg.Points(11)
+	p.Y.Tick.Label.Color = darkTextColor
+	p.Y.Tick.Label.Font.Size = vg.Points(9)
+	p.Y.Tick.LineStyle.Color = darkGridColor
+	p.Y.LineStyle.Color = darkTextColor
+
+	// Configure legend styling
+	p.Legend.TextStyle.Color = darkTextColor
+	p.Legend.TextStyle.Font.Size = vg.Points(9)
+}
+
+// addStyledLines adds line plots with dark theme colors and proper styling
+func addStyledLines(p *plot.Plot, pts []any) error {
+	colorIndex := 0
+
+	for i := 0; i < len(pts); {
+		var name string
+		var xyData plotter.XYer
+
+		// Check if we have a name (legend entry)
+		if i+1 < len(pts) {
+			if n, ok := pts[i].(string); ok {
+				name = n
+				i++
+			}
+		}
+
+		// Get the XY data
+		if i < len(pts) {
+			if xy, ok := pts[i].(plotter.XYer); ok {
+				xyData = xy
+				i++
+			} else {
+				return errors.New("expected plotter.XYer")
+			}
+		}
+
+		// Create and style the line
+		line, err := plotter.NewLine(xyData)
+		if err != nil {
+			return err
+		}
+
+		// Apply color from our dark theme palette
+		line.Color = darkSeriesColors[colorIndex%len(darkSeriesColors)]
+		line.Width = vg.Points(2)
+
+		// Add to plot
+		p.Add(line)
+
+		// Add legend entry if we have a name
+		if name != "" {
+			p.Legend.Add(name, line)
+		}
+
+		colorIndex++
+	}
+
+	return nil
+}
+
 // RenderSeries renders a time series graph for the given series.
 func (r *Renderer) RenderSeries(w io.Writer, series model.Matrix, ws, hs int, legend bool) error {
 	p := plot.New()
 	p.Legend.Top = true
 
+	// Apply dark theme
+	applyDarkTheme(p)
+
 	pts := formatSeriesForRender(series, legend)
 
-	if err := plotutil.AddLinePoints(p, pts...); err != nil {
+	if err := addStyledLines(p, pts); err != nil {
 		return err
 	}
 
@@ -85,6 +187,9 @@ func (r *Renderer) Render(ctx context.Context, w io.Writer, query string, start,
 	p := plot.New()
 	p.Legend.Top = true
 
+	// Apply dark theme
+	applyDarkTheme(p)
+
 	// Query the data
 	api, err := r.DataAPI()
 	if err != nil {
@@ -105,7 +210,7 @@ func (r *Renderer) Render(ctx context.Context, w io.Writer, query string, start,
 
 	timeseries := formatSeriesForRender(matrix, legend)
 
-	if err := plotutil.AddLinePoints(p, timeseries...); err != nil {
+	if err := addStyledLines(p, timeseries); err != nil {
 		return err
 	}
 

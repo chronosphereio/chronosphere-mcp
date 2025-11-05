@@ -39,7 +39,7 @@ More details for VSCode [here](https://code.visualstudio.com/docs/copilot/custom
 #### Claude code
 Adding chronosphere MCP server to claude code
 ```shell
-claude mcp add -t http -H "Authorization: ${CHRONOSPHERE_API_TOKEN}" chronosphere "https://${CHRONOSPHERE_ORG_NAME}.chronosphere.io/api/mcp/mcp"
+claude mcp add -t http -H "Authorization: Bearer ${CHRONOSPHERE_API_TOKEN}" chronosphere "https://${CHRONOSPHERE_ORG_NAME}.chronosphere.io/api/mcp/mcp"
 ```
 
 You can leave out the Authorization header if you are using OAuth. Once you're in claude type `/mcp` and select the server to login to trigger the OAuth flow.
@@ -57,6 +57,17 @@ bearer_token = "<chronosphere api token>"
 For oauth login, you must enable `experimental_use_rmcp_client = true` and then run `codex mcp login chronosphere`
 
 More details [here](https://github.com/openai/codex/blob/main/docs/config.md#mcp_servers)
+
+#### Gemini CLI
+```
+CHRONOSPHERE_ORG_NAME=<your org>
+CHRONOSPHERE_API_TOKEN=<your api token>
+gemini mcp add chronosphere "https://${CHRONOSPHERE_ORG_NAME}.chronosphere.io/api/mcp/mcp" -H "Authorization: Bearer ${CHRONOSPHERE_API_TOKEN}" 
+
+# Drop the -H authorization header option if you want to use OAuth.
+```
+
+See [Gemini MCP docs](https://geminicli.com/docs/tools/mcp-server/) for more information.
 
 ### Building from source
 First build the binary

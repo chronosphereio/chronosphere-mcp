@@ -1,0 +1,9 @@
+{
+	"name": "chronosphere-extension",
+	"version": "1.0.0",
+	"mcpServers": {
+	  "chronosphere": {
+		"url": "https://${CHRONOSPHERE_ORG_NAME}.chronosphere.io/api/mcp/mcp"
+	  }
+	}
+}

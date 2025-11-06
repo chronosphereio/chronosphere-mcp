@@ -17,7 +17,9 @@ package traces
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"unsafe"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/mark3labs/mcp-go/mcp"
@@ -51,6 +53,44 @@ func NewTools(
 
 func (t *Tools) GroupName() string {
 	return "traces"
+}
+
+// listTracesRequestBody wraps the generated model and provides correct JSON marshaling
+// to work around go-swagger's broken allOf handling which generates an embedded anonymous
+// struct that doesn't marshal correctly to JSON.
+type listTracesRequestBody struct {
+	*models.Datav1ListTracesRequest
+	queryType models.ListTracesRequestQueryType
+}
+
+// MarshalBinary implements the encoding.BinaryMarshaler interface
+func (m *listTracesRequestBody) MarshalBinary() ([]byte, error) {
+	if m == nil {
+		return nil, nil
+	}
+
+	// Create a properly structured JSON request
+	type flatRequest struct {
+		StartTime  strfmt.DateTime                          `json:"start_time,omitempty"`
+		EndTime    strfmt.DateTime                          `json:"end_time,omitempty"`
+		QueryType  models.ListTracesRequestQueryType        `json:"query_type,omitempty"`
+		Service    string                                   `json:"service,omitempty"`
+		Operation  string                                   `json:"operation,omitempty"`
+		TraceIds   []string                                 `json:"trace_ids,omitempty"`
+		TagFilters []*models.ListTracesRequestTagFilter     `json:"tag_filters,omitempty"`
+	}
+
+	flat := &flatRequest{
+		StartTime:  m.Datav1ListTracesRequest.StartTime,
+		EndTime:    m.Datav1ListTracesRequest.EndTime,
+		QueryType:  m.queryType,
+		Service:    m.Datav1ListTracesRequest.Service,
+		Operation:  m.Datav1ListTracesRequest.Operation,
+		TraceIds:   m.Datav1ListTracesRequest.TraceIds,
+		TagFilters: m.Datav1ListTracesRequest.TagFilters,
+	}
+
+	return json.Marshal(flat)
 }
 
 // MCPTools returns a list of MCP tools related to traces.
@@ -93,35 +133,30 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					return nil, fmt.Errorf("trace_ids can not be used with service or operation")
 				}
 
-				queryParams := &version1.ListTracesParams{
-					Context: ctx,
-					Body: &models.Datav1ListTracesRequest{
+				// Create wrapped request body with correct marshaling
+				body := &listTracesRequestBody{
+					Datav1ListTracesRequest: &models.Datav1ListTracesRequest{
 						StartTime: strfmt.DateTime(timeRange.Start),
 						EndTime:   strfmt.DateTime(timeRange.End),
+						Service:   service,
+						Operation: operation,
+						TraceIds:  traceIDs,
 					},
 				}
 
 				if len(traceIDs) > 0 {
-					queryParams.Body.TraceIds = traceIDs
-					queryParams.Body.QueryType = struct {
-						models.ListTracesRequestQueryType
-					}{
-						models.ListTracesRequestQueryTypeTRACEIDS,
-					}
+					body.queryType = models.ListTracesRequestQueryTypeTRACEIDS
 				} else {
-					queryParams.Body.QueryType = struct {
-						models.ListTracesRequestQueryType
-					}{
-						models.ListTracesRequestQueryTypeSERVICEOPERATION,
-					}
+					body.queryType = models.ListTracesRequestQueryTypeSERVICEOPERATION
 				}
 
-				if service != "" {
-					queryParams.Body.Service = service
+				queryParams := &version1.ListTracesParams{
+					Context: ctx,
 				}
-				if operation != "" {
-					queryParams.Body.Operation = operation
-				}
+
+				// Use unsafe to bypass type checking and inject our custom marshaler
+				// This is necessary because go-swagger generates broken code for allOf with enums
+				queryParams.Body = (*models.Datav1ListTracesRequest)(unsafe.Pointer(body))
 
 				resp, err := t.api.Version1.ListTraces(queryParams, nil)
 				if err != nil {

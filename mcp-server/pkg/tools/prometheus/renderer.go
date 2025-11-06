@@ -54,20 +54,20 @@ func NewRenderer(
 
 // Dark theme colors - professional and easy on the eyes
 var (
-	darkBackground   = color.RGBA{R: 30, G: 30, B: 30, A: 255}      // Dark gray background
-	darkGridColor    = color.RGBA{R: 60, G: 60, B: 60, A: 255}      // Subtle grid lines
-	darkTextColor    = color.RGBA{R: 220, G: 220, B: 220, A: 255}   // Light gray text
+	darkBackground   = color.RGBA{R: 30, G: 30, B: 30, A: 255}    // Dark gray background
+	darkGridColor    = color.RGBA{R: 60, G: 60, B: 60, A: 255}    // Subtle grid lines
+	darkTextColor    = color.RGBA{R: 220, G: 220, B: 220, A: 255} // Light gray text
 	darkSeriesColors = []color.Color{
-		color.RGBA{R: 99, G: 179, B: 237, A: 255},   // Light blue
-		color.RGBA{R: 46, G: 204, B: 113, A: 255},   // Green
-		color.RGBA{R: 241, G: 196, B: 15, A: 255},   // Yellow
-		color.RGBA{R: 231, G: 76, B: 60, A: 255},    // Red
-		color.RGBA{R: 155, G: 89, B: 182, A: 255},   // Purple
-		color.RGBA{R: 52, G: 152, B: 219, A: 255},   // Blue
-		color.RGBA{R: 26, G: 188, B: 156, A: 255},   // Teal
-		color.RGBA{R: 230, G: 126, B: 34, A: 255},   // Orange
-		color.RGBA{R: 236, G: 240, B: 241, A: 255},  // Light gray
-		color.RGBA{R: 149, G: 165, B: 166, A: 255},  // Gray
+		color.RGBA{R: 99, G: 179, B: 237, A: 255},  // Light blue
+		color.RGBA{R: 46, G: 204, B: 113, A: 255},  // Green
+		color.RGBA{R: 241, G: 196, B: 15, A: 255},  // Yellow
+		color.RGBA{R: 231, G: 76, B: 60, A: 255},   // Red
+		color.RGBA{R: 155, G: 89, B: 182, A: 255},  // Purple
+		color.RGBA{R: 52, G: 152, B: 219, A: 255},  // Blue
+		color.RGBA{R: 26, G: 188, B: 156, A: 255},  // Teal
+		color.RGBA{R: 230, G: 126, B: 34, A: 255},  // Orange
+		color.RGBA{R: 236, G: 240, B: 241, A: 255}, // Light gray
+		color.RGBA{R: 149, G: 165, B: 166, A: 255}, // Gray
 	}
 )
 
@@ -304,10 +304,10 @@ func formatMetric(m model.Metric) string {
 // timeTickMarker implements plot.Ticker to format X-axis ticks as ISO 8601 timestamps
 type timeTickMarker struct{}
 
-// Ticks returns tick marks for the given min and max values
-func (t *timeTickMarker) Ticks(min, max float64) []plot.Tick {
+// Ticks returns tick marks for the given minVal and maxVal values
+func (t *timeTickMarker) Ticks(minVal, maxVal float64) []plot.Tick {
 	// Calculate a reasonable number of ticks based on the time range
-	timeRange := max - min
+	timeRange := maxVal - minVal
 	var tickCount int
 	var format string
 
@@ -327,10 +327,10 @@ func (t *timeTickMarker) Ticks(min, max float64) []plot.Tick {
 	}
 
 	ticks := make([]plot.Tick, 0, tickCount)
-	step := (max - min) / float64(tickCount-1)
+	step := (maxVal - minVal) / float64(tickCount-1)
 
 	for i := 0; i < tickCount; i++ {
-		val := min + float64(i)*step
+		val := minVal + float64(i)*step
 		timestamp := time.Unix(int64(val), 0).UTC()
 		ticks = append(ticks, plot.Tick{
 			Value: val,
@@ -341,7 +341,7 @@ func (t *timeTickMarker) Ticks(min, max float64) []plot.Tick {
 	// Add minor ticks between major ticks for better readability
 	minorStep := step / 5
 	for i := 0; i < tickCount-1; i++ {
-		baseVal := min + float64(i)*step
+		baseVal := minVal + float64(i)*step
 		for j := 1; j < 5; j++ {
 			minorVal := baseVal + float64(j)*minorStep
 			ticks = append(ticks, plot.Tick{

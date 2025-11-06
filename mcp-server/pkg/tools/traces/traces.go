@@ -16,17 +16,19 @@
 package traces
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"unsafe"
+	"io"
+	"net/http"
+	"reflect"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/mark3labs/mcp-go/mcp"
 	"go.uber.org/zap"
 
 	"github.com/chronosphereio/chronosphere-mcp/generated/datav1/datav1"
-	"github.com/chronosphereio/chronosphere-mcp/generated/datav1/datav1/version1"
 	"github.com/chronosphereio/chronosphere-mcp/generated/datav1/models"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/pkg/params"
@@ -35,19 +37,53 @@ import (
 var _ tools.MCPTools = (*Tools)(nil)
 
 type Tools struct {
-	logger *zap.Logger
-	api    *datav1.DataV1API
+	logger     *zap.Logger
+	api        *datav1.DataV1API
+	httpClient *http.Client
+	baseURL    string
 }
 
 func NewTools(
 	api *datav1.DataV1API,
 	logger *zap.Logger,
 ) (*Tools, error) {
-	logger.Info("events tool configured")
+	logger.Info("traces tool configured")
+
+	// Extract HTTP client and base URL from the transport for direct API calls
+	// This is needed to work around go-swagger's broken allOf handling
+	//
+	// The transport is typically *httptransport.Runtime which has unexported fields,
+	// so we need to use reflection to extract the HTTP client
+	httpClient := http.DefaultClient
+	baseURL := "https://" + datav1.DefaultHost + datav1.DefaultBasePath
+
+	// Try to extract the client using reflection from the httptransport.Runtime
+	transportValue := reflect.ValueOf(api.Transport)
+	if transportValue.Kind() == reflect.Ptr {
+		transportElem := transportValue.Elem()
+
+		// Try to get the "client" field
+		clientField := transportElem.FieldByName("Client")
+		if clientField.IsValid() && clientField.CanInterface() {
+			if client, ok := clientField.Interface().(*http.Client); ok {
+				httpClient = client
+			}
+		}
+
+		// Try to get the host
+		hostField := transportElem.FieldByName("Host")
+		if hostField.IsValid() && hostField.CanInterface() {
+			if host, ok := hostField.Interface().(string); ok && host != "" {
+				baseURL = "https://" + host + datav1.DefaultBasePath
+			}
+		}
+	}
 
 	return &Tools{
-		logger: logger,
-		api:    api,
+		logger:     logger,
+		api:        api,
+		httpClient: httpClient,
+		baseURL:    baseURL,
 	}, nil
 }
 
@@ -59,7 +95,7 @@ func (t *Tools) GroupName() string {
 // to work around go-swagger's broken allOf handling which generates an embedded anonymous
 // struct that doesn't marshal correctly to JSON.
 type listTracesRequestBody struct {
-	*models.Datav1ListTracesRequest
+	models.Datav1ListTracesRequest
 	queryType models.ListTracesRequestQueryType
 }
 
@@ -69,7 +105,8 @@ func (m *listTracesRequestBody) MarshalBinary() ([]byte, error) {
 		return nil, nil
 	}
 
-	// Create a properly structured JSON request
+	// Create a properly structured JSON request with the query_type as a plain string
+	// instead of the broken embedded struct that go-swagger generates
 	type flatRequest struct {
 		StartTime  strfmt.DateTime                          `json:"start_time,omitempty"`
 		EndTime    strfmt.DateTime                          `json:"end_time,omitempty"`
@@ -91,6 +128,14 @@ func (m *listTracesRequestBody) MarshalBinary() ([]byte, error) {
 	}
 
 	return json.Marshal(flat)
+}
+
+// Validate implements the validation interface to satisfy go-swagger requirements
+func (m *listTracesRequestBody) Validate(formats strfmt.Registry) error {
+	if m == nil {
+		return nil
+	}
+	return m.Datav1ListTracesRequest.Validate(formats)
 }
 
 // MCPTools returns a list of MCP tools related to traces.
@@ -133,37 +178,63 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					return nil, fmt.Errorf("trace_ids can not be used with service or operation")
 				}
 
-				// Create wrapped request body with correct marshaling
+				// Determine query type
+				var queryType models.ListTracesRequestQueryType
+				if len(traceIDs) > 0 {
+					queryType = models.ListTracesRequestQueryTypeTRACEIDS
+				} else {
+					queryType = models.ListTracesRequestQueryTypeSERVICEOPERATION
+				}
+
+				// Create request body with correct marshaling
+				// We marshal it ourselves to work around go-swagger's broken allOf handling
 				body := &listTracesRequestBody{
-					Datav1ListTracesRequest: &models.Datav1ListTracesRequest{
+					Datav1ListTracesRequest: models.Datav1ListTracesRequest{
 						StartTime: strfmt.DateTime(timeRange.Start),
 						EndTime:   strfmt.DateTime(timeRange.End),
 						Service:   service,
 						Operation: operation,
 						TraceIds:  traceIDs,
 					},
+					queryType: queryType,
 				}
 
-				if len(traceIDs) > 0 {
-					body.queryType = models.ListTracesRequestQueryTypeTRACEIDS
-				} else {
-					body.queryType = models.ListTracesRequestQueryTypeSERVICEOPERATION
-				}
-
-				queryParams := &version1.ListTracesParams{
-					Context: ctx,
-				}
-
-				// Use unsafe to bypass type checking and inject our custom marshaler
-				// This is necessary because go-swagger generates broken code for allOf with enums
-				queryParams.Body = (*models.Datav1ListTracesRequest)(unsafe.Pointer(body))
-
-				resp, err := t.api.Version1.ListTraces(queryParams, nil)
+				// Marshal the body ourselves to ensure correct JSON format
+				bodyJSON, err := body.MarshalBinary()
 				if err != nil {
-					return nil, fmt.Errorf("failed to list traces: %s", err)
+					return nil, fmt.Errorf("failed to marshal request: %w", err)
 				}
+
+				// Make a direct HTTP call since we can't use the generated client
+				// with our custom marshaling due to go-swagger's broken allOf handling
+				httpReq, err := http.NewRequestWithContext(ctx, "POST",
+					t.baseURL+"/traces",
+					bytes.NewReader(bodyJSON))
+				if err != nil {
+					return nil, fmt.Errorf("failed to create request: %w", err)
+				}
+				httpReq.Header.Set("Content-Type", "application/json")
+
+				// Make the request
+				httpResp, err := t.httpClient.Do(httpReq)
+				if err != nil {
+					return nil, fmt.Errorf("failed to execute request: %w", err)
+				}
+				defer httpResp.Body.Close()
+
+				if httpResp.StatusCode != http.StatusOK {
+					bodyBytes, _ := io.ReadAll(httpResp.Body)
+					return nil, fmt.Errorf("failed to list traces: %s (status %d)", string(bodyBytes), httpResp.StatusCode)
+				}
+
+				// Parse the response
+				var listResp models.Datav1ListTracesResponse
+				if err := json.NewDecoder(httpResp.Body).Decode(&listResp); err != nil {
+					return nil, fmt.Errorf("failed to decode response: %w", err)
+				}
+
 				return &tools.Result{
-					JSONContent: resp,
+					JSONContent: &listResp,
 				}, nil
 			},
 		},

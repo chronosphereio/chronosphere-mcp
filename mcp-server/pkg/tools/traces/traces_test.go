@@ -49,7 +49,7 @@ func TestListTracesRequestQueryTypeSerialization(t *testing.T) {
 			// Create a wrapped request body using the same pattern as the fixed code
 			now := time.Now()
 			body := &listTracesRequestBody{
-				Datav1ListTracesRequest: &models.Datav1ListTracesRequest{
+				Datav1ListTracesRequest: models.Datav1ListTracesRequest{
 					StartTime: strfmt.DateTime(now.Add(-1 * time.Hour)),
 					EndTime:   strfmt.DateTime(now),
 				},

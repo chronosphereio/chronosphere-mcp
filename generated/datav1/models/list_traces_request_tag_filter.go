@@ -21,17 +21,11 @@ type ListTracesRequestTagFilter struct {
 	// The key (or name) of the span tag that is inspected by this filter.
 	Key string `json:"key,omitempty"`
 
-	// Matcher used to evaluate the span tag value as a numeric value (if the
-	// tag with the given key is found and the value type is numerical).
-	NumericValue struct {
-		TagFilterNumericFilter
-	} `json:"numeric_value,omitempty"`
+	// numeric value
+	NumericValue *TagFilterNumericFilter `json:"numeric_value,omitempty"`
 
-	// Matcher used to evaluate the span tag value (if the tag with the given
-	// key is found and the value type is a string).
-	Value struct {
-		TagFilterStringFilter
-	} `json:"value,omitempty"`
+	// value
+	Value *TagFilterStringFilter `json:"value,omitempty"`
 }
 
 // Validate validates this list traces request tag filter
@@ -57,12 +51,34 @@ func (m *ListTracesRequestTagFilter) validateNumericValue(formats strfmt.Registr
 		return nil
 	}
 
+	if m.NumericValue != nil {
+		if err := m.NumericValue.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("numeric_value")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("numeric_value")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 
 func (m *ListTracesRequestTagFilter) validateValue(formats strfmt.Registry) error {
 	if swag.IsZero(m.Value) { // not required
 		return nil
+	}
+
+	if m.Value != nil {
+		if err := m.Value.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("value")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("value")
+			}
+			return err
+		}
 	}
 
 	return nil
@@ -88,10 +104,42 @@ func (m *ListTracesRequestTagFilter) ContextValidate(ctx context.Context, format
 
 func (m *ListTracesRequestTagFilter) contextValidateNumericValue(ctx context.Context, formats strfmt.Registry) error {
 
+	if m.NumericValue != nil {
+
+		if swag.IsZero(m.NumericValue) { // not required
+			return nil
+		}
+
+		if err := m.NumericValue.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("numeric_value")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("numeric_value")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 
 func (m *ListTracesRequestTagFilter) contextValidateValue(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Value != nil {
+
+		if swag.IsZero(m.Value) { // not required
+			return nil
+		}
+
+		if err := m.Value.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("value")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("value")
+			}
+			return err
+		}
+	}
 
 	return nil
 }

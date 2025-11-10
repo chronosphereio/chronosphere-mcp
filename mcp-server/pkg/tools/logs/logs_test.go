@@ -62,9 +62,7 @@ func TestTrimLogEntries(t *testing.T) {
 					Columns: []*models.QueryLogsRangeResponseColumnMeta{{Name: "col1"}},
 					Rows:    []*models.QueryLogsRangeResponseRow{{}, {}, {}, {}, {}},
 				},
-				Metadata: struct {
-					models.QueryLogsRangeResponseMetadata
-				}{},
+				Metadata: &models.QueryLogsRangeResponseMetadata{},
 			},
 			limit:       3,
 			offset:      0,
@@ -106,18 +104,14 @@ func TestTrimLogEntries(t *testing.T) {
 		{
 			name: "time series data - limit without offset",
 			payload: &models.Datav1QueryLogsRangeResponse{
-				TimeSeriesData: struct {
-					models.QueryLogsRangeResponseTimeSeriesData
-				}{
-					QueryLogsRangeResponseTimeSeriesData: models.QueryLogsRangeResponseTimeSeriesData{
-						GroupByDimensionNames: []string{"dim1"},
-						Series: []*models.TimeSeriesDataTimeSeries{
-							{
-								AggregationName:        "count",
-								GroupByDimensionValues: []string{"val1"},
-								Buckets: []*models.TimeSeriesBucket{
-									{}, {}, {}, {}, {},
-								},
+				TimeSeriesData: &models.QueryLogsRangeResponseTimeSeriesData{
+					GroupByDimensionNames: []string{"dim1"},
+					Series: []*models.TimeSeriesDataTimeSeries{
+						{
+							AggregationName:        "count",
+							GroupByDimensionValues: []string{"val1"},
+							Buckets: []*models.TimeSeriesBucket{
+								{}, {}, {}, {}, {},
 							},
 						},
 					},
@@ -136,20 +130,16 @@ func TestTrimLogEntries(t *testing.T) {
 		{
 			name: "time series data - multiple series",
 			payload: &models.Datav1QueryLogsRangeResponse{
-				TimeSeriesData: struct {
-					models.QueryLogsRangeResponseTimeSeriesData
-				}{
-					QueryLogsRangeResponseTimeSeriesData: models.QueryLogsRangeResponseTimeSeriesData{
-						Series: []*models.TimeSeriesDataTimeSeries{
-							{
-								Buckets: []*models.TimeSeriesBucket{
-									{}, {}, {}, {},
-								},
+				TimeSeriesData: &models.QueryLogsRangeResponseTimeSeriesData{
+					Series: []*models.TimeSeriesDataTimeSeries{
+						{
+							Buckets: []*models.TimeSeriesBucket{
+								{}, {}, {}, {},
 							},
-							{
-								Buckets: []*models.TimeSeriesBucket{
-									{}, {}, {},
-								},
+						},
+						{
+							Buckets: []*models.TimeSeriesBucket{
+								{}, {}, {},
 							},
 						},
 					},
@@ -167,12 +157,8 @@ func TestTrimLogEntries(t *testing.T) {
 		{
 			name: "preserve metadata",
 			payload: &models.Datav1QueryLogsRangeResponse{
-				Metadata: struct {
-					models.QueryLogsRangeResponseMetadata
-				}{
-					QueryLogsRangeResponseMetadata: models.QueryLogsRangeResponseMetadata{
-						LimitEnforced: true,
-					},
+				Metadata: &models.QueryLogsRangeResponseMetadata{
+					LimitEnforced: true,
 				},
 				GridData: &models.QueryLogsRangeResponseGridData{
 					Rows: []*models.QueryLogsRangeResponseRow{{}, {}},

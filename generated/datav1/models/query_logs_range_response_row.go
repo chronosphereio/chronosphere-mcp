@@ -19,7 +19,8 @@ import (
 // swagger:model QueryLogsRangeResponseRow
 type QueryLogsRangeResponseRow struct {
 
-	// values
+	// Values to include that match each column type. Only one of the supported
+	// fields can be set depending on the type of value.
 	Values []*QueryLogsRangeResponseRowValue `json:"values"`
 }
 

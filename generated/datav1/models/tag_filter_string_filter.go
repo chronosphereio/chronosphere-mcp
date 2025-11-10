@@ -21,10 +21,8 @@ type TagFilterStringFilter struct {
 	// Values the filter tests against when using IN or NOT_IN match type.
 	InValues []string `json:"in_values"`
 
-	// If EXACT, compared strings have the exact value of the filter value.
-	Match struct {
-		StringFilterStringFilterMatchType
-	} `json:"match,omitempty"`
+	// match
+	Match StringFilterStringFilterMatchType `json:"match,omitempty"`
 
 	// The value the filter compares to the target trace or span field.
 	Value string `json:"value,omitempty"`
@@ -49,6 +47,15 @@ func (m *TagFilterStringFilter) validateMatch(formats strfmt.Registry) error {
 		return nil
 	}
 
+	if err := m.Match.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("match")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("match")
+		}
+		return err
+	}
+
 	return nil
 }
 
@@ -67,6 +74,19 @@ func (m *TagFilterStringFilter) ContextValidate(ctx context.Context, formats str
 }
 
 func (m *TagFilterStringFilter) contextValidateMatch(ctx context.Context, formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Match) { // not required
+		return nil
+	}
+
+	if err := m.Match.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("match")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("match")
+		}
+		return err
+	}
 
 	return nil
 }

@@ -76,7 +76,7 @@ type QueryLogsRangeParams struct {
 
 	/* TimeRangeAfter.
 
-	   Only log messages with a timestamp after this time will be returned.
+	   Returns only log messages with a timestamp after this time.
 
 	   Format: date-time
 	*/
@@ -84,7 +84,7 @@ type QueryLogsRangeParams struct {
 
 	/* TimeRangeBefore.
 
-	   Only log messages with a timestamp before this time will be returned.
+	   Returns only log messages with a timestamp before this time.
 
 	   Format: date-time
 	*/

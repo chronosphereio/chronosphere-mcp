@@ -18,13 +18,11 @@ import (
 // swagger:model QueryLogsRangeResponseMetadata
 type QueryLogsRangeResponseMetadata struct {
 
-	// This field indicates whether the result is truncated by the limit requested.
+	// Indicates whether the result is truncated by the request limit.
 	LimitEnforced bool `json:"limit_enforced,omitempty"`
 
-	// If set, there are more results to return.
-	Page struct {
-		QueryLogsRangeResponseMetadataPageResult
-	} `json:"page,omitempty"`
+	// page
+	Page *QueryLogsRangeResponseMetadataPageResult `json:"page,omitempty"`
 }
 
 // Validate validates this query logs range response metadata
@@ -46,6 +44,17 @@ func (m *QueryLogsRangeResponseMetadata) validatePage(formats strfmt.Registry) e
 		return nil
 	}
 
+	if m.Page != nil {
+		if err := m.Page.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("page")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("page")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -64,6 +73,22 @@ func (m *QueryLogsRangeResponseMetadata) ContextValidate(ctx context.Context, fo
 }
 
 func (m *QueryLogsRangeResponseMetadata) contextValidatePage(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Page != nil {
+
+		if swag.IsZero(m.Page) { // not required
+			return nil
+		}
+
+		if err := m.Page.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("page")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("page")
+			}
+			return err
+		}
+	}
 
 	return nil
 }

@@ -21,16 +21,11 @@ type Datav1QueryLogsRangeResponse struct {
 	// grid data
 	GridData *QueryLogsRangeResponseGridData `json:"grid_data,omitempty"`
 
-	// The metadata of the query.
-	Metadata struct {
-		QueryLogsRangeResponseMetadata
-	} `json:"metadata,omitempty"`
+	// metadata
+	Metadata *QueryLogsRangeResponseMetadata `json:"metadata,omitempty"`
 
-	// Only one of the two below fields can be set depending on the type of query
-	// a time series query is defined by using a `make-series` aggregation.
-	TimeSeriesData struct {
-		QueryLogsRangeResponseTimeSeriesData
-	} `json:"time_series_data,omitempty"`
+	// time series data
+	TimeSeriesData *QueryLogsRangeResponseTimeSeriesData `json:"time_series_data,omitempty"`
 }
 
 // Validate validates this datav1 query logs range response
@@ -79,12 +74,34 @@ func (m *Datav1QueryLogsRangeResponse) validateMetadata(formats strfmt.Registry)
 		return nil
 	}
 
+	if m.Metadata != nil {
+		if err := m.Metadata.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("metadata")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("metadata")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 
 func (m *Datav1QueryLogsRangeResponse) validateTimeSeriesData(formats strfmt.Registry) error {
 	if swag.IsZero(m.TimeSeriesData) { // not required
 		return nil
+	}
+
+	if m.TimeSeriesData != nil {
+		if err := m.TimeSeriesData.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("time_series_data")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("time_series_data")
+			}
+			return err
+		}
 	}
 
 	return nil
@@ -135,10 +152,42 @@ func (m *Datav1QueryLogsRangeResponse) contextValidateGridData(ctx context.Conte
 
 func (m *Datav1QueryLogsRangeResponse) contextValidateMetadata(ctx context.Context, formats strfmt.Registry) error {
 
+	if m.Metadata != nil {
+
+		if swag.IsZero(m.Metadata) { // not required
+			return nil
+		}
+
+		if err := m.Metadata.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("metadata")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("metadata")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 
 func (m *Datav1QueryLogsRangeResponse) contextValidateTimeSeriesData(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.TimeSeriesData != nil {
+
+		if swag.IsZero(m.TimeSeriesData) { // not required
+			return nil
+		}
+
+		if err := m.TimeSeriesData.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("time_series_data")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("time_series_data")
+			}
+			return err
+		}
+	}
 
 	return nil
 }

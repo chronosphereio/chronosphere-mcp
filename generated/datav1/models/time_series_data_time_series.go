@@ -19,14 +19,14 @@ import (
 // swagger:model TimeSeriesDataTimeSeries
 type TimeSeriesDataTimeSeries struct {
 
-	// aggregation_name is by default the name of the aggregation used to calculate
-	// the values.
+	// Name of the aggregation used to calculate the values.
 	AggregationName string `json:"aggregation_name,omitempty"`
 
-	// buckets
+	// Defines a time-bounded data point in a time series to store aggregated
+	// values over specific time intervals.
 	Buckets []*TimeSeriesBucket `json:"buckets"`
 
-	// group by dimension values
+	// Values of the dimensions to group results by.
 	GroupByDimensionValues []string `json:"group_by_dimension_values"`
 }
 

@@ -82,12 +82,8 @@ type V1Span struct {
 	// [Optional].
 	Flags int64 `json:"flags,omitempty"`
 
-	// Distinguishes between spans generated in a particular context. For example,
-	// two spans with the same name may be distinguished using `CLIENT` (caller)
-	// and `SERVER` (callee) to identify queueing latency associated with the span.
-	Kind struct {
-		SpanSpanKind
-	} `json:"kind,omitempty"`
+	// kind
+	Kind SpanSpanKind `json:"kind,omitempty"`
 
 	// links is a collection of Links, which are references from this span to a span
 	// in the same or different trace.
@@ -128,11 +124,8 @@ type V1Span struct {
 	// This field is semantically required and it is expected that end_time >= start_time.
 	StartTimeUnixNano string `json:"start_time_unix_nano,omitempty"`
 
-	// An optional final status for this span. Semantically when Status isn't set, it means
-	// span's status code is unset, i.e. assume STATUS_CODE_UNSET (code = 0).
-	Status struct {
-		Tracev1Status
-	} `json:"status,omitempty"`
+	// status
+	Status *Tracev1Status `json:"status,omitempty"`
 
 	// A unique identifier for a trace. All spans from the same trace share
 	// the same `trace_id`. The ID is a 16-byte array. An ID with all zeroes OR
@@ -236,6 +229,15 @@ func (m *V1Span) validateKind(formats strfmt.Registry) error {
 		return nil
 	}
 
+	if err := m.Kind.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("kind")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("kind")
+		}
+		return err
+	}
+
 	return nil
 }
 
@@ -268,6 +270,17 @@ func (m *V1Span) validateLinks(formats strfmt.Registry) error {
 func (m *V1Span) validateStatus(formats strfmt.Registry) error {
 	if swag.IsZero(m.Status) { // not required
 		return nil
+	}
+
+	if m.Status != nil {
+		if err := m.Status.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("status")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("status")
+			}
+			return err
+		}
 	}
 
 	return nil
@@ -355,6 +368,19 @@ func (m *V1Span) contextValidateEvents(ctx context.Context, formats strfmt.Regis
 
 func (m *V1Span) contextValidateKind(ctx context.Context, formats strfmt.Registry) error {
 
+	if swag.IsZero(m.Kind) { // not required
+		return nil
+	}
+
+	if err := m.Kind.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("kind")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("kind")
+		}
+		return err
+	}
+
 	return nil
 }
 
@@ -384,6 +410,22 @@ func (m *V1Span) contextValidateLinks(ctx context.Context, formats strfmt.Regist
 }
 
 func (m *V1Span) contextValidateStatus(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Status != nil {
+
+		if swag.IsZero(m.Status) { // not required
+			return nil
+		}
+
+		if err := m.Status.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("status")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("status")
+			}
+			return err
+		}
+	}
 
 	return nil
 }

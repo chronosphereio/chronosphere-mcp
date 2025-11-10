@@ -16,21 +16,11 @@
           "description": "The key (or name) of the span tag that is inspected by this filter.",
           "type": "string"
         },
-        "numeric_value": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/TagFilterNumericFilter"
-            }
-          ],
-          "description": "Matcher used to evaluate the span tag value as a numeric value (if the\ntag with the given key is found and the value type is numerical)."
-        },
         "value": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/TagFilterStringFilter"
-            }
-          ],
-          "description": "Matcher used to evaluate the span tag value (if the tag with the given\nkey is found and the value type is a string)."
+          "$ref": "#/definitions/TagFilterStringFilter"
+        },
+        "numeric_value": {
+          "$ref": "#/definitions/TagFilterNumericFilter"
         }
       },
       "type": "object"
@@ -49,12 +39,12 @@
     "QueryLogsRangeRequestTimestampFilter": {
       "properties": {
         "after": {
-          "description": "Only log messages with a timestamp after this time will be returned.",
+          "description": "Returns only log messages with a timestamp after this time.",
           "format": "date-time",
           "type": "string"
         },
         "before": {
-          "description": "Only log messages with a timestamp before this time will be returned.",
+          "description": "Returns only log messages with a timestamp before this time.",
           "format": "date-time",
           "type": "string"
         }
@@ -64,6 +54,7 @@
     "QueryLogsRangeResponseColumnMeta": {
       "properties": {
         "name": {
+          "description": "The column names to include in the tabular results.",
           "type": "string"
         },
         "type": {
@@ -73,6 +64,7 @@
       "type": "object"
     },
     "QueryLogsRangeResponseColumnMetaType": {
+      "description": "The data type to include in each column.",
       "enum": [
         "BOOLEAN",
         "FLOAT",
@@ -83,12 +75,14 @@
     "QueryLogsRangeResponseGridData": {
       "properties": {
         "columns": {
+          "description": "Defines the structure and data types of columns in tabular log results.",
           "items": {
             "$ref": "#/definitions/QueryLogsRangeResponseColumnMeta"
           },
           "type": "array"
         },
         "rows": {
+          "description": "Defines the structure and data types of rows in tabular log results.",
           "items": {
             "$ref": "#/definitions/QueryLogsRangeResponseRow"
           },
@@ -100,16 +94,11 @@
     "QueryLogsRangeResponseMetadata": {
       "properties": {
         "limit_enforced": {
-          "description": "This field indicates whether the result is truncated by the limit requested.",
+          "description": "Indicates whether the result is truncated by the request limit.",
           "type": "boolean"
         },
         "page": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/QueryLogsRangeResponseMetadataPageResult"
-            }
-          ],
-          "description": "If set, there are more results to return."
+          "$ref": "#/definitions/QueryLogsRangeResponseMetadataPageResult"
         }
       },
       "type": "object"
@@ -117,7 +106,7 @@
     "QueryLogsRangeResponseMetadataPageResult": {
       "properties": {
         "next_token": {
-          "description": "Opaque page token which identifies the next page of items which the\nclient should request. An empty next_token indicates that there are no\nmore items to return.",
+          "description": "Opaque page token that identifies the next page of items to request.\nAn empty value indicates there are no more items to return.",
           "type": "string"
         }
       },
@@ -126,6 +115,7 @@
     "QueryLogsRangeResponseRow": {
       "properties": {
         "values": {
+          "description": "Values to include that match each column type. Only one of the supported\nfields can be set depending on the type of value.",
           "items": {
             "$ref": "#/definitions/QueryLogsRangeResponseRowValue"
           },
@@ -137,14 +127,16 @@
     "QueryLogsRangeResponseRowValue": {
       "properties": {
         "bool_value": {
-          "description": "Only one of the below fields can be set depending on the type of value",
+          "description": "Indicates a boolean value.",
           "type": "boolean"
         },
         "float_value": {
+          "description": "Indicates a float value.",
           "format": "double",
           "type": "number"
         },
         "string_value": {
+          "description": "Indicates a string value.",
           "type": "string"
         }
       },
@@ -152,16 +144,17 @@
     },
     "QueryLogsRangeResponseTimeSeriesData": {
       "properties": {
-        "group_by_dimension_names": {
-          "description": "The names of the dimensions by which the results are grouped by.",
+        "series": {
+          "description": "Specifies the time series to return from query results.",
           "items": {
-            "type": "string"
+            "$ref": "#/definitions/TimeSeriesDataTimeSeries"
           },
           "type": "array"
         },
-        "series": {
+        "group_by_dimension_names": {
+          "description": "Names of the dimensions to group results by.",
           "items": {
-            "$ref": "#/definitions/TimeSeriesDataTimeSeries"
+            "type": "string"
           },
           "type": "array"
         }
@@ -171,6 +164,20 @@
     "SpanLink": {
       "description": "A pointer from the current span to another span in the same trace or in a\ndifferent trace. For example, this can be used in batching operations,\nwhere a single batch handler processes multiple requests from different\ntraces or when the handler receives a request from a different project.",
       "properties": {
+        "trace_id": {
+          "description": "A unique identifier of a trace that this linked span is part of. The ID is a\n16-byte array.",
+          "format": "byte",
+          "type": "string"
+        },
+        "span_id": {
+          "description": "A unique identifier for the linked span. The ID is an 8-byte array.",
+          "format": "byte",
+          "type": "string"
+        },
+        "trace_state": {
+          "description": "The trace_state associated with the link.",
+          "type": "string"
+        },
         "attributes": {
           "description": "attributes is a collection of attribute key/value pairs on the link.\nAttribute keys MUST be unique (it is not allowed to have more than one\nattribute with the same key).",
           "items": {
@@ -187,20 +194,6 @@
           "description": "Flags, a bit field.\n\nBits 0-7 (8 least significant bits) are the trace flags as defined in W3C Trace\nContext specification. To read the 8-bit W3C trace flag, use\n`flags \u0026 SPAN_FLAGS_TRACE_FLAGS_MASK`.\n\nSee https://www.w3.org/TR/trace-context-2/#trace-flags for the flag definitions.\n\nBits 8 and 9 represent the 3 states of whether the link is remote.\nThe states are (unknown, is not remote, is remote).\nTo read whether the value is known, use `(flags \u0026 SPAN_FLAGS_CONTEXT_HAS_IS_REMOTE_MASK) != 0`.\nTo read whether the link is remote, use `(flags \u0026 SPAN_FLAGS_CONTEXT_IS_REMOTE_MASK) != 0`.\n\nReaders MUST NOT assume that bits 10-31 (22 most significant bits) will be zero.\nWhen creating new spans, bits 10-31 (most-significant 22-bits) MUST be zero.\n\n[Optional].",
           "format": "int64",
           "type": "integer"
-        },
-        "span_id": {
-          "description": "A unique identifier for the linked span. The ID is an 8-byte array.",
-          "format": "byte",
-          "type": "string"
-        },
-        "trace_id": {
-          "description": "A unique identifier of a trace that this linked span is part of. The ID is a\n16-byte array.",
-          "format": "byte",
-          "type": "string"
-        },
-        "trace_state": {
-          "description": "The trace_state associated with the link.",
-          "type": "string"
         }
       },
       "type": "object"
@@ -239,12 +232,7 @@
     "TagFilterNumericFilter": {
       "properties": {
         "comparison": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/NumericFilterComparisonType"
-            }
-          ],
-          "description": "The comparison operation to be applied to an input against the given filter value."
+          "$ref": "#/definitions/NumericFilterComparisonType"
         },
         "value": {
           "description": "The filter value used in comparison against match candidates.",
@@ -256,71 +244,73 @@
     },
     "TagFilterStringFilter": {
       "properties": {
+        "match": {
+          "$ref": "#/definitions/StringFilterStringFilterMatchType"
+        },
+        "value": {
+          "description": "The value the filter compares to the target trace or span field.",
+          "type": "string"
+        },
         "in_values": {
           "description": "Values the filter tests against when using IN or NOT_IN match type.",
           "items": {
             "type": "string"
           },
           "type": "array"
-        },
-        "match": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/StringFilterStringFilterMatchType"
-            }
-          ],
-          "description": "If EXACT, compared strings have the exact value of the filter value."
-        },
-        "value": {
-          "description": "The value the filter compares to the target trace or span field.",
-          "type": "string"
         }
       },
       "type": "object"
     },
     "TimeSeriesBucket": {
       "properties": {
+        "start_time": {
+          "description": "The start time of the time range for this bucket.",
+          "format": "date-time",
+          "type": "string"
+        },
         "end_time": {
-          "description": "The end time of the time range this bucket covers.",
+          "description": "The end time of the time range for this bucket.",
           "format": "date-time",
           "type": "string"
         },
         "float_value": {
-          "description": "The value of the aggregation in this group within the bucket.\nThis value is nullable.",
+          "description": "The aggregated value for the time period of this bucket.\nThis value is nullable.",
           "format": "double",
           "type": "number"
-        },
-        "start_time": {
-          "description": "The start time of the time range this bucket covers.",
-          "format": "date-time",
-          "type": "string"
         }
       },
       "type": "object"
     },
     "TimeSeriesDataTimeSeries": {
       "properties": {
-        "aggregation_name": {
-          "description": "aggregation_name is by default the name of the aggregation used to calculate\nthe values.",
-          "type": "string"
+        "group_by_dimension_values": {
+          "description": "Values of the dimensions to group results by.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "buckets": {
+          "description": "Defines a time-bounded data point in a time series to store aggregated\nvalues over specific time intervals.",
           "items": {
             "$ref": "#/definitions/TimeSeriesBucket"
           },
           "type": "array"
         },
-        "group_by_dimension_values": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+        "aggregation_name": {
+          "description": "Name of the aggregation used to calculate the values.",
+          "type": "string"
         }
       },
       "type": "object"
     },
     "apiError": {
       "properties": {
+        "code": {
+          "description": "An optional private error code whose values are undefined.",
+          "format": "int32",
+          "type": "integer"
+        },
         "message": {
           "description": "An error message describing what went wrong.",
           "type": "string"
@@ -331,12 +321,12 @@
     "configv1PageParams": {
       "properties": {
         "max_size": {
-          "description": "Page size preference (i.e. how many items are returned in the next\npage). If zero, the server will use a default. Regardless of what size\nis given, clients must never assume how many items will be returned.",
+          "description": "Sets the preferred number of items to return per page. If set to `0`, the\nserver will use its default value. Regardless of the value specified, clients\nmust never assume how many items will be returned.",
           "format": "int64",
           "type": "integer"
         },
         "token": {
-          "description": "Opaque page token identifying which page to request. An empty token\nidentifies the first page.",
+          "description": "An opaque page token that identifies which page the client should request.\nAn empty value indicates the first page.",
           "type": "string"
         }
       },
@@ -345,7 +335,7 @@
     "configv1PageResult": {
       "properties": {
         "next_token": {
-          "description": "Opaque page token which identifies the next page of items which the\nclient should request. An empty next_token indicates that there are no\nmore items to return.",
+          "description": "An opaque page token that identifies the next page of items that the\nclient should request. An empty value indicates that there are no\nmore items to return.",
           "type": "string"
         }
       },
@@ -354,12 +344,7 @@
     "datav1CreateEventRequest": {
       "properties": {
         "event": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/datav1Event"
-            }
-          ],
-          "description": "Event to create."
+          "$ref": "#/definitions/datav1Event"
         }
       },
       "type": "object"
@@ -369,9 +354,8 @@
     },
     "datav1Event": {
       "properties": {
-        "category": {
-          "description": "Change Event categories are case sensitive. Each of the listed categories are\nlowercase and must be queried in all lowercase. For example, `\"category\":\n\"alerts\"` is valid, but `\"category\": \"Alerts\"` is invalid.\n\nChronosphere Support can add and remove custom categories upon request.\nBecause categories are case sensitive, custom categories must be queried using\nthe same case they were created. For example, if you create a category called\n`INGEST`, any queries in Changes Explorer must use `INGEST` in all uppercase\nas the category to query.",
-          "title": "The category the event belongs to. Must be one of these categories:\n * `alerts`\n * `broadcasts`\n * `chronosphere`\n * `deploys`\n * `feature_flags`\n * `infrastructure`\n * `third_party`",
+        "title": {
+          "description": "A short description of the event that occurred, such as a commit message of\na code deploy. Max length: 100 characters.",
           "type": "string"
         },
         "happened_at": {
@@ -379,9 +363,17 @@
           "format": "date-time",
           "type": "string"
         },
-        "id": {
-          "description": "Unique identifier for the change event.",
-          "readOnly": true,
+        "category": {
+          "description": "Change Event categories are case sensitive. Each of the listed categories are\nlowercase and must be queried in all lowercase. For example, `\"category\":\n\"alerts\"` is valid, but `\"category\": \"Alerts\"` is invalid.\n\nChronosphere Support can add and remove custom categories upon request.\nBecause categories are case sensitive, custom categories must be queried using\nthe same case they were created. For example, if you create a category called\n`INGEST`, any queries in Changes Explorer must use `INGEST` in all uppercase\nas the category to query.",
+          "title": "The category the event belongs to. Must be one of these categories:\n * `alerts`\n * `broadcasts`\n * `chronosphere`\n * `deploys`\n * `feature_flags`\n * `infrastructure`\n * `third_party`",
+          "type": "string"
+        },
+        "type": {
+          "description": "The event type, which is used to group and differentiate events within a\n`category` or `source`.",
+          "type": "string"
+        },
+        "source": {
+          "description": "Identifies where the data originated, in cases where a change to the\ninstrumentation or integration is needed. Max length: 50 characters.",
           "type": "string"
         },
         "labels": {
@@ -399,16 +391,9 @@
           "description": "The JSON payload, if the original event was in key/value format. You can set\nonly `payload_json` or `payload_object`. Max length: 100,000 characters.\nThis field is input only.",
           "type": "object"
         },
-        "source": {
-          "description": "Identifies where the data originated, in cases where a change to the\ninstrumentation or integration is needed. Max length: 50 characters.",
-          "type": "string"
-        },
-        "title": {
-          "description": "A short description of the event that occurred, such as a commit message of\na code deploy. Max length: 100 characters.",
-          "type": "string"
-        },
-        "type": {
-          "description": "The event type, which is used to group and differentiate events within a\n`category` or `source`.",
+        "id": {
+          "description": "Unique identifier for the change event.",
+          "readOnly": true,
           "type": "string"
         }
       },
@@ -430,43 +415,38 @@
     },
     "datav1ListTracesRequest": {
       "properties": {
-        "end_time": {
-          "description": "End time for the search.",
-          "format": "date-time",
-          "type": "string"
-        },
-        "operation": {
-          "description": "Operation to filter on. An empty value doesn't apply any operation filter.",
-          "type": "string"
-        },
         "query_type": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/ListTracesRequestQueryType"
-            }
-          ],
-          "description": "Type of query to perform.\nTRACE_IDS: Search for specific trace IDs.\nSERVICE_OPERATION: Search for traces with a specific service and operation, over a specific time frame."
+          "$ref": "#/definitions/ListTracesRequestQueryType"
         },
-        "service": {
-          "description": "Service to filter on. An empty value doesn't apply any service filter.",
-          "type": "string"
+        "trace_ids": {
+          "description": "Trace IDs to search for.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "start_time": {
           "description": "Start time for the search.",
           "format": "date-time",
           "type": "string"
         },
+        "end_time": {
+          "description": "End time for the search.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "service": {
+          "description": "Service to filter on. An empty value doesn't apply any service filter.",
+          "type": "string"
+        },
+        "operation": {
+          "description": "Operation to filter on. An empty value doesn't apply any operation filter.",
+          "type": "string"
+        },
         "tag_filters": {
           "description": "Tag filter to apply. An empty value doesn't apply any tag filter.",
           "items": {
             "$ref": "#/definitions/ListTracesRequestTagFilter"
-          },
-          "type": "array"
-        },
-        "trace_ids": {
-          "description": "Trace IDs to search for.",
-          "items": {
-            "type": "string"
           },
           "type": "array"
         }
@@ -495,24 +475,14 @@
     },
     "datav1QueryLogsRangeResponse": {
       "properties": {
-        "grid_data": {
-          "$ref": "#/definitions/QueryLogsRangeResponseGridData"
-        },
         "metadata": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/QueryLogsRangeResponseMetadata"
-            }
-          ],
-          "description": "The metadata of the query."
+          "$ref": "#/definitions/QueryLogsRangeResponseMetadata"
         },
         "time_series_data": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/QueryLogsRangeResponseTimeSeriesData"
-            }
-          ],
-          "description": "Only one of the two below fields can be set depending on the type of query\na time series query is defined by using a `make-series` aggregation."
+          "$ref": "#/definitions/QueryLogsRangeResponseTimeSeriesData"
+        },
+        "grid_data": {
+          "$ref": "#/definitions/QueryLogsRangeResponseGridData"
         }
       },
       "type": "object"
@@ -527,14 +497,14 @@
           "format": "int32",
           "type": "integer"
         },
+        "message": {
+          "type": "string"
+        },
         "details": {
           "items": {
             "$ref": "#/definitions/protobufAny"
           },
           "type": "array"
-        },
-        "message": {
-          "type": "string"
         }
       },
       "type": "object"
@@ -555,17 +525,12 @@
     "tracev1Status": {
       "description": "The Status type defines a logical error model that is suitable for different\nprogramming environments, including REST APIs and RPC APIs.",
       "properties": {
-        "code": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/StatusStatusCode"
-            }
-          ],
-          "description": "The status code."
-        },
         "message": {
           "description": "A developer-facing human readable error message.",
           "type": "string"
+        },
+        "code": {
+          "$ref": "#/definitions/StatusStatusCode"
         }
       },
       "type": "object"
@@ -573,28 +538,28 @@
     "v1AnyValue": {
       "description": "AnyValue is used to represent any type of attribute value. AnyValue may contain a\nprimitive value such as a string or integer or it may contain an arbitrary nested\nobject containing arrays, key-value lists and primitives.",
       "properties": {
-        "array_value": {
-          "$ref": "#/definitions/v1ArrayValue"
+        "string_value": {
+          "type": "string"
         },
         "bool_value": {
           "type": "boolean"
         },
-        "bytes_value": {
-          "format": "byte",
+        "int_value": {
+          "format": "int64",
           "type": "string"
         },
         "double_value": {
           "format": "double",
           "type": "number"
         },
-        "int_value": {
-          "format": "int64",
-          "type": "string"
+        "array_value": {
+          "$ref": "#/definitions/v1ArrayValue"
         },
         "kvlist_value": {
           "$ref": "#/definitions/v1KeyValueList"
         },
-        "string_value": {
+        "bytes_value": {
+          "format": "byte",
           "type": "string"
         }
       },
@@ -616,20 +581,6 @@
     "v1EntityRef": {
       "description": "A reference to an Entity.\nEntity represents an object of interest associated with produced telemetry: e.g spans, metrics, profiles, or logs.\n\nStatus: [Development]",
       "properties": {
-        "description_keys": {
-          "description": "Descriptive (non-identifying) attribute keys of the entity.\nMAY change over the lifetime of the entity. MAY be empty.\nThese attribute keys are not part of entity's identity.\nThese keys MUST exist in the containing {message}.attributes.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "id_keys": {
-          "description": "Attribute Keys that identify the entity.\nMUST not change during the lifetime of the entity. The Id must contain at least one attribute.\nThese keys MUST exist in the containing {message}.attributes.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
         "schema_url": {
           "description": "This schema_url applies to the data in this message and to the Resource attributes\nreferenced by id_keys and description_keys.\nTODO: discuss if we are happy with this somewhat complicated definition of what\nthe schema_url applies to.\n\nThis field obsoletes the schema_url field in ResourceMetrics/ResourceSpans/ResourceLogs.",
           "title": "The Schema URL, if known. This is the identifier of the Schema that the entity data\nis recorded in. To learn more about Schema URL see\nhttps://opentelemetry.io/docs/specs/otel/schemas/#schema-url",
@@ -638,6 +589,20 @@
         "type": {
           "description": "Defines the type of the entity. MUST not change during the lifetime of the entity.\nFor example: \"service\" or \"host\". This field is required and MUST not be empty\nfor valid entities.",
           "type": "string"
+        },
+        "id_keys": {
+          "description": "Attribute Keys that identify the entity.\nMUST not change during the lifetime of the entity. The Id must contain at least one attribute.\nThese keys MUST exist in the containing {message}.attributes.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "description_keys": {
+          "description": "Descriptive (non-identifying) attribute keys of the entity.\nMAY change over the lifetime of the entity. MAY be empty.\nThese attribute keys are not part of entity's identity.\nThese keys MUST exist in the containing {message}.attributes.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -645,6 +610,13 @@
     "v1InstrumentationScope": {
       "description": "InstrumentationScope is a message representing the instrumentation scope information\nsuch as the fully qualified name and version.",
       "properties": {
+        "name": {
+          "description": "An empty instrumentation scope name means the name is unknown.",
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
         "attributes": {
           "description": "Additional attributes that describe the scope. [Optional].\nAttribute keys MUST be unique (it is not allowed to have more than one\nattribute with the same key).",
           "items": {
@@ -655,13 +627,6 @@
         "dropped_attributes_count": {
           "format": "int64",
           "type": "integer"
-        },
-        "name": {
-          "description": "An empty instrumentation scope name means the name is unknown.",
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
         }
       },
       "type": "object"
@@ -720,16 +685,7 @@
       "description": "A collection of ScopeSpans from a Resource.",
       "properties": {
         "resource": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/v1Resource"
-            }
-          ],
-          "description": "The resource for the spans in this message.\nIf this field is not set then no resource info is known."
-        },
-        "schema_url": {
-          "description": "The Schema URL, if known. This is the identifier of the Schema that the resource data\nis recorded in. Notably, the last part of the URL path is the version number of the\nschema: http[s]://server[:port]/path/\u003cversion\u003e. To learn more about Schema URL see\nhttps://opentelemetry.io/docs/specs/otel/schemas/#schema-url\nThis schema_url applies to the data in the \"resource\" field. It does not apply\nto the data in the \"scope_spans\" field which have their own schema_url field.",
-          "type": "string"
+          "$ref": "#/definitions/v1Resource"
         },
         "scope_spans": {
           "description": "A list of ScopeSpans that originate from a resource.",
@@ -737,6 +693,10 @@
             "$ref": "#/definitions/v1ScopeSpans"
           },
           "type": "array"
+        },
+        "schema_url": {
+          "description": "The Schema URL, if known. This is the identifier of the Schema that the resource data\nis recorded in. Notably, the last part of the URL path is the version number of the\nschema: http[s]://server[:port]/path/\u003cversion\u003e. To learn more about Schema URL see\nhttps://opentelemetry.io/docs/specs/otel/schemas/#schema-url\nThis schema_url applies to the data in the \"resource\" field. It does not apply\nto the data in the \"scope_spans\" field which have their own schema_url field.",
+          "type": "string"
         }
       },
       "type": "object"
@@ -744,17 +704,8 @@
     "v1ScopeSpans": {
       "description": "A collection of Spans produced by an InstrumentationScope.",
       "properties": {
-        "schema_url": {
-          "description": "The Schema URL, if known. This is the identifier of the Schema that the span data\nis recorded in. Notably, the last part of the URL path is the version number of the\nschema: http[s]://server[:port]/path/\u003cversion\u003e. To learn more about Schema URL see\nhttps://opentelemetry.io/docs/specs/otel/schemas/#schema-url\nThis schema_url applies to all spans and span events in the \"spans\" field.",
-          "type": "string"
-        },
         "scope": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/v1InstrumentationScope"
-            }
-          ],
-          "description": "The instrumentation scope information for the spans in this message.\nSemantically when InstrumentationScope isn't set, it is equivalent with\nan empty instrumentation scope name (unknown)."
+          "$ref": "#/definitions/v1InstrumentationScope"
         },
         "spans": {
           "description": "A list of Spans that originate from an instrumentation scope.",
@@ -762,6 +713,10 @@
             "$ref": "#/definitions/v1Span"
           },
           "type": "array"
+        },
+        "schema_url": {
+          "description": "The Schema URL, if known. This is the identifier of the Schema that the span data\nis recorded in. Notably, the last part of the URL path is the version number of the\nschema: http[s]://server[:port]/path/\u003cversion\u003e. To learn more about Schema URL see\nhttps://opentelemetry.io/docs/specs/otel/schemas/#schema-url\nThis schema_url applies to all spans and span events in the \"spans\" field.",
+          "type": "string"
         }
       },
       "type": "object"
@@ -769,6 +724,47 @@
     "v1Span": {
       "description": "A Span represents a single operation performed by a single component of the system.\n\nThe next available field id is 17.",
       "properties": {
+        "trace_id": {
+          "description": "A unique identifier for a trace. All spans from the same trace share\nthe same `trace_id`. The ID is a 16-byte array. An ID with all zeroes OR\nof length other than 16 bytes is considered invalid (empty string in OTLP/JSON\nis zero-length and thus is also invalid).\n\nThis field is required.",
+          "format": "byte",
+          "type": "string"
+        },
+        "span_id": {
+          "description": "A unique identifier for a span within a trace, assigned when the span\nis created. The ID is an 8-byte array. An ID with all zeroes OR of length\nother than 8 bytes is considered invalid (empty string in OTLP/JSON\nis zero-length and thus is also invalid).\n\nThis field is required.",
+          "format": "byte",
+          "type": "string"
+        },
+        "trace_state": {
+          "description": "trace_state conveys information about request position in multiple distributed tracing graphs.\nIt is a trace_state in w3c-trace-context format: https://www.w3.org/TR/trace-context/#tracestate-header\nSee also https://github.com/w3c/distributed-tracing for more details about this field.",
+          "type": "string"
+        },
+        "parent_span_id": {
+          "description": "The `span_id` of this span's parent span. If this is a root span, then this\nfield must be empty. The ID is an 8-byte array.",
+          "format": "byte",
+          "type": "string"
+        },
+        "flags": {
+          "description": "Flags, a bit field.\n\nBits 0-7 (8 least significant bits) are the trace flags as defined in W3C Trace\nContext specification. To read the 8-bit W3C trace flag, use\n`flags \u0026 SPAN_FLAGS_TRACE_FLAGS_MASK`.\n\nSee https://www.w3.org/TR/trace-context-2/#trace-flags for the flag definitions.\n\nBits 8 and 9 represent the 3 states of whether a span's parent\nis remote. The states are (unknown, is not remote, is remote).\nTo read whether the value is known, use `(flags \u0026 SPAN_FLAGS_CONTEXT_HAS_IS_REMOTE_MASK) != 0`.\nTo read whether the span is remote, use `(flags \u0026 SPAN_FLAGS_CONTEXT_IS_REMOTE_MASK) != 0`.\n\nWhen creating span messages, if the message is logically forwarded from another source\nwith an equivalent flags fields (i.e., usually another OTLP span message), the field SHOULD\nbe copied as-is. If creating from a source that does not have an equivalent flags field\n(such as a runtime representation of an OpenTelemetry span), the high 22 bits MUST\nbe set to zero.\nReaders MUST NOT assume that bits 10-31 (22 most significant bits) will be zero.\n\n[Optional].",
+          "format": "int64",
+          "type": "integer"
+        },
+        "name": {
+          "description": "A description of the span's operation.\n\nFor example, the name can be a qualified method name or a file name\nand a line number where the operation is called. A best practice is to use\nthe same display name at the same call point in an application.\nThis makes it easier to correlate spans in different traces.\n\nThis field is semantically required to be set to non-empty string.\nEmpty value is equivalent to an unknown span name.\n\nThis field is required.",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/definitions/SpanSpanKind"
+        },
+        "start_time_unix_nano": {
+          "description": "start_time_unix_nano is the start time of the span. On the client side, this is the time\nkept by the local machine where the span execution starts. On the server side, this\nis the time when the server's application handler starts running.\nValue is UNIX Epoch time in nanoseconds since 00:00:00 UTC on 1 January 1970.\n\nThis field is semantically required and it is expected that end_time \u003e= start_time.",
+          "format": "uint64",
+          "type": "string"
+        },
+        "end_time_unix_nano": {
+          "description": "end_time_unix_nano is the end time of the span. On the client side, this is the time\nkept by the local machine where the span execution ends. On the server side, this\nis the time when the server application handler stops running.\nValue is UNIX Epoch time in nanoseconds since 00:00:00 UTC on 1 January 1970.\n\nThis field is semantically required and it is expected that end_time \u003e= start_time.",
+          "format": "uint64",
+          "type": "string"
+        },
         "attributes": {
           "description": "\"/http/user_agent\": \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36\"\n    \"/http/server_latency\": 300\n    \"example.com/myattribute\": true\n    \"example.com/score\": 10.239\n\nThe OpenTelemetry API specification further restricts the allowed value types:\nhttps://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/common/README.md#attribute\nAttribute keys MUST be unique (it is not allowed to have more than one\nattribute with the same key).",
           "items": {
@@ -782,21 +778,6 @@
           "format": "int64",
           "type": "integer"
         },
-        "dropped_events_count": {
-          "description": "dropped_events_count is the number of dropped events. If the value is 0, then no\nevents were dropped.",
-          "format": "int64",
-          "type": "integer"
-        },
-        "dropped_links_count": {
-          "description": "dropped_links_count is the number of dropped links after the maximum size was\nenforced. If this value is 0, then no links were dropped.",
-          "format": "int64",
-          "type": "integer"
-        },
-        "end_time_unix_nano": {
-          "description": "end_time_unix_nano is the end time of the span. On the client side, this is the time\nkept by the local machine where the span execution ends. On the server side, this\nis the time when the server application handler stops running.\nValue is UNIX Epoch time in nanoseconds since 00:00:00 UTC on 1 January 1970.\n\nThis field is semantically required and it is expected that end_time \u003e= start_time.",
-          "format": "uint64",
-          "type": "string"
-        },
         "events": {
           "description": "events is a collection of Event items.",
           "items": {
@@ -804,18 +785,10 @@
           },
           "type": "array"
         },
-        "flags": {
-          "description": "Flags, a bit field.\n\nBits 0-7 (8 least significant bits) are the trace flags as defined in W3C Trace\nContext specification. To read the 8-bit W3C trace flag, use\n`flags \u0026 SPAN_FLAGS_TRACE_FLAGS_MASK`.\n\nSee https://www.w3.org/TR/trace-context-2/#trace-flags for the flag definitions.\n\nBits 8 and 9 represent the 3 states of whether a span's parent\nis remote. The states are (unknown, is not remote, is remote).\nTo read whether the value is known, use `(flags \u0026 SPAN_FLAGS_CONTEXT_HAS_IS_REMOTE_MASK) != 0`.\nTo read whether the span is remote, use `(flags \u0026 SPAN_FLAGS_CONTEXT_IS_REMOTE_MASK) != 0`.\n\nWhen creating span messages, if the message is logically forwarded from another source\nwith an equivalent flags fields (i.e., usually another OTLP span message), the field SHOULD\nbe copied as-is. If creating from a source that does not have an equivalent flags field\n(such as a runtime representation of an OpenTelemetry span), the high 22 bits MUST\nbe set to zero.\nReaders MUST NOT assume that bits 10-31 (22 most significant bits) will be zero.\n\n[Optional].",
+        "dropped_events_count": {
+          "description": "dropped_events_count is the number of dropped events. If the value is 0, then no\nevents were dropped.",
           "format": "int64",
           "type": "integer"
-        },
-        "kind": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/SpanSpanKind"
-            }
-          ],
-          "description": "Distinguishes between spans generated in a particular context. For example,\ntwo spans with the same name may be distinguished using `CLIENT` (caller)\nand `SERVER` (callee) to identify queueing latency associated with the span."
         },
         "links": {
           "description": "links is a collection of Links, which are references from this span to a span\nin the same or different trace.",
@@ -824,41 +797,13 @@
           },
           "type": "array"
         },
-        "name": {
-          "description": "A description of the span's operation.\n\nFor example, the name can be a qualified method name or a file name\nand a line number where the operation is called. A best practice is to use\nthe same display name at the same call point in an application.\nThis makes it easier to correlate spans in different traces.\n\nThis field is semantically required to be set to non-empty string.\nEmpty value is equivalent to an unknown span name.\n\nThis field is required.",
-          "type": "string"
-        },
-        "parent_span_id": {
-          "description": "The `span_id` of this span's parent span. If this is a root span, then this\nfield must be empty. The ID is an 8-byte array.",
-          "format": "byte",
-          "type": "string"
-        },
-        "span_id": {
-          "description": "A unique identifier for a span within a trace, assigned when the span\nis created. The ID is an 8-byte array. An ID with all zeroes OR of length\nother than 8 bytes is considered invalid (empty string in OTLP/JSON\nis zero-length and thus is also invalid).\n\nThis field is required.",
-          "format": "byte",
-          "type": "string"
-        },
-        "start_time_unix_nano": {
-          "description": "start_time_unix_nano is the start time of the span. On the client side, this is the time\nkept by the local machine where the span execution starts. On the server side, this\nis the time when the server's application handler starts running.\nValue is UNIX Epoch time in nanoseconds since 00:00:00 UTC on 1 January 1970.\n\nThis field is semantically required and it is expected that end_time \u003e= start_time.",
-          "format": "uint64",
-          "type": "string"
+        "dropped_links_count": {
+          "description": "dropped_links_count is the number of dropped links after the maximum size was\nenforced. If this value is 0, then no links were dropped.",
+          "format": "int64",
+          "type": "integer"
         },
         "status": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/tracev1Status"
-            }
-          ],
-          "description": "An optional final status for this span. Semantically when Status isn't set, it means\nspan's status code is unset, i.e. assume STATUS_CODE_UNSET (code = 0)."
-        },
-        "trace_id": {
-          "description": "A unique identifier for a trace. All spans from the same trace share\nthe same `trace_id`. The ID is a 16-byte array. An ID with all zeroes OR\nof length other than 16 bytes is considered invalid (empty string in OTLP/JSON\nis zero-length and thus is also invalid).\n\nThis field is required.",
-          "format": "byte",
-          "type": "string"
-        },
-        "trace_state": {
-          "description": "trace_state conveys information about request position in multiple distributed tracing graphs.\nIt is a trace_state in w3c-trace-context format: https://www.w3.org/TR/trace-context/#tracestate-header\nSee also https://github.com/w3c/distributed-tracing for more details about this field.",
-          "type": "string"
+          "$ref": "#/definitions/tracev1Status"
         }
       },
       "type": "object"
@@ -866,6 +811,15 @@
     "v1SpanEvent": {
       "description": "Event is a time-stamped annotation of the span, consisting of user-supplied\ntext description and key-value pairs.",
       "properties": {
+        "time_unix_nano": {
+          "description": "time_unix_nano is the time the event occurred.",
+          "format": "uint64",
+          "type": "string"
+        },
+        "name": {
+          "description": "name of the event.\nThis field is semantically required to be set to non-empty string.",
+          "type": "string"
+        },
         "attributes": {
           "description": "attributes is a collection of attribute key/value pairs on the event.\nAttribute keys MUST be unique (it is not allowed to have more than one\nattribute with the same key).",
           "items": {
@@ -877,15 +831,6 @@
           "description": "dropped_attributes_count is the number of dropped attributes. If the value is 0,\nthen no attributes were dropped.",
           "format": "int64",
           "type": "integer"
-        },
-        "name": {
-          "description": "name of the event.\nThis field is semantically required to be set to non-empty string.",
-          "type": "string"
-        },
-        "time_unix_nano": {
-          "description": "time_unix_nano is the time the event occurred.",
-          "format": "uint64",
-          "type": "string"
         }
       },
       "type": "object"
@@ -935,14 +880,14 @@
             "type": "string"
           },
           {
-            "description": "Page size preference (i.e. how many items are returned in the next\npage). If zero, the server will use a default. Regardless of what size\nis given, clients must never assume how many items will be returned.",
+            "description": "Sets the preferred number of items to return per page. If set to `0`, the\nserver will use its default value. Regardless of the value specified, clients\nmust never assume how many items will be returned.",
             "format": "int64",
             "in": "query",
             "name": "page.max_size",
             "type": "integer"
           },
           {
-            "description": "Opaque page token identifying which page to request. An empty token\nidentifies the first page.",
+            "description": "An opaque page token that identifies which page the client should request.\nAn empty value indicates the first page.",
             "in": "query",
             "name": "page.token",
             "type": "string"
@@ -1009,14 +954,14 @@
             "type": "string"
           },
           {
-            "description": "Only log messages with a timestamp after this time will be returned.",
+            "description": "Returns only log messages with a timestamp after this time.",
             "format": "date-time",
             "in": "query",
             "name": "time_range.after",
             "type": "string"
           },
           {
-            "description": "Only log messages with a timestamp before this time will be returned.",
+            "description": "Returns only log messages with a timestamp before this time.",
             "format": "date-time",
             "in": "query",
             "name": "time_range.before",
@@ -1085,19 +1030,6 @@
   "produces": [
     "application/json"
   ],
-  "security": [
-    {
-      "ApiKeyAuth": []
-    }
-  ],
-  "securityDefinitions": {
-    "ApiKeyAuth": {
-      "description": "Chronosphere API token",
-      "in": "header",
-      "name": "API-Token",
-      "type": "apiKey"
-    }
-  },
   "swagger": "2.0",
   "tags": [
     {

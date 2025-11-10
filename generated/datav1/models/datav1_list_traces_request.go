@@ -27,12 +27,8 @@ type Datav1ListTracesRequest struct {
 	// Operation to filter on. An empty value doesn't apply any operation filter.
 	Operation string `json:"operation,omitempty"`
 
-	// Type of query to perform.
-	// TRACE_IDS: Search for specific trace IDs.
-	// SERVICE_OPERATION: Search for traces with a specific service and operation, over a specific time frame.
-	QueryType struct {
-		ListTracesRequestQueryType
-	} `json:"query_type,omitempty"`
+	// query type
+	QueryType ListTracesRequestQueryType `json:"query_type,omitempty"`
 
 	// Service to filter on. An empty value doesn't apply any service filter.
 	Service string `json:"service,omitempty"`
@@ -89,6 +85,15 @@ func (m *Datav1ListTracesRequest) validateEndTime(formats strfmt.Registry) error
 func (m *Datav1ListTracesRequest) validateQueryType(formats strfmt.Registry) error {
 	if swag.IsZero(m.QueryType) { // not required
 		return nil
+	}
+
+	if err := m.QueryType.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("query_type")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("query_type")
+		}
+		return err
 	}
 
 	return nil
@@ -151,6 +156,19 @@ func (m *Datav1ListTracesRequest) ContextValidate(ctx context.Context, formats s
 }
 
 func (m *Datav1ListTracesRequest) contextValidateQueryType(ctx context.Context, formats strfmt.Registry) error {
+
+	if swag.IsZero(m.QueryType) { // not required
+		return nil
+	}
+
+	if err := m.QueryType.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("query_type")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("query_type")
+		}
+		return err
+	}
 
 	return nil
 }

@@ -17,13 +17,13 @@ import (
 // swagger:model QueryLogsRangeResponseRowValue
 type QueryLogsRangeResponseRowValue struct {
 
-	// Only one of the below fields can be set depending on the type of value
+	// Indicates a boolean value.
 	BoolValue bool `json:"bool_value,omitempty"`
 
-	// float value
+	// Indicates a float value.
 	FloatValue float64 `json:"float_value,omitempty"`
 
-	// string value
+	// Indicates a string value.
 	StringValue string `json:"string_value,omitempty"`
 }
 

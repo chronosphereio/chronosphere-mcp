@@ -14,7 +14,7 @@ import (
 	"github.com/go-openapi/validate"
 )
 
-// QueryLogsRangeResponseColumnMetaType query logs range response column meta type
+// QueryLogsRangeResponseColumnMetaType The data type to include in each column.
 //
 // swagger:model QueryLogsRangeResponseColumnMetaType
 type QueryLogsRangeResponseColumnMetaType string

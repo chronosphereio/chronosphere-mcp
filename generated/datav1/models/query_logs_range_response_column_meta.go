@@ -18,7 +18,7 @@ import (
 // swagger:model QueryLogsRangeResponseColumnMeta
 type QueryLogsRangeResponseColumnMeta struct {
 
-	// name
+	// The column names to include in the tabular results.
 	Name string `json:"name,omitempty"`
 
 	// type

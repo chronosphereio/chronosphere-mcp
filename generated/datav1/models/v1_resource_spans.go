@@ -19,11 +19,8 @@ import (
 // swagger:model v1ResourceSpans
 type V1ResourceSpans struct {
 
-	// The resource for the spans in this message.
-	// If this field is not set then no resource info is known.
-	Resource struct {
-		V1Resource
-	} `json:"resource,omitempty"`
+	// resource
+	Resource *V1Resource `json:"resource,omitempty"`
 
 	// The Schema URL, if known. This is the identifier of the Schema that the resource data
 	// is recorded in. Notably, the last part of the URL path is the version number of the
@@ -58,6 +55,17 @@ func (m *V1ResourceSpans) Validate(formats strfmt.Registry) error {
 func (m *V1ResourceSpans) validateResource(formats strfmt.Registry) error {
 	if swag.IsZero(m.Resource) { // not required
 		return nil
+	}
+
+	if m.Resource != nil {
+		if err := m.Resource.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("resource")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("resource")
+			}
+			return err
+		}
 	}
 
 	return nil
@@ -108,6 +116,22 @@ func (m *V1ResourceSpans) ContextValidate(ctx context.Context, formats strfmt.Re
 }
 
 func (m *V1ResourceSpans) contextValidateResource(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Resource != nil {
+
+		if swag.IsZero(m.Resource) { // not required
+			return nil
+		}
+
+		if err := m.Resource.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("resource")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("resource")
+			}
+			return err
+		}
+	}
 
 	return nil
 }

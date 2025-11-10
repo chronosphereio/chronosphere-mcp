@@ -17,6 +17,9 @@ import (
 // swagger:model apiError
 type APIError struct {
 
+	// An optional private error code whose values are undefined.
+	Code int32 `json:"code,omitempty"`
+
 	// An error message describing what went wrong.
 	Message string `json:"message,omitempty"`
 }

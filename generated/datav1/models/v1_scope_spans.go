@@ -26,12 +26,8 @@ type V1ScopeSpans struct {
 	// This schema_url applies to all spans and span events in the "spans" field.
 	SchemaURL string `json:"schema_url,omitempty"`
 
-	// The instrumentation scope information for the spans in this message.
-	// Semantically when InstrumentationScope isn't set, it is equivalent with
-	// an empty instrumentation scope name (unknown).
-	Scope struct {
-		V1InstrumentationScope
-	} `json:"scope,omitempty"`
+	// scope
+	Scope *V1InstrumentationScope `json:"scope,omitempty"`
 
 	// A list of Spans that originate from an instrumentation scope.
 	Spans []*V1Span `json:"spans"`
@@ -58,6 +54,17 @@ func (m *V1ScopeSpans) Validate(formats strfmt.Registry) error {
 func (m *V1ScopeSpans) validateScope(formats strfmt.Registry) error {
 	if swag.IsZero(m.Scope) { // not required
 		return nil
+	}
+
+	if m.Scope != nil {
+		if err := m.Scope.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("scope")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("scope")
+			}
+			return err
+		}
 	}
 
 	return nil
@@ -108,6 +115,22 @@ func (m *V1ScopeSpans) ContextValidate(ctx context.Context, formats strfmt.Regis
 }
 
 func (m *V1ScopeSpans) contextValidateScope(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Scope != nil {
+
+		if swag.IsZero(m.Scope) { // not required
+			return nil
+		}
+
+		if err := m.Scope.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("scope")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("scope")
+			}
+			return err
+		}
+	}
 
 	return nil
 }

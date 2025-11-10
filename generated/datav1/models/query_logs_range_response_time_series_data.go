@@ -19,10 +19,10 @@ import (
 // swagger:model QueryLogsRangeResponseTimeSeriesData
 type QueryLogsRangeResponseTimeSeriesData struct {
 
-	// The names of the dimensions by which the results are grouped by.
+	// Names of the dimensions to group results by.
 	GroupByDimensionNames []string `json:"group_by_dimension_names"`
 
-	// series
+	// Specifies the time series to return from query results.
 	Series []*TimeSeriesDataTimeSeries `json:"series"`
 }
 

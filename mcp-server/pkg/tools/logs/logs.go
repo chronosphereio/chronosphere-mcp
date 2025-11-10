@@ -374,13 +374,9 @@ func trimLogEntries(payload *models.Datav1QueryLogsRangeResponse, limit int, off
 			totalTrimmed = offset + (totalRows - end)
 		}
 	} else if payload.TimeSeriesData.GroupByDimensionNames != nil || payload.TimeSeriesData.Series != nil {
-		trimmed.TimeSeriesData = struct {
-			models.QueryLogsRangeResponseTimeSeriesData
-		}{
-			QueryLogsRangeResponseTimeSeriesData: models.QueryLogsRangeResponseTimeSeriesData{
-				GroupByDimensionNames: payload.TimeSeriesData.GroupByDimensionNames,
-				Series:                make([]*models.TimeSeriesDataTimeSeries, len(payload.TimeSeriesData.Series)),
-			},
+		trimmed.TimeSeriesData = &models.QueryLogsRangeResponseTimeSeriesData{
+			GroupByDimensionNames: payload.TimeSeriesData.GroupByDimensionNames,
+			Series:                make([]*models.TimeSeriesDataTimeSeries, len(payload.TimeSeriesData.Series)),
 		}
 
 		for i, series := range payload.TimeSeriesData.Series {
@@ -502,7 +498,7 @@ func (t *Tools) createCompactSummary(ctx context.Context, query string, timeRang
 		summary.Summary = strings.Join(summaryParts, ". ")
 	} else if resp.TimeSeriesData.GroupByDimensionNames != nil || resp.TimeSeriesData.Series != nil {
 		// Include full time series data since it's typically not verbose
-		summary.TimeSeriesData = &resp.TimeSeriesData.QueryLogsRangeResponseTimeSeriesData
+		summary.TimeSeriesData = resp.TimeSeriesData
 		summary.TotalLogs = 0
 		if resp.TimeSeriesData.Series != nil {
 			for _, series := range resp.TimeSeriesData.Series {

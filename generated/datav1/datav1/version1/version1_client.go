@@ -54,13 +54,13 @@ type ClientOption func(*runtime.ClientOperation)
 
 // ClientService is the interface for Client methods
 type ClientService interface {
-	CreateEvent(params *CreateEventParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*CreateEventOK, error)
+	CreateEvent(params *CreateEventParams, opts ...ClientOption) (*CreateEventOK, error)
 
-	ListEvents(params *ListEventsParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ListEventsOK, error)
+	ListEvents(params *ListEventsParams, opts ...ClientOption) (*ListEventsOK, error)
 
-	ListTraces(params *ListTracesParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ListTracesOK, error)
+	ListTraces(params *ListTracesParams, opts ...ClientOption) (*ListTracesOK, error)
 
-	QueryLogsRange(params *QueryLogsRangeParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*QueryLogsRangeOK, error)
+	QueryLogsRange(params *QueryLogsRangeParams, opts ...ClientOption) (*QueryLogsRangeOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
 }
@@ -68,7 +68,7 @@ type ClientService interface {
 /*
 CreateEvent create event API
 */
-func (a *Client) CreateEvent(params *CreateEventParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*CreateEventOK, error) {
+func (a *Client) CreateEvent(params *CreateEventParams, opts ...ClientOption) (*CreateEventOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewCreateEventParams()
@@ -82,7 +82,6 @@ func (a *Client) CreateEvent(params *CreateEventParams, authInfo runtime.ClientA
 		Schemes:            []string{"http"},
 		Params:             params,
 		Reader:             &CreateEventReader{formats: a.formats},
-		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -106,7 +105,7 @@ func (a *Client) CreateEvent(params *CreateEventParams, authInfo runtime.ClientA
 /*
 ListEvents list events API
 */
-func (a *Client) ListEvents(params *ListEventsParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ListEventsOK, error) {
+func (a *Client) ListEvents(params *ListEventsParams, opts ...ClientOption) (*ListEventsOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewListEventsParams()
@@ -120,7 +119,6 @@ func (a *Client) ListEvents(params *ListEventsParams, authInfo runtime.ClientAut
 		Schemes:            []string{"http"},
 		Params:             params,
 		Reader:             &ListEventsReader{formats: a.formats},
-		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -144,7 +142,7 @@ func (a *Client) ListEvents(params *ListEventsParams, authInfo runtime.ClientAut
 /*
 ListTraces Tracing
 */
-func (a *Client) ListTraces(params *ListTracesParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ListTracesOK, error) {
+func (a *Client) ListTraces(params *ListTracesParams, opts ...ClientOption) (*ListTracesOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewListTracesParams()
@@ -158,7 +156,6 @@ func (a *Client) ListTraces(params *ListTracesParams, authInfo runtime.ClientAut
 		Schemes:            []string{"http"},
 		Params:             params,
 		Reader:             &ListTracesReader{formats: a.formats},
-		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -182,7 +179,7 @@ func (a *Client) ListTraces(params *ListTracesParams, authInfo runtime.ClientAut
 /*
 QueryLogsRange Logging
 */
-func (a *Client) QueryLogsRange(params *QueryLogsRangeParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*QueryLogsRangeOK, error) {
+func (a *Client) QueryLogsRange(params *QueryLogsRangeParams, opts ...ClientOption) (*QueryLogsRangeOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewQueryLogsRangeParams()
@@ -196,7 +193,6 @@ func (a *Client) QueryLogsRange(params *QueryLogsRangeParams, authInfo runtime.C
 		Schemes:            []string{"http"},
 		Params:             params,
 		Reader:             &QueryLogsRangeReader{formats: a.formats},
-		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}

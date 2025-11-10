@@ -18,10 +18,8 @@ import (
 // swagger:model TagFilterNumericFilter
 type TagFilterNumericFilter struct {
 
-	// The comparison operation to be applied to an input against the given filter value.
-	Comparison struct {
-		NumericFilterComparisonType
-	} `json:"comparison,omitempty"`
+	// comparison
+	Comparison NumericFilterComparisonType `json:"comparison,omitempty"`
 
 	// The filter value used in comparison against match candidates.
 	Value float64 `json:"value,omitempty"`
@@ -46,6 +44,15 @@ func (m *TagFilterNumericFilter) validateComparison(formats strfmt.Registry) err
 		return nil
 	}
 
+	if err := m.Comparison.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("comparison")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("comparison")
+		}
+		return err
+	}
+
 	return nil
 }
 
@@ -64,6 +71,19 @@ func (m *TagFilterNumericFilter) ContextValidate(ctx context.Context, formats st
 }
 
 func (m *TagFilterNumericFilter) contextValidateComparison(ctx context.Context, formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Comparison) { // not required
+		return nil
+	}
+
+	if err := m.Comparison.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("comparison")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("comparison")
+		}
+		return err
+	}
 
 	return nil
 }

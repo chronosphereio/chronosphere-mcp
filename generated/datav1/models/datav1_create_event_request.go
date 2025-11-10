@@ -18,10 +18,8 @@ import (
 // swagger:model datav1CreateEventRequest
 type Datav1CreateEventRequest struct {
 
-	// Event to create.
-	Event struct {
-		Datav1Event
-	} `json:"event,omitempty"`
+	// event
+	Event *Datav1Event `json:"event,omitempty"`
 }
 
 // Validate validates this datav1 create event request
@@ -43,6 +41,17 @@ func (m *Datav1CreateEventRequest) validateEvent(formats strfmt.Registry) error 
 		return nil
 	}
 
+	if m.Event != nil {
+		if err := m.Event.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("event")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("event")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -61,6 +70,22 @@ func (m *Datav1CreateEventRequest) ContextValidate(ctx context.Context, formats 
 }
 
 func (m *Datav1CreateEventRequest) contextValidateEvent(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Event != nil {
+
+		if swag.IsZero(m.Event) { // not required
+			return nil
+		}
+
+		if err := m.Event.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("event")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("event")
+			}
+			return err
+		}
+	}
 
 	return nil
 }

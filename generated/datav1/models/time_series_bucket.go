@@ -19,15 +19,15 @@ import (
 // swagger:model TimeSeriesBucket
 type TimeSeriesBucket struct {
 
-	// The end time of the time range this bucket covers.
+	// The end time of the time range for this bucket.
 	// Format: date-time
 	EndTime strfmt.DateTime `json:"end_time,omitempty"`
 
-	// The value of the aggregation in this group within the bucket.
+	// The aggregated value for the time period of this bucket.
 	// This value is nullable.
 	FloatValue float64 `json:"float_value,omitempty"`
 
-	// The start time of the time range this bucket covers.
+	// The start time of the time range for this bucket.
 	// Format: date-time
 	StartTime strfmt.DateTime `json:"start_time,omitempty"`
 }

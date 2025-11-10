@@ -103,17 +103,9 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 
 				if len(traceIDs) > 0 {
 					queryParams.Body.TraceIds = traceIDs
-					queryParams.Body.QueryType = struct {
-						models.ListTracesRequestQueryType
-					}{
-						models.ListTracesRequestQueryTypeTRACEIDS,
-					}
+					queryParams.Body.QueryType = models.ListTracesRequestQueryTypeTRACEIDS
 				} else {
-					queryParams.Body.QueryType = struct {
-						models.ListTracesRequestQueryType
-					}{
-						models.ListTracesRequestQueryTypeSERVICEOPERATION,
-					}
+					queryParams.Body.QueryType = models.ListTracesRequestQueryTypeSERVICEOPERATION
 				}
 
 				if service != "" {

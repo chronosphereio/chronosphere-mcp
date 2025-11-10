@@ -19,10 +19,10 @@ import (
 // swagger:model QueryLogsRangeResponseGridData
 type QueryLogsRangeResponseGridData struct {
 
-	// columns
+	// Defines the structure and data types of columns in tabular log results.
 	Columns []*QueryLogsRangeResponseColumnMeta `json:"columns"`
 
-	// rows
+	// Defines the structure and data types of rows in tabular log results.
 	Rows []*QueryLogsRangeResponseRow `json:"rows"`
 }
 

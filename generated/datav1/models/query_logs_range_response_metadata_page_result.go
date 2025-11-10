@@ -17,9 +17,8 @@ import (
 // swagger:model QueryLogsRangeResponseMetadataPageResult
 type QueryLogsRangeResponseMetadataPageResult struct {
 
-	// Opaque page token which identifies the next page of items which the
-	// client should request. An empty next_token indicates that there are no
-	// more items to return.
+	// Opaque page token that identifies the next page of items to request.
+	// An empty value indicates there are no more items to return.
 	NextToken string `json:"next_token,omitempty"`
 }
 

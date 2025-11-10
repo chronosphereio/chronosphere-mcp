@@ -17,13 +17,13 @@ import (
 // swagger:model configv1PageParams
 type Configv1PageParams struct {
 
-	// Page size preference (i.e. how many items are returned in the next
-	// page). If zero, the server will use a default. Regardless of what size
-	// is given, clients must never assume how many items will be returned.
+	// Sets the preferred number of items to return per page. If set to `0`, the
+	// server will use its default value. Regardless of the value specified, clients
+	// must never assume how many items will be returned.
 	MaxSize int64 `json:"max_size,omitempty"`
 
-	// Opaque page token identifying which page to request. An empty token
-	// identifies the first page.
+	// An opaque page token that identifies which page the client should request.
+	// An empty value indicates the first page.
 	Token string `json:"token,omitempty"`
 }
 

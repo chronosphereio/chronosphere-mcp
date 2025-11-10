@@ -19,10 +19,8 @@ import (
 // swagger:model tracev1Status
 type Tracev1Status struct {
 
-	// The status code.
-	Code struct {
-		StatusStatusCode
-	} `json:"code,omitempty"`
+	// code
+	Code StatusStatusCode `json:"code,omitempty"`
 
 	// A developer-facing human readable error message.
 	Message string `json:"message,omitempty"`
@@ -47,6 +45,15 @@ func (m *Tracev1Status) validateCode(formats strfmt.Registry) error {
 		return nil
 	}
 
+	if err := m.Code.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("code")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("code")
+		}
+		return err
+	}
+
 	return nil
 }
 
@@ -65,6 +72,19 @@ func (m *Tracev1Status) ContextValidate(ctx context.Context, formats strfmt.Regi
 }
 
 func (m *Tracev1Status) contextValidateCode(ctx context.Context, formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Code) { // not required
+		return nil
+	}
+
+	if err := m.Code.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("code")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("code")
+		}
+		return err
+	}
 
 	return nil
 }

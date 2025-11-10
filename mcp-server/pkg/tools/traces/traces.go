@@ -115,7 +115,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					queryParams.Body.Operation = operation
 				}
 
-				resp, err := t.api.Version1.ListTraces(queryParams, nil)
+				resp, err := t.api.Version1.ListTraces(queryParams)
 				if err != nil {
 					return nil, fmt.Errorf("failed to list traces: %s", err)
 				}

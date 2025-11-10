@@ -69,6 +69,10 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					mcp.Description("Optional. Trace IDs to filter traces. Can not be used with service or operation"),
 				),
 				params.WithTimeRange(),
+				mcp.WithNumber("limit",
+					mcp.Description("limit the number of results to return")),
+				mcp.WithNumber("offset",
+					mcp.Description("skip `offset` number of results before returning")),
 			),
 			Handler: func(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
 				timeRange, err := params.ParseTimeRange(request)
@@ -85,6 +89,15 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					return nil, err
 				}
 				traceIDs, err := params.StringArray(request, "trace_ids", false, nil)
+				if err != nil {
+					return nil, err
+				}
+
+				limit, err := params.Int(request, "limit", false, 0)
+				if err != nil {
+					return nil, err
+				}
+				offset, err := params.Int(request, "offset", false, 0)
 				if err != nil {
 					return nil, err
 				}
@@ -119,10 +132,42 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				if err != nil {
 					return nil, fmt.Errorf("failed to list traces: %s", err)
 				}
+
+				resp.Payload, _ = trimTraces(resp.Payload, limit, offset)
+
 				return &tools.Result{
 					JSONContent: resp,
 				}, nil
 			},
 		},
 	}
+}
+
+// trimTraces trims trace entries to at most `limit` traces with an offset. It returns a trimmed payload along with the total number of entries trimmed.
+func trimTraces(payload *models.Datav1ListTracesResponse, limit int, offset int) (*models.Datav1ListTracesResponse, int) {
+	if payload == nil || payload.Traces == nil || (limit == 0 && offset == 0) {
+		return payload, 0
+	}
+
+	totalTraces := len(payload.Traces)
+	if offset >= totalTraces {
+		return &models.Datav1ListTracesResponse{
+			Traces: []*models.V1TracesData{},
+		}, totalTraces
+	}
+
+	end := totalTraces
+	if limit > 0 {
+		end = offset + limit
+		if end > totalTraces {
+			end = totalTraces
+		}
+	}
+
+	trimmed := &models.Datav1ListTracesResponse{
+		Traces: payload.Traces[offset:end],
+	}
+
+	totalTrimmed := offset + (totalTraces - end)
+	return trimmed, totalTrimmed
 }

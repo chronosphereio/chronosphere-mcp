@@ -19,21 +19,21 @@
           "description": "The auth header containing the service account token or personal access token for Chronosphere",
           "value": "Bearer {CHRONOSPHERE_API_TOKEN}",
           "is_required": true,
-          "is_secret": true
+          "is_secret": true,
+          "variables": {
+            "CHRONOSPHERE_ORG_NAME": {
+              "description": "The name of the Chronosphere organization or subdomain",
+              "is_required": true,
+              "is_secret": false
+            },
+            "CHRONOSPHERE_API_TOKEN": {
+              "description": "The service account token or personal access token for Chronosphere",
+              "is_required": true,
+              "is_secret": true
+            }
+          }
         }
-      ],
-      "variables": {
-        "CHRONOSPHERE_ORG_NAME": {
-          "description": "The name of the Chronosphere organization or subdomain",
-          "is_required": true,
-          "is_secret": false
-        },
-        "CHRONOSPHERE_API_TOKEN": {
-          "description": "The service account token or personal access token for Chronosphere",
-          "is_required": true,
-          "is_secret": true
-        }
-      }
+      ]
     }
   ]
 }

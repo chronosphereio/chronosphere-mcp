@@ -91,7 +91,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					queryParams.Query = ptr.To(query)
 				}
 
-				resp, err := t.dataV1API.Version1.ListEvents(queryParams, nil)
+				resp, err := t.dataV1API.Version1.ListEvents(queryParams)
 				if err != nil {
 					return nil, fmt.Errorf("failed to list events: %s", err)
 				}

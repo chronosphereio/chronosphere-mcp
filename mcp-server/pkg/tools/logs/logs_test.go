@@ -15,11 +15,21 @@
 package logs
 
 import (
+	"context"
+	"net/http"
+	"net/http/httptest"
 	"testing"
+	"time"
 
+	"github.com/go-openapi/strfmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap/zaptest"
 
+	"github.com/chronosphereio/chronosphere-mcp/generated/datav1/datav1"
+	"github.com/chronosphereio/chronosphere-mcp/generated/datav1/datav1/version1"
 	"github.com/chronosphereio/chronosphere-mcp/generated/datav1/models"
+	"github.com/chronosphereio/chronosphere-mcp/pkg/links"
 )
 
 func TestTrimLogEntries(t *testing.T) {
@@ -180,4 +190,57 @@ func TestTrimLogEntries(t *testing.T) {
 			tt.validateFunc(t, result)
 		})
 	}
+}
+
+// TestQueryLogsRangeAPICall tests that QueryLogsRange can be called successfully.
+func TestQueryLogsRangeAPICall(t *testing.T) {
+	// Create a test server that returns a valid response
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		// Return a minimal valid response
+		_, _ = w.Write([]byte(`{
+			"gridData": {
+				"columns": [{"name": "message"}],
+				"rows": []
+			},
+			"metadata": {
+				"page": {"token": ""}
+			}
+		}`))
+	}))
+	defer server.Close()
+
+	// Create client pointing to test server
+	transport := datav1.DefaultTransportConfig().
+		WithHost(server.URL[7:]). // Remove "http://"
+		WithSchemes([]string{"http"})
+
+	client := datav1.NewHTTPClientWithConfig(nil, transport)
+	logger := zaptest.NewLogger(t)
+	linkBuilder := links.NewBuilder("https://test.chronosphere.io")
+
+	tools, err := NewTools(client, nil, logger, linkBuilder)
+	require.NoError(t, err)
+
+	// Create query params
+	now := time.Now()
+	query := "test query"
+	pageToken := ""
+
+	queryParams := &version1.QueryLogsRangeParams{
+		Context:         context.Background(),
+		Query:           &query,
+		TimeRangeAfter:  (*strfmt.DateTime)(&now),
+		TimeRangeBefore: (*strfmt.DateTime)(&now),
+		PageToken:       &pageToken,
+	}
+
+	// Call the API
+	resp, err := tools.dataV1API.Version1.QueryLogsRange(queryParams)
+
+	// We expect success since our test server returns a valid response
+	require.NoError(t, err)
+	assert.NotNil(t, resp)
+	assert.NotNil(t, resp.Payload)
 }

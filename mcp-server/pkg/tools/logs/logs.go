@@ -136,7 +136,7 @@ the next page. Consult the Log Query Syntax resource for more details on query s
 				}
 				t.logger.Info("query logs range", zap.Any("params", queryParams))
 
-				resp, err := t.dataV1API.Version1.QueryLogsRange(queryParams, nil)
+				resp, err := t.dataV1API.Version1.QueryLogsRange(queryParams)
 				if err != nil {
 					return nil, fmt.Errorf("failed to query logs range: %s", err)
 				}

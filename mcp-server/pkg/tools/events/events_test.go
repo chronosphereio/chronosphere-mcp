@@ -35,14 +35,16 @@ import (
 // TestListEventsAPICall tests that ListEvents can be called successfully.
 func TestListEventsAPICall(t *testing.T) {
 	// Create a test server that returns a valid response
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		// Return a minimal valid response
-		_, _ = w.Write([]byte(`{
+		if _, err := w.Write([]byte(`{
 			"events": [],
 			"page": {"token": ""}
-		}`))
+		}`)); err != nil {
+			t.Errorf("failed to write response: %v", err)
+		}
 	}))
 	defer server.Close()
 

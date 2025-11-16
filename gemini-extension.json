@@ -1,5 +1,6 @@
 {
-	"name": "chronosphere-extension",
+	"name": "chronosphere",
+	"description": "Interact with Chronosphere Observability Platform: Fetch logs, metrics, traces, events as well as select entities."
 	"version": "1.0.0",
 	"mcpServers": {
 	  "chronosphere": {

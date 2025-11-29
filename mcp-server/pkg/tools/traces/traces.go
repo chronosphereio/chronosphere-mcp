@@ -108,17 +108,17 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 
 				queryParams := &version1.ListTracesParams{
 					Context: ctx,
-					Body: &models.Datav1ListTracesRequest{
-						StartTime: strfmt.DateTime(timeRange.Start),
-						EndTime:   strfmt.DateTime(timeRange.End),
-					},
+					Body:    &models.Datav1ListTracesRequest{},
 				}
 
 				if len(traceIDs) > 0 {
 					queryParams.Body.TraceIds = traceIDs
 					queryParams.Body.QueryType = models.ListTracesRequestQueryTypeTRACEIDS
+					// Don't set start and end time when querying for trace ids.
 				} else {
 					queryParams.Body.QueryType = models.ListTracesRequestQueryTypeSERVICEOPERATION
+					queryParams.Body.StartTime = strfmt.DateTime(timeRange.Start)
+					queryParams.Body.EndTime = strfmt.DateTime(timeRange.End)
 				}
 
 				if service != "" {

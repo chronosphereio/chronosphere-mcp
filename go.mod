@@ -1,6 +1,6 @@
 module github.com/chronosphereio/chronosphere-mcp
 
-go 1.23.4
+go 1.25.1
 
 require (
 	github.com/chronosphereio/chronoctl-core v1.13.0

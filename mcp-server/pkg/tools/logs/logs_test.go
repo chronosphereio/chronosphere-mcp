@@ -15,7 +15,6 @@
 package logs
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -231,7 +230,7 @@ func TestQueryLogsRangeAPICall(t *testing.T) {
 	pageToken := ""
 
 	queryParams := &version1.QueryLogsRangeParams{
-		Context:         context.Background(),
+		Context:         t.Context(),
 		Query:           &query,
 		TimeRangeAfter:  (*strfmt.DateTime)(&now),
 		TimeRangeBefore: (*strfmt.DateTime)(&now),

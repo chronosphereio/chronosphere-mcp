@@ -146,7 +146,7 @@ func TestLoggingTool_mustHandle(t *testing.T) {
 				tool:   tt.tool,
 			}
 
-			ctx := authcontext.SetSessionCredentials(context.Background(), authcontext.SessionCredentials{
+			ctx := authcontext.SetSessionCredentials(t.Context(), authcontext.SessionCredentials{
 				APIToken: tt.sessionAPIToken,
 			})
 			result := lt.mustHandle(ctx, mcp.CallToolRequest{})

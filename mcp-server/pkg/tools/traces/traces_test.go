@@ -15,7 +15,6 @@
 package traces
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -291,7 +290,7 @@ func TestListTracesQueryTypeFields(t *testing.T) {
 			}
 
 			// Call the handler
-			_, err = listTracesTool.Handler(context.Background(), request)
+			_, err = listTracesTool.Handler(t.Context(), request)
 			require.NoError(t, err)
 
 			// Verify the captured request

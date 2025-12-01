@@ -15,7 +15,6 @@
 package events
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -63,7 +62,7 @@ func TestListEventsAPICall(t *testing.T) {
 	// Create query params
 	now := time.Now()
 	queryParams := &version1.ListEventsParams{
-		Context:        context.Background(),
+		Context:        t.Context(),
 		HappenedAfter:  (*strfmt.DateTime)(ptr.To(now)),
 		HappenedBefore: (*strfmt.DateTime)(ptr.To(now)),
 		Query:          ptr.To("test query"),

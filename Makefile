@@ -9,9 +9,6 @@ LIBRECHAT_CONFIG ?= librechat.yaml
 AGENT_INPUTS_FILE ?= agent/resources/inputs.txt
 LDFLAGS ?= -ldflags="-X github.com/chronosphereio/chronosphere-mcp/pkg/version.Version=$(shell git describe --tags --always --dirty) -X github.com/chronosphereio/chronosphere-mcp/pkg/version.BuildDate=$(shell date -u +%Y-%m-%dT%H:%M:%SZ) -X github.com/chronosphereio/chronosphere-mcp/pkg/version.GitCommit=$(shell git rev-parse HEAD)"
 
-# Enable json/v2 experiment for unknown field preservation
-export GOEXPERIMENT := jsonv2
-
 .PHONY: install-tools
 install-tools: go-version-check
 	cd tools && GOBIN=$(tools_bin_path) go install  github.com/go-swagger/go-swagger/cmd/swagger  github.com/golangci/golangci-lint/cmd/golangci-lint
@@ -21,8 +18,7 @@ install-tools: go-version-check
 go-version-check:
 	# make sure you're running the right version of Go, otherwise builds/codegen/tests
 	# may have inconsistent results that are hard to debug.
-	# NOTE: Go 1.25.1 is required (1.25.0 has a bug with GOEXPERIMENT=jsonv2)
-	go version | grep "go1.25.1" || (echo "Error: you must be running go1.25.1 (not 1.25.0)" && exit 1)
+	go version | grep "go1.25.1" || (echo "Error: you must be running go1.25.1" && exit 1)
 
 .PHONY: swagger-gen
 swagger-gen: install-tools

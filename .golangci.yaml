@@ -33,7 +33,7 @@ run:
   modules-download-mode: readonly
 
   # Define the Go version limit.
-  go: "1.23"
+  go: "1.25.1"
 
 # output configuration options
 output:

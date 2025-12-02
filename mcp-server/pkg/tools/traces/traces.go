@@ -133,10 +133,12 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					return nil, fmt.Errorf("failed to list traces: %s", err)
 				}
 
+				// Apply pagination/trimming first (reduces data to convert)
 				resp.Payload, _ = trimTraces(resp.Payload, limit, offset)
 
+				// Convert base64 IDs to hex
 				return &tools.Result{
-					JSONContent: resp,
+					JSONContent: convertToHexResponse(resp.Payload),
 				}, nil
 			},
 		},

@@ -13,8 +13,6 @@ jobs:
   check-codegen:
     name: Verify Generated Code
     runs-on: ubuntu-latest
-    env:
-      GOEXPERIMENT: jsonv2
     steps:
       - uses: actions/checkout@v3
         with:

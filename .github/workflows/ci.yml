@@ -13,8 +13,6 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    env:
-      GOEXPERIMENT: jsonv2
     steps:
       - uses: actions/checkout@v3
 
@@ -37,8 +35,6 @@ jobs:
   golangci:
     name: Lint
     runs-on: ubuntu-latest
-    env:
-      GOEXPERIMENT: jsonv2
     steps:
       - uses: actions/checkout@v3
 
@@ -55,8 +51,6 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    env:
-      GOEXPERIMENT: jsonv2
     steps:
       - uses: actions/checkout@v3
 

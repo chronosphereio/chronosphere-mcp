@@ -36,7 +36,7 @@ func TestLoggingTool_mustHandle(t *testing.T) {
 		sessionAPIToken string
 		tool            tools.MCPTool
 		expectedContent []mcp.Content
-		expectedMeta    map[string]any
+		expectedMeta    *mcp.Meta
 	}{
 		{
 			name:            "successful JSON response",
@@ -106,7 +106,7 @@ func TestLoggingTool_mustHandle(t *testing.T) {
 			expectedContent: []mcp.Content{
 				mcp.NewTextContent(`{"key":"value"}`),
 			},
-			expectedMeta: map[string]any{"meta-key": "meta-value"},
+			expectedMeta: mcp.NewMetaFromMap(map[string]any{"meta-key": "meta-value"}),
 		},
 		{
 			name:            "response with text content",
@@ -136,7 +136,7 @@ func TestLoggingTool_mustHandle(t *testing.T) {
 			expectedContent: []mcp.Content{
 				mcp.NewTextContent("CSV data"),
 			},
-			expectedMeta: map[string]any{"total_series": 10},
+			expectedMeta: mcp.NewMetaFromMap(map[string]any{"total_series": 10}),
 		},
 	}
 

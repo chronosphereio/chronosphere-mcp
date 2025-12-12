@@ -18,6 +18,7 @@ package authcontext
 import "context"
 
 type sessionAPITokenKey struct{}
+type disabledToolsKey struct{}
 
 type SessionCredentials struct {
 	APIToken          string
@@ -40,4 +41,18 @@ func FetchSessionAPIToken(ctx context.Context) SessionCredentials {
 		return SessionCredentials{}
 	}
 	return credentials
+}
+
+// SetDisabledTools sets the disabled tools set in the context.
+func SetDisabledTools(ctx context.Context, disabledTools map[string]struct{}) context.Context {
+	return context.WithValue(ctx, disabledToolsKey{}, disabledTools)
+}
+
+// FetchDisabledTools retrieves the disabled tools set from the context.
+func FetchDisabledTools(ctx context.Context) map[string]struct{} {
+	disabledTools, ok := ctx.Value(disabledToolsKey{}).(map[string]struct{})
+	if !ok {
+		return nil
+	}
+	return disabledTools
 }

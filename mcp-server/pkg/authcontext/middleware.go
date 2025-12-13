@@ -23,6 +23,7 @@ import (
 
 const (
 	_chronoAccessTokenHeaderName = "chrono-accesstoken"
+	_disableToolsHeaderName      = "X-Chrono-MCP-Disable-Tools"
 )
 
 // HTTPInboundContextFunc extracts the Authorization header from the HTTP request and sets it in the context.
@@ -33,10 +34,25 @@ func HTTPInboundContextFunc(ctx context.Context, r *http.Request) context.Contex
 	if err == nil {
 		cookieValue = cookie.Value
 	}
-	return SetSessionCredentials(ctx, SessionCredentials{
+	ctx = SetSessionCredentials(ctx, SessionCredentials{
 		APIToken:          authValue,
 		AccessTokenCookie: cookieValue,
 	})
+
+	// Extract disabled tools from header
+	disabledToolsHeader := r.Header.Get(_disableToolsHeaderName)
+	if disabledToolsHeader != "" {
+		disabledTools := make(map[string]struct{})
+		for _, tool := range strings.Split(disabledToolsHeader, ",") {
+			tool = strings.TrimSpace(tool)
+			if tool != "" {
+				disabledTools[tool] = struct{}{}
+			}
+		}
+		ctx = SetDisabledTools(ctx, disabledTools)
+	}
+
+	return ctx
 }
 
 // RoundTripper wraps an http.RoundTripper and adds an Authorization header.

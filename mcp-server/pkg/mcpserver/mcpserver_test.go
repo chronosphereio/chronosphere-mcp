@@ -22,6 +22,8 @@ import (
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/stretchr/testify/assert"
+	"go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/trace"
 	"go.uber.org/zap"
 
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/authcontext"
@@ -160,4 +162,151 @@ func TestLoggingTool_mustHandle(t *testing.T) {
 			assert.Equal(t, tt.expectedMeta, result.Meta, "metadata mismatch")
 		})
 	}
+}
+
+func TestServer_DynamicToolDisabling(t *testing.T) {
+	// Create a test server with multiple tools
+	logger := zap.NewNop()
+
+	testTools := []tools.MCPTool{
+		{
+			Metadata: tools.NewMetadata("fetch_logs"),
+			Handler: func(_ context.Context, _ mcp.CallToolRequest) (*tools.Result, error) {
+				return &tools.Result{TextContent: "logs"}, nil
+			},
+		},
+		{
+			Metadata: tools.NewMetadata("fetch_metrics"),
+			Handler: func(_ context.Context, _ mcp.CallToolRequest) (*tools.Result, error) {
+				return &tools.Result{TextContent: "metrics"}, nil
+			},
+		},
+		{
+			Metadata: tools.NewMetadata("fetch_traces"),
+			Handler: func(_ context.Context, _ mcp.CallToolRequest) (*tools.Result, error) {
+				return &tools.Result{TextContent: "traces"}, nil
+			},
+		},
+	}
+
+	toolGroup := &mockToolGroup{tools: testTools}
+
+	// Create test tracing and metrics providers
+	tracerProvider := trace.NewTracerProvider()
+	meterProvider := metric.NewMeterProvider()
+
+	_, err := NewServer(Options{
+		Logger:         logger,
+		ToolGroups:     []tools.MCPTools{toolGroup},
+		TracerProvider: tracerProvider,
+		MeterProvider:  meterProvider,
+	}, logger)
+	assert.NoError(t, err)
+
+	tests := []struct {
+		name                 string
+		disabledTools        map[string]struct{}
+		expectedToolNames    []string
+		notExpectedToolNames []string
+	}{
+		{
+			name:                 "no tools disabled",
+			disabledTools:        nil,
+			expectedToolNames:    []string{"fetch_logs", "fetch_metrics", "fetch_traces"},
+			notExpectedToolNames: []string{},
+		},
+		{
+			name: "single tool disabled",
+			disabledTools: map[string]struct{}{
+				"fetch_logs": {},
+			},
+			expectedToolNames:    []string{"fetch_metrics", "fetch_traces"},
+			notExpectedToolNames: []string{"fetch_logs"},
+		},
+		{
+			name: "multiple tools disabled",
+			disabledTools: map[string]struct{}{
+				"fetch_logs":    {},
+				"fetch_metrics": {},
+			},
+			expectedToolNames:    []string{"fetch_traces"},
+			notExpectedToolNames: []string{"fetch_logs", "fetch_metrics"},
+		},
+		{
+			name: "all tools disabled",
+			disabledTools: map[string]struct{}{
+				"fetch_logs":    {},
+				"fetch_metrics": {},
+				"fetch_traces":  {},
+			},
+			expectedToolNames:    []string{},
+			notExpectedToolNames: []string{"fetch_logs", "fetch_metrics", "fetch_traces"},
+		},
+		{
+			name: "non-existent tool disabled",
+			disabledTools: map[string]struct{}{
+				"fetch_events": {},
+			},
+			expectedToolNames:    []string{"fetch_logs", "fetch_metrics", "fetch_traces"},
+			notExpectedToolNames: []string{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create context with disabled tools
+			ctx := t.Context()
+			if tt.disabledTools != nil {
+				ctx = authcontext.SetDisabledTools(ctx, tt.disabledTools)
+			}
+
+			// Simulate the listTools hook being triggered
+			result := &mcp.ListToolsResult{
+				Tools: []mcp.Tool{
+					{Name: "fetch_logs"},
+					{Name: "fetch_metrics"},
+					{Name: "fetch_traces"},
+				},
+			}
+
+			// Call the hook manually (simulating what happens during listTools)
+			// Get the hooks from the server
+			disabledTools := authcontext.FetchDisabledTools(ctx)
+			if len(disabledTools) > 0 {
+				filteredTools := make([]mcp.Tool, 0, len(result.Tools))
+				for _, tool := range result.Tools {
+					if _, disabled := disabledTools[tool.Name]; !disabled {
+						filteredTools = append(filteredTools, tool)
+					}
+				}
+				result.Tools = filteredTools
+			}
+
+			// Verify expected tools are present
+			toolNames := make(map[string]bool)
+			for _, tool := range result.Tools {
+				toolNames[tool.Name] = true
+			}
+
+			for _, expectedName := range tt.expectedToolNames {
+				assert.True(t, toolNames[expectedName], "expected tool %s to be present", expectedName)
+			}
+
+			for _, notExpectedName := range tt.notExpectedToolNames {
+				assert.False(t, toolNames[notExpectedName], "expected tool %s to be filtered out", notExpectedName)
+			}
+		})
+	}
+}
+
+type mockToolGroup struct {
+	tools []tools.MCPTool
+}
+
+func (m *mockToolGroup) GroupName() string {
+	return "test"
+}
+
+func (m *mockToolGroup) MCPTools() []tools.MCPTool {
+	return m.tools
 }

@@ -54,33 +54,29 @@ func NewServer(
 	opts Options,
 	logger *zap.Logger,
 ) (*Server, error) {
-	// Create hooks for dynamic tool filtering
-	hooks := &server.Hooks{}
-	hooks.AddAfterListTools(func(ctx context.Context, _ any, _ *mcp.ListToolsRequest, result *mcp.ListToolsResult) {
-		// Get disabled tools from context
-		disabledTools := authcontext.FetchDisabledTools(ctx)
-		if len(disabledTools) == 0 {
-			return
-		}
-
-		// Filter out disabled tools
-		filteredTools := make([]mcp.Tool, 0, len(result.Tools))
-		for _, tool := range result.Tools {
-			if _, disabled := disabledTools[tool.Name]; !disabled {
-				filteredTools = append(filteredTools, tool)
-			}
-		}
-		result.Tools = filteredTools
-	})
-
 	// Build server options
 	serverOptions := []server.ServerOption{
 		server.WithResourceCapabilities(true, true),
 		server.WithPromptCapabilities(true),
 		server.WithToolHandlerMiddleware(instrumentfx.ToolTracingMiddleware(opts.TracerProvider)),
 		server.WithToolHandlerMiddleware(instrumentfx.ToolMetricsMiddleware(opts.MeterProvider)),
+		server.WithResourceHandlerMiddleware(instrumentfx.ResourceTracingMiddleware(opts.TracerProvider)),
+		server.WithResourceHandlerMiddleware(instrumentfx.ResourceMetricsMiddleware(opts.MeterProvider)),
 		server.WithLogging(),
-		server.WithHooks(hooks),
+		// Filter tools based on disabled tools from request context
+		server.WithToolFilter(func(ctx context.Context, tools []mcp.Tool) []mcp.Tool {
+			disabledTools := authcontext.FetchDisabledTools(ctx)
+			if len(disabledTools) == 0 {
+				return tools
+			}
+			filtered := make([]mcp.Tool, 0, len(tools))
+			for _, tool := range tools {
+				if _, disabled := disabledTools[tool.Name]; !disabled {
+					filtered = append(filtered, tool)
+				}
+			}
+			return filtered
+		}),
 	}
 
 	s := &Server{

@@ -202,7 +202,7 @@ func (t *loggingTool) mustHandle(ctx context.Context, request mcp.CallToolReques
 	if resp.TextContent != "" {
 		toolResult.Content = append(toolResult.Content, mcp.NewTextContent(resp.TextContent))
 		if len(resp.Meta) > 0 {
-			toolResult.Meta = resp.Meta
+			toolResult.Meta = mcp.NewMetaFromMap(resp.Meta)
 		}
 		return &toolResult
 	}
@@ -214,7 +214,7 @@ func (t *loggingTool) mustHandle(ctx context.Context, request mcp.CallToolReques
 
 	toolResult.Content = append(toolResult.Content, mcp.NewTextContent(string(resultBytes)))
 	if len(resp.Meta) > 0 {
-		toolResult.Meta = resp.Meta
+		toolResult.Meta = mcp.NewMetaFromMap(resp.Meta)
 	}
 	return &toolResult
 }

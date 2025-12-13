@@ -93,3 +93,63 @@ func ToolMetricsMiddleware(mp metric.MeterProvider) server.ToolHandlerMiddleware
 		}
 	}
 }
+
+func ResourceTracingMiddleware(tp trace.TracerProvider) server.ResourceHandlerMiddleware {
+	tracer := tp.Tracer(instrumentationName)
+	return func(next server.ResourceHandlerFunc) server.ResourceHandlerFunc {
+		return func(ctx context.Context, request mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
+			ctx, span := tracer.Start(ctx, "ResourceRead",
+				trace.WithAttributes(
+					attribute.String("resource.uri", request.Params.URI),
+				),
+				trace.WithSpanKind(trace.SpanKindClient),
+			)
+			defer span.End()
+
+			result, err := next(ctx, request)
+			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, "resource read resulted in error")
+			} else {
+				span.SetStatus(codes.Ok, "resource read completed")
+			}
+			return result, err
+		}
+	}
+}
+
+func ResourceMetricsMiddleware(mp metric.MeterProvider) server.ResourceHandlerMiddleware {
+	meter := mp.Meter(instrumentationName)
+
+	resourceReadCounter, err := meter.Int64Counter(
+		"resource_read_total",
+		metric.WithDescription("Total number of resource reads"),
+		metric.WithUnit("1"),
+	)
+	if err != nil {
+		return func(next server.ResourceHandlerFunc) server.ResourceHandlerFunc {
+			return next
+		}
+	}
+
+	return func(next server.ResourceHandlerFunc) server.ResourceHandlerFunc {
+		return func(ctx context.Context, request mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
+			result, err := next(ctx, request)
+
+			status := "success"
+			if err != nil {
+				status = "error"
+			}
+
+			resourceReadCounter.Add(ctx, 1,
+				metric.WithAttributes(
+					attribute.String("service", "chrono-mcp"),
+					attribute.String("resource_uri", request.Params.URI),
+					attribute.String("status", status),
+				),
+			)
+
+			return result, err
+		}
+	}
+}

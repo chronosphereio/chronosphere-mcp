@@ -54,6 +54,25 @@ func NewServer(
 	opts Options,
 	logger *zap.Logger,
 ) (*Server, error) {
+	// Create hooks for dynamic tool filtering
+	hooks := &server.Hooks{}
+	hooks.AddAfterListTools(func(ctx context.Context, _ any, _ *mcp.ListToolsRequest, result *mcp.ListToolsResult) {
+		// Get disabled tools from context
+		disabledTools := authcontext.FetchDisabledTools(ctx)
+		if len(disabledTools) == 0 {
+			return
+		}
+
+		// Filter out disabled tools
+		filteredTools := make([]mcp.Tool, 0, len(result.Tools))
+		for _, tool := range result.Tools {
+			if _, disabled := disabledTools[tool.Name]; !disabled {
+				filteredTools = append(filteredTools, tool)
+			}
+		}
+		result.Tools = filteredTools
+	})
+
 	// Build server options
 	serverOptions := []server.ServerOption{
 		server.WithResourceCapabilities(true, true),
@@ -61,6 +80,7 @@ func NewServer(
 		server.WithToolHandlerMiddleware(instrumentfx.ToolTracingMiddleware(opts.TracerProvider)),
 		server.WithToolHandlerMiddleware(instrumentfx.ToolMetricsMiddleware(opts.MeterProvider)),
 		server.WithLogging(),
+		server.WithHooks(hooks),
 	}
 
 	s := &Server{

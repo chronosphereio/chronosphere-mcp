@@ -23,13 +23,6 @@ server:
     # The API token for Chronosphere, used to authenticate requests.
     # Leave empty if forwarding bearer token.
     apiToken: ${CHRONOSPHERE_API_TOKEN:""}
-    # Whether the organization uses LogScale for logs.
-    # Must set logscaleURL and logscaleAPIToken if true.
-    useLogscale: ${USE_LOGSCALE:false}
-    # The URL for the logscale API if using LogScale for logs.
-    logscaleURL: https://${CHRONOSPHERE_ORG_NAME:""}.logs.chronosphere.io
-    # The API token for LogScale if using LogScale for logs.
-    logscaleAPIToken: ${LOGSCALE_API_TOKEN:""}
 
 instrument:
   logs:

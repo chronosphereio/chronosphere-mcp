@@ -27,8 +27,7 @@ import (
 )
 
 const (
-	apiURLFormat      = "https://%s.chronosphere.io"
-	logscaleURLFormat = "https://%s.logs.chronosphere.io"
+	apiURLFormat = "https://%s.chronosphere.io"
 )
 
 type configResult struct {
@@ -67,18 +66,10 @@ func parseConfig(cfgProvider config.Provider, flags *Flags) (configResult, error
 }
 
 func mergeConfig(c *Config, f *Flags) {
-	if f.UseLogScale {
-		c.Chronosphere.UseLogscale = f.UseLogScale
-	}
-
 	if f.orgName != "" {
 		c.Chronosphere.APIURL = fmt.Sprintf(apiURLFormat, f.orgName)
-		c.Chronosphere.LogscaleURL = fmt.Sprintf(logscaleURLFormat, f.orgName)
 	}
 	if f.apiToken != "" {
 		c.Chronosphere.APIToken = f.apiToken
-	}
-	if f.UseLogScale {
-		c.Chronosphere.UseLogscale = f.UseLogScale
 	}
 }

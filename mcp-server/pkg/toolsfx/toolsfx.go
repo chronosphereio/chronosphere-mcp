@@ -22,7 +22,6 @@ import (
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/configapi"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/events"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/logs"
-	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/logscale"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/monitors"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/prometheus"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/traces"
@@ -33,7 +32,6 @@ var Module = fx.Provide(
 		configapi.NewTools,
 		events.NewTools,
 		logs.NewTools,
-		logscale.NewTools,
 		monitors.NewTools,
 		prometheus.NewTools,
 		traces.NewTools,

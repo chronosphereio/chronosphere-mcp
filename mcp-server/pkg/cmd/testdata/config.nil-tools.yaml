@@ -8,7 +8,6 @@ server:
   chronosphere:
     apiURL: https://${CHRONOSPHERE_ORG_NAME:""}.chronosphere.io
     apiToken: ${CHRONOSPHERE_API_TOKEN:""}
-    useLogscale: false
 
 instrument:
   logs:

@@ -142,7 +142,6 @@ The MCP project provides an inspector useful for directly calling tools APIs. To
 | logs | list_log_field_names | List field names of logs |
 | logs | list_log_field_values | List field values of logs |
 | logs | query_logs_range | Execute a range query for logs. This endpoint returns logs as either timeSeries or gridData. It may return a large amount of data, so be careful putting the result of this direction into context. U... |
-| logscale | query_logscale | Query LogScale repository with a given query string. LogScale uses its own query language for searching and analyzing logs. |
 | metrics | list_prometheus_label_names | Returns the list of label names (keys) available on metrics that match the given selectors. Use this tool when you need to discover what labels are available on specific metrics or services. Exampl... |
 | metrics | list_prometheus_label_values | Returns the list of values for a specific label name, optionally filtered by selectors. Use this tool when you know the label name and want to discover what values it has across your metrics. Commo... |
 | metrics | list_prometheus_series | Returns the complete time series (full label sets with all key-value pairs) that match the given selectors. Each result shows the exact combination of labels for an active time series. Use this too... |

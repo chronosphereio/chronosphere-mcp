@@ -28,7 +28,6 @@ import (
 	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/dataunstable"
 	"github.com/chronosphereio/chronosphere-mcp/generated/datav1/datav1"
 	"github.com/chronosphereio/chronosphere-mcp/generated/stateunstable/stateunstable"
-	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/clientfx/logscale"
 )
 
 var (
@@ -39,24 +38,13 @@ var (
 )
 
 type ChronosphereConfig struct {
-	APIURL           string `yaml:"apiURL" validate:"nonzero"`
-	APIToken         string `yaml:"apiToken"`
-	UseLogscale      bool   `yaml:"useLogscale"`
-	LogscaleURL      string `yaml:"logscaleURL"`
-	LogscaleAPIToken string `yaml:"logscaleAPIToken"`
+	APIURL   string `yaml:"apiURL" validate:"nonzero"`
+	APIToken string `yaml:"apiToken"`
 }
 
 func (c *ChronosphereConfig) Validate() error {
 	if c.APIURL == "" {
 		return fmt.Errorf("apiURL must be set")
-	}
-	if c.UseLogscale {
-		if c.LogscaleURL == "" {
-			return fmt.Errorf("logscaleURL must be set")
-		}
-		if c.LogscaleAPIToken == "" {
-			return fmt.Errorf("logscaleAPIToken must be set")
-		}
 	}
 	return nil
 }
@@ -69,7 +57,6 @@ type Provider struct {
 	DataUnstable   *dataunstable.DataUnstableAPI
 	DataV1         *datav1.DataV1API
 	StateUnstable  *stateunstable.StateUnstableAPI
-	LogScale       logscale.Client `fx:"logscaleClient"`
 }
 
 func NewProvider(apiConfig *ChronosphereConfig) (Provider, error) {
@@ -83,26 +70,12 @@ func NewProvider(apiConfig *ChronosphereConfig) (Provider, error) {
 		return Provider{}, fmt.Errorf("could not create Prometheus data client: %v", err)
 	}
 
-	var logscaleClient logscale.Client
-	if apiConfig.UseLogscale {
-		rt := newRoundTripper(http.DefaultTransport, _component, apiConfig.LogscaleAPIToken)
-		logscaleClient, err = logscale.New(&logscale.Options{
-			URL:       apiConfig.LogscaleURL,
-			APIToken:  apiConfig.LogscaleAPIToken,
-			Transport: rt,
-		})
-		if err != nil {
-			return Provider{}, fmt.Errorf("could not create LogScale client: %w", err)
-		}
-	}
-
 	return Provider{
 		PrometheusData: promClient,
 		ConfigV1:       configv1.New(t, strfmt.Default),
 		DataUnstable:   dataunstable.New(t, strfmt.Default),
 		DataV1:         datav1.New(t, strfmt.Default),
 		StateUnstable:  stateunstable.New(t, strfmt.Default),
-		LogScale:       logscaleClient,
 	}, nil
 }
 

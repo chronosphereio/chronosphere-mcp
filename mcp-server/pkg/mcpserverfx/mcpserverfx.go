@@ -77,7 +77,6 @@ func invoke(p params) (*Transports, error) {
 			Logger:         p.Logger,
 			ToolGroups:     p.ToolGroups,
 			DisabledTools:  disabledTools,
-			UseLogscale:    cfg.Chronosphere.UseLogscale,
 			TracerProvider: p.TracerProvider,
 			MeterProvider:  p.MeterProvider,
 		},

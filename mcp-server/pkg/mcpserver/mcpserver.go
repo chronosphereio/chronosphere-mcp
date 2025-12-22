@@ -45,7 +45,6 @@ type Options struct {
 	Logger         *zap.Logger
 	DisabledTools  map[string]struct{}
 	ToolGroups     []tools.MCPTools
-	UseLogscale    bool
 	TracerProvider trace.TracerProvider
 	MeterProvider  *metric.MeterProvider
 }
@@ -97,13 +96,6 @@ func NewServer(
 
 	// Register all tools.
 	for _, group := range opts.ToolGroups {
-		if opts.UseLogscale && group.GroupName() == "logs" {
-			// If we're using Logscale, we skip the logs group as it is already handled by the log resources.
-			continue
-		} else if !opts.UseLogscale && group.GroupName() == "logscale" {
-			// If we're not using Logscale, we skip the logscale group as it is not needed.
-			continue
-		}
 		for _, tool := range group.MCPTools() {
 			if _, ok := opts.DisabledTools[tool.Metadata.Name]; ok {
 				continue

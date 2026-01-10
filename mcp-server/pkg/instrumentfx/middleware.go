@@ -36,7 +36,7 @@ func ToolTracingMiddleware(tp trace.TracerProvider) server.ToolHandlerMiddleware
 			// Start a new span for the tool call
 			ctx, span := tracer.Start(ctx, "ToolCall",
 				trace.WithAttributes(
-					attribute.String("tool.method", request.Method),
+					attribute.String("tool.name", request.Params.Name),
 				),
 				trace.WithSpanKind(trace.SpanKindClient),
 			)
@@ -84,7 +84,7 @@ func ToolMetricsMiddleware(mp metric.MeterProvider) server.ToolHandlerMiddleware
 			toolCallCounter.Add(ctx, 1,
 				metric.WithAttributes(
 					attribute.String("service", "chrono-mcp"),
-					attribute.String("method", request.Method),
+					attribute.String("name", request.Params.Name),
 					attribute.String("status", status),
 				),
 			)

@@ -23,6 +23,8 @@ import (
 	xswagger "github.com/chronosphereio/chronoctl-core/src/x/swagger"
 	httpruntime "github.com/go-openapi/runtime"
 	httptransport "github.com/go-openapi/runtime/client"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
 
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/authcontext"
 	"github.com/chronosphereio/chronosphere-mcp/pkg/version"
@@ -44,6 +46,7 @@ func newRoundTripper(base http.RoundTripper, component Component, authToken stri
 	return roundTripperFn(func(req *http.Request) (*http.Response, error) {
 		req = req.Clone(req.Context())
 		req.Header.Set("User-Agent", fmt.Sprintf("%s/%v-%v", component, version.Version, version.GitCommit))
+		otel.GetTextMapPropagator().Inject(req.Context(), propagation.HeaderCarrier(req.Header))
 		return authcontext.NewRoundTripper(base, authToken).RoundTrip(req)
 	})
 }

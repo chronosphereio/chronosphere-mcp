@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
@@ -149,6 +150,7 @@ func newMeterProvider() (*sdkmetric.MeterProvider, error) {
 
 // initializeTracing sets up the global tracer provider and handles lifecycle.
 func initializeTracing(lc fx.Lifecycle, logger *zap.Logger, tp *trace.TracerProvider) {
+	otel.SetTextMapPropagator(propagation.TraceContext{})
 	otel.SetTracerProvider(tp)
 	logger.Info("OpenTelemetry tracing initialized")
 

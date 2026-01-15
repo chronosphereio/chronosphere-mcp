@@ -19,6 +19,9 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
 )
 
 const (
@@ -28,6 +31,7 @@ const (
 
 // HTTPInboundContextFunc extracts the Authorization header from the HTTP request and sets it in the context.
 func HTTPInboundContextFunc(ctx context.Context, r *http.Request) context.Context {
+	ctx = otel.GetTextMapPropagator().Extract(ctx, propagation.HeaderCarrier(r.Header))
 	authValue := strings.ReplaceAll(r.Header.Get("Authorization"), "Bearer ", "")
 	cookie, err := r.Cookie(_chronoAccessTokenHeaderName)
 	var cookieValue string

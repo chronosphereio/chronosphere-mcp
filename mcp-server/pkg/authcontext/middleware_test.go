@@ -20,6 +20,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func TestHTTPInboundContextFunc_DisabledTools(t *testing.T) {
@@ -143,4 +147,28 @@ func TestHTTPInboundContextFunc_Credentials(t *testing.T) {
 			assert.Equal(t, tt.expectedCookieValue, credentials.AccessTokenCookie)
 		})
 	}
+}
+
+func TestHTTPInboundContextFunc_TraceContext(t *testing.T) {
+	prevPropagator := otel.GetTextMapPropagator()
+	t.Cleanup(func() {
+		otel.SetTextMapPropagator(prevPropagator)
+	})
+	propagator := propagation.TraceContext{}
+	otel.SetTextMapPropagator(propagator)
+
+	tp := sdktrace.NewTracerProvider()
+	tracer := tp.Tracer("test")
+	baseCtx := t.Context()
+	ctx, span := tracer.Start(baseCtx, "test-span")
+	t.Cleanup(func() { span.End() })
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	propagator.Inject(ctx, propagation.HeaderCarrier(req.Header))
+
+	extracted := HTTPInboundContextFunc(baseCtx, req)
+	spanContext := trace.SpanContextFromContext(extracted)
+	assert.True(t, spanContext.IsValid())
+	assert.Equal(t, span.SpanContext().TraceID(), spanContext.TraceID())
+	assert.Equal(t, span.SpanContext().SpanID(), spanContext.SpanID())
 }

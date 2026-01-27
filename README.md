@@ -18,6 +18,17 @@ Chronosphere support in slack with the following information:
 2. What steps you took to attempt authentication
 3. What error you're seeing.
 
+### Header-based configuration
+Some MCP hosts let you attach custom HTTP headers to requests sent to the MCP server. The Chronosphere MCP server supports
+the following user-facing headers.
+
+#### Disable tools (`X-Chrono-MCP-Disable-Tools`)
+Use this header to hide specific tools from the tool list exposed to your MCP client.
+
+- **Format**: comma-separated list of MCP tool names (the **Tool Name** column in the [Available Tools](#available-tools) table)
+- **Example value**: `query_logs_range,render_prometheus_range_query`
+- **Notes**: whitespace is ignored; unknown tool names are ignored
+
 #### Cursor/VSCode
 ```json
 {
@@ -25,7 +36,8 @@ Chronosphere support in slack with the following information:
         "chronosphere": {
             "url": "https://<org name>.chronosphere.io/api/mcp/mcp",
             "headers": {
-                "Authorization": "Bearer <chronosphere api token>"
+                "Authorization": "Bearer <chronosphere api token>",
+                "X-Chrono-MCP-Disable-Tools": "<optional list of tools to disable>"
             }
         }
     }
@@ -33,16 +45,21 @@ Chronosphere support in slack with the following information:
 ```
 
 This configuration should work for Cursor and VSCode. Leave out the `headers` section to use OAuth instead of a Chronosphere API token.
+Remove `X-Chrono-MCP-Disable-Tools` to expose all tools.
 
 More details for VSCode [here](https://code.visualstudio.com/docs/copilot/customization/mcp-servers) and Cursor [here](https://cursor.com/docs/context/mcp)
 
 #### Claude code
 Adding chronosphere MCP server to claude code
 ```shell
-claude mcp add -t http -H "Authorization: Bearer ${CHRONOSPHERE_API_TOKEN}" chronosphere "https://${CHRONOSPHERE_ORG_NAME}.chronosphere.io/api/mcp/mcp"
+claude mcp add -t http \
+  -H "Authorization: Bearer ${CHRONOSPHERE_API_TOKEN}" \
+  -H "X-Chrono-MCP-Disable-Tools: <list of tools to disable>" \
+  chronosphere "https://${CHRONOSPHERE_ORG_NAME}.chronosphere.io/api/mcp/mcp"
 ```
 
 You can leave out the Authorization header if you are using OAuth. Once you're in claude type `/mcp` and select the server to login to trigger the OAuth flow.
+Remove the `X-Chrono-MCP-Disable-Tools` header to expose all tools.
 
 More details [here](https://docs.claude.com/en/docs/claude-code/mcp)
 
@@ -62,7 +79,9 @@ More details [here](https://github.com/openai/codex/blob/main/docs/config.md#mcp
 ```
 CHRONOSPHERE_ORG_NAME=<your org>
 CHRONOSPHERE_API_TOKEN=<your api token>
-gemini mcp add chronosphere "https://${CHRONOSPHERE_ORG_NAME}.chronosphere.io/api/mcp/mcp" -H "Authorization: Bearer ${CHRONOSPHERE_API_TOKEN}" 
+gemini mcp add chronosphere "https://${CHRONOSPHERE_ORG_NAME}.chronosphere.io/api/mcp/mcp" \
+  -H "Authorization: Bearer ${CHRONOSPHERE_API_TOKEN}" \
+  -H "X-Chrono-MCP-Disable-Tools: <list of tools to disable>"
 
 # Drop the -H authorization header option if you want to use OAuth.
 ```

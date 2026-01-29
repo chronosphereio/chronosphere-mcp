@@ -53,6 +53,18 @@ func (b *CustomBuilder) WithTimeSec(key string, t time.Time) *CustomBuilder {
 	return b
 }
 
+func (b *CustomBuilder) WithParams(params url.Values) *CustomBuilder {
+	if b.params == nil {
+		b.params = url.Values{}
+	}
+	for key, values := range params {
+		for _, value := range values {
+			b.params.Add(key, value)
+		}
+	}
+	return b
+}
+
 func (b *CustomBuilder) String() string {
 	return fmt.Sprintf("%s%s?%s", b.chronosphereURL, b.path, b.params.Encode())
 }

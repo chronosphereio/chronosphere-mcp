@@ -28,6 +28,7 @@ import (
 	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/dataunstable"
 	"github.com/chronosphereio/chronosphere-mcp/generated/datav1/datav1"
 	"github.com/chronosphereio/chronosphere-mcp/generated/stateunstable/stateunstable"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/metricusage"
 )
 
 var (
@@ -57,6 +58,7 @@ type Provider struct {
 	DataUnstable   *dataunstable.DataUnstableAPI
 	DataV1         *datav1.DataV1API
 	StateUnstable  *stateunstable.StateUnstableAPI
+	StateV1Client  *metricusage.StateV1Client
 }
 
 func NewProvider(apiConfig *ChronosphereConfig) (Provider, error) {
@@ -70,13 +72,22 @@ func NewProvider(apiConfig *ChronosphereConfig) (Provider, error) {
 		return Provider{}, fmt.Errorf("could not create Prometheus data client: %v", err)
 	}
 
+	stateV1Client := newStateV1Client(apiConfig)
+
 	return Provider{
 		PrometheusData: promClient,
 		ConfigV1:       configv1.New(t, strfmt.Default),
 		DataUnstable:   dataunstable.New(t, strfmt.Default),
 		DataV1:         datav1.New(t, strfmt.Default),
 		StateUnstable:  stateunstable.New(t, strfmt.Default),
+		StateV1Client:  stateV1Client,
 	}, nil
+}
+
+func newStateV1Client(config *ChronosphereConfig) *metricusage.StateV1Client {
+	rt := newRoundTripper(http.DefaultTransport, _component, config.APIToken)
+	httpClient := &http.Client{Transport: rt}
+	return metricusage.NewStateV1Client(httpClient, config.APIURL)
 }
 
 func prometheusClientForBasePath(config *ChronosphereConfig, basePath string) (api.Client, error) {

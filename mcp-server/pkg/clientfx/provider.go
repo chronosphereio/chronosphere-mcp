@@ -28,6 +28,7 @@ import (
 	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/dataunstable"
 	"github.com/chronosphereio/chronosphere-mcp/generated/datav1/datav1"
 	"github.com/chronosphereio/chronosphere-mcp/generated/stateunstable/stateunstable"
+	"github.com/chronosphereio/chronosphere-mcp/generated/statev1/statev1"
 )
 
 var (
@@ -56,6 +57,7 @@ type Provider struct {
 	ConfigV1       *configv1.ConfigV1API
 	DataUnstable   *dataunstable.DataUnstableAPI
 	DataV1         *datav1.DataV1API
+	StateV1        *statev1.StateV1API
 	StateUnstable  *stateunstable.StateUnstableAPI
 }
 
@@ -75,6 +77,7 @@ func NewProvider(apiConfig *ChronosphereConfig) (Provider, error) {
 		ConfigV1:       configv1.New(t, strfmt.Default),
 		DataUnstable:   dataunstable.New(t, strfmt.Default),
 		DataV1:         datav1.New(t, strfmt.Default),
+		StateV1:        statev1.New(t, strfmt.Default),
 		StateUnstable:  stateunstable.New(t, strfmt.Default),
 	}, nil
 }

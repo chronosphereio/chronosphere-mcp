@@ -112,6 +112,35 @@ make chronomcp
 }
 ```
 
+### Building with Docker
+Build the Docker image with version information:
+```sh
+docker build \
+  --build-arg VERSION=$(git describe --tags --always --dirty) \
+  --build-arg GIT_COMMIT=$(git rev-parse HEAD) \
+  --build-arg BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ) \
+  -t chronomcp:latest .
+```
+
+Run the container in MCP streamable HTTP mode:
+```sh
+docker run -p 8081:8081 \
+  -e CHRONOSPHERE_ORG_NAME=<your-org> \
+  -e CHRONOSPHERE_API_TOKEN=<your-token> \
+  chronomcp:latest
+```
+
+To use a custom configuration file:
+```sh
+docker run -p 8081:8081 \
+  -v $(pwd)/custom-config.yaml:/app/config.yaml \
+  -e CHRONOSPHERE_ORG_NAME=<your-org> \
+  -e CHRONOSPHERE_API_TOKEN=<your-token> \
+  chronomcp:latest
+```
+
+The container exposes the MCP server on port 8081 by default using HTTP transport for streamable communication.
+
 ## Developing
 ### Running the server
 #### Authentication to Chronosphere

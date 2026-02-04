@@ -33,8 +33,7 @@ type Statev1RuleEvaluation struct {
 	// Unique identifier of the rule.
 	RuleSlug string `json:"rule_slug,omitempty"`
 
-	// Type of the rule.
-	// @EXAMPLE MONITOR
+	// rule type
 	RuleType RuleEvaluationRuleType `json:"rule_type,omitempty"`
 }
 

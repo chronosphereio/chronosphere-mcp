@@ -10,7 +10,9 @@ import (
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 
-	"github.com/chronosphereio/chronosphere-mcp/generated/statev1/statev1/version1"
+	"github.com/chronosphereio/chronosphere-mcp/generated/statev1/statev1/metric_usages_by_label_name"
+	"github.com/chronosphereio/chronosphere-mcp/generated/statev1/statev1/metric_usages_by_metric_name"
+	"github.com/chronosphereio/chronosphere-mcp/generated/statev1/statev1/rule_evaluations"
 )
 
 // Default state v1 API HTTP client.
@@ -55,7 +57,9 @@ func New(transport runtime.ClientTransport, formats strfmt.Registry) *StateV1API
 
 	cli := new(StateV1API)
 	cli.Transport = transport
-	cli.Version1 = version1.New(transport, formats)
+	cli.MetricUsagesByLabelName = metric_usages_by_label_name.New(transport, formats)
+	cli.MetricUsagesByMetricName = metric_usages_by_metric_name.New(transport, formats)
+	cli.RuleEvaluations = rule_evaluations.New(transport, formats)
 	return cli
 }
 
@@ -100,7 +104,11 @@ func (cfg *TransportConfig) WithSchemes(schemes []string) *TransportConfig {
 
 // StateV1API is a client for state v1 API
 type StateV1API struct {
-	Version1 version1.ClientService
+	MetricUsagesByLabelName metric_usages_by_label_name.ClientService
+
+	MetricUsagesByMetricName metric_usages_by_metric_name.ClientService
+
+	RuleEvaluations rule_evaluations.ClientService
 
 	Transport runtime.ClientTransport
 }
@@ -108,5 +116,7 @@ type StateV1API struct {
 // SetTransport changes the transport on the client and all its subresources
 func (c *StateV1API) SetTransport(transport runtime.ClientTransport) {
 	c.Transport = transport
-	c.Version1.SetTransport(transport)
+	c.MetricUsagesByLabelName.SetTransport(transport)
+	c.MetricUsagesByMetricName.SetTransport(transport)
+	c.RuleEvaluations.SetTransport(transport)
 }

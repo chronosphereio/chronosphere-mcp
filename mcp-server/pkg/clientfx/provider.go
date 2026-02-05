@@ -28,11 +28,8 @@ import (
 	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/dataunstable"
 	"github.com/chronosphereio/chronosphere-mcp/generated/datav1/datav1"
 	"github.com/chronosphereio/chronosphere-mcp/generated/stateunstable/stateunstable"
-<<<<<<< stuart23-metrics_usage
-	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/metricusage"
-=======
 	"github.com/chronosphereio/chronosphere-mcp/generated/statev1/statev1"
->>>>>>> main
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/metricusage"
 )
 
 var (

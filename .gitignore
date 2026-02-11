@@ -51,8 +51,5 @@ vendor/
 .github_release_token
 dist
 
-CLAUDE.md
-CODEX.md
-
 .mcpregistry_github_token
 .mcpregistry_registry_token

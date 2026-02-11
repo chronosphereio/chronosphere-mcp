@@ -1,1 +1,0 @@
-Graph my CPU usage and memory usage for my service "orders" across namespaces. Return the two generated images in base64 format.

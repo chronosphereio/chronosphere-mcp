@@ -173,9 +173,6 @@ The MCP project provides an inspector useful for directly calling tools APIs. To
 
 *Note: To regenerate this table after tool updates, run: `make tools-gen && go run scripts/generate-tools-table.go`*
 
-## Agent (experimental)
-See [agent/README.md](chat/README.md)
-
 ### Releases
 We use [goreleaser](https://goreleaser.com/) to manage releases.
 

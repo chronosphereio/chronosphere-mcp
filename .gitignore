@@ -1,6 +1,4 @@
-chat/.env
 output/
-agent.yaml
 .chronosphere_api_token
 
 *~

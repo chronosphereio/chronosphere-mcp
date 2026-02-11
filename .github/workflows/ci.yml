@@ -29,9 +29,6 @@ jobs:
       - name: Build server
         run: make build-server
 
-      - name: Build agent
-        run: make build-agent
-
   golangci:
     name: Lint
     runs-on: ubuntu-latest

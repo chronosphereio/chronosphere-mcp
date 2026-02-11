@@ -368,6 +368,99 @@ func TestCustomBuilder_TimeHandling(t *testing.T) {
 	}
 }
 
+func TestCustomBuilder_WithParams(t *testing.T) {
+	builder := NewBuilder("https://params.chronosphere.io")
+
+	tests := []struct {
+		name     string
+		buildURL func() *CustomBuilder
+		expected string
+	}{
+		{
+			name: "basic param merging",
+			buildURL: func() *CustomBuilder {
+				p := url.Values{}
+				p.Set("key1", "val1")
+				p.Set("key2", "val2")
+				return builder.Custom("/api").WithParams(p)
+			},
+			expected: "https://params.chronosphere.io/api?key1=val1&key2=val2",
+		},
+		{
+			name: "repeated keys (multi-value params)",
+			buildURL: func() *CustomBuilder {
+				p := url.Values{}
+				p.Add("tag", "alpha")
+				p.Add("tag", "beta")
+				p.Add("tag", "gamma")
+				return builder.Custom("/multi").WithParams(p)
+			},
+			expected: "https://params.chronosphere.io/multi?tag=alpha&tag=beta&tag=gamma",
+		},
+		{
+			name: "merge with existing params",
+			buildURL: func() *CustomBuilder {
+				p := url.Values{}
+				p.Set("extra", "added")
+				return builder.Custom("/merge").
+					WithParam("existing", "value").
+					WithParams(p)
+			},
+			expected: "https://params.chronosphere.io/merge?existing=value&extra=added",
+		},
+		{
+			name: "merge overlapping keys adds values",
+			buildURL: func() *CustomBuilder {
+				p := url.Values{}
+				p.Set("key", "from_params")
+				return builder.Custom("/overlap").
+					WithParam("key", "from_param").
+					WithParams(p)
+			},
+			expected: "https://params.chronosphere.io/overlap?key=from_param&key=from_params",
+		},
+		{
+			name: "empty url.Values is a no-op",
+			buildURL: func() *CustomBuilder {
+				return builder.Custom("/empty").
+					WithParam("existing", "stays").
+					WithParams(url.Values{})
+			},
+			expected: "https://params.chronosphere.io/empty?existing=stays",
+		},
+		{
+			name: "nil-safe with no prior params",
+			buildURL: func() *CustomBuilder {
+				p := url.Values{}
+				p.Set("first", "param")
+				return builder.Custom("/nil").WithParams(p)
+			},
+			expected: "https://params.chronosphere.io/nil?first=param",
+		},
+		{
+			name: "special characters in values",
+			buildURL: func() *CustomBuilder {
+				p := url.Values{}
+				p.Set("query", `service="api" AND status=500`)
+				return builder.Custom("/special").WithParams(p)
+			},
+			expected: "https://params.chronosphere.io/special?query=service%3D%22api%22+AND+status%3D500",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.buildURL().String()
+			assert.Equal(t, tt.expected, result)
+
+			// Verify URL is parseable
+			parsedURL, err := url.Parse(result)
+			require.NoError(t, err)
+			assert.NotNil(t, parsedURL)
+		})
+	}
+}
+
 func TestCustomBuilder_ParameterTypes(t *testing.T) {
 	builder := NewBuilder("https://types.chronosphere.io")
 

@@ -18,54 +18,42 @@ package metricusage
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"net/url"
 	"strconv"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"go.uber.org/zap"
 
+	"github.com/chronosphereio/chronosphere-mcp/generated/statev1/statev1"
+	"github.com/chronosphereio/chronosphere-mcp/generated/statev1/statev1/metric_usages_by_label_name"
+	"github.com/chronosphereio/chronosphere-mcp/generated/statev1/statev1/metric_usages_by_metric_name"
+	"github.com/chronosphereio/chronosphere-mcp/generated/statev1/statev1/rule_evaluations"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/pkg/params"
 	"github.com/chronosphereio/chronosphere-mcp/pkg/links"
+	"github.com/chronosphereio/chronosphere-mcp/pkg/ptr"
 )
 
 var _ tools.MCPTools = (*Tools)(nil)
 
-// StateV1Client is an HTTP client for the State V1 API.
-type StateV1Client struct {
-	httpClient *http.Client
-	baseURL    string
-}
-
 // Tools provides MCP tools for metric usage analysis.
 type Tools struct {
 	logger      *zap.Logger
-	client      *StateV1Client
+	api         *statev1.StateV1API
 	linkBuilder *links.Builder
-}
-
-// NewStateV1Client creates a new State V1 API client.
-func NewStateV1Client(httpClient *http.Client, baseURL string) *StateV1Client {
-	return &StateV1Client{
-		httpClient: httpClient,
-		baseURL:    baseURL,
-	}
 }
 
 // NewTools creates new metric usage tools.
 func NewTools(
-	stateV1Client *StateV1Client,
+	api *statev1.StateV1API,
 	logger *zap.Logger,
 	linkBuilder *links.Builder,
 ) (*Tools, error) {
 	logger.Info("metric usage tool configured")
 	return &Tools{
 		logger:      logger,
-		client:      stateV1Client,
+		api:         api,
 		linkBuilder: linkBuilder,
 	}, nil
 }
@@ -96,7 +84,9 @@ Metrics with low utility_score, zero references, and zero query executions are g
 				mcp.WithString("page_token",
 					mcp.Description("Pagination token for fetching the next page.")),
 				mcp.WithString("order_by",
-					mcp.Description("Field to order results by. One of: VALUABLE, DPPS, UTILITY, REFERENCES, EXECUTIONS, UNIQUE_VALUES, UNIQUE_USERS")),
+					mcp.Description("Field to order results by."),
+					mcp.Enum("VALUABLE", "DPPS", "UTILITY", "REFERENCES", "EXECUTIONS", "UNIQUE_VALUES", "UNIQUE_USERS"),
+				),
 				mcp.WithBoolean("order_ascending",
 					mcp.Description("If true, sort in ascending order. Default is false (descending).")),
 				mcp.WithNumber("lookback_secs",
@@ -130,7 +120,9 @@ Labels with low utility_score, zero references, and high unique_values are good 
 				mcp.WithString("page_token",
 					mcp.Description("Pagination token for fetching the next page.")),
 				mcp.WithString("order_by",
-					mcp.Description("Field to order results by. One of: VALUABLE, DPPS, UTILITY, REFERENCES, EXECUTIONS, UNIQUE_VALUES, UNIQUE_USERS")),
+					mcp.Description("Field to order results by."),
+					mcp.Enum("VALUABLE", "DPPS", "UTILITY", "REFERENCES", "EXECUTIONS", "UNIQUE_VALUES", "UNIQUE_USERS"),
+				),
 				mcp.WithBoolean("order_ascending",
 					mcp.Description("If true, sort in ascending order. Default is false (descending).")),
 				mcp.WithNumber("lookback_secs",
@@ -165,180 +157,167 @@ Common issues include query timeouts, invalid PromQL, or missing metrics.`),
 }
 
 func (t *Tools) listMetricUsagesByMetricName(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
-	query := url.Values{}
+	queryParams := metric_usages_by_metric_name.NewListMetricUsagesByMetricNameParams().
+		WithContext(ctx)
+	linkParams := url.Values{}
 
 	if v, err := params.Int(request, "page_max_size", false, 0); err != nil {
 		return nil, err
 	} else if v > 0 {
-		query.Set("page.max_size", strconv.Itoa(v))
+		queryParams.SetPageMaxSize(ptr.To(int64(v)))
+		linkParams.Set("page.max_size", strconv.Itoa(v))
 	}
 
 	if v, err := params.String(request, "page_token", false, ""); err != nil {
 		return nil, err
 	} else if v != "" {
-		query.Set("page.token", v)
+		queryParams.SetPageToken(ptr.To(v))
+		linkParams.Set("page.token", v)
 	}
 
 	if v, err := params.String(request, "order_by", false, ""); err != nil {
 		return nil, err
 	} else if v != "" {
-		query.Set("order.by", v)
+		queryParams.SetOrderBy(ptr.To(v))
+		linkParams.Set("order.by", v)
 	}
 
 	if v, err := params.Bool(request, "order_ascending", false, false); err != nil {
 		return nil, err
 	} else if v {
-		query.Set("order.ascending", "true")
+		queryParams.SetOrderAscending(ptr.To(v))
+		linkParams.Set("order.ascending", "true")
 	}
 
 	if v, err := params.Int(request, "lookback_secs", false, 0); err != nil {
 		return nil, err
 	} else if v > 0 {
-		query.Set("lookback_secs", strconv.Itoa(v))
+		queryParams.SetLookbackSecs(ptr.To(int32(v)))
+		linkParams.Set("lookback_secs", strconv.Itoa(v))
 	}
 
 	if v, err := params.String(request, "metric_name_glob", false, ""); err != nil {
 		return nil, err
 	} else if v != "" {
-		query.Set("metric_name_glob", v)
+		queryParams.SetMetricNameGlob(ptr.To(v))
+		linkParams.Set("metric_name_glob", v)
 	}
 
 	if v, err := params.Bool(request, "include_counts_by_type", false, false); err != nil {
 		return nil, err
 	} else if v {
-		query.Set("include_counts_by_type", "true")
+		queryParams.SetIncludeCountsByType(ptr.To(v))
+		linkParams.Set("include_counts_by_type", "true")
 	}
 
-	resp, err := t.client.get(ctx, "/api/v1/state/metric-usages-by-metric-name", query)
+	resp, err := t.api.MetricUsagesByMetricName.ListMetricUsagesByMetricName(queryParams)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list metric usages by metric name: %w", err)
 	}
 
 	return &tools.Result{
-		JSONContent: resp,
+		JSONContent: resp.Payload,
 		ChronosphereLink: t.linkBuilder.Custom("/api/v1/state/metric-usages-by-metric-name").
-			WithParams(query).
+			WithParams(linkParams).
 			String(),
 	}, nil
 }
 
 func (t *Tools) listMetricUsagesByLabelName(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
-	query := url.Values{}
+	queryParams := metric_usages_by_label_name.NewListMetricUsagesByLabelNameParams().
+		WithContext(ctx)
+	linkParams := url.Values{}
 
 	if v, err := params.Int(request, "page_max_size", false, 0); err != nil {
 		return nil, err
 	} else if v > 0 {
-		query.Set("page.max_size", strconv.Itoa(v))
+		queryParams.SetPageMaxSize(ptr.To(int64(v)))
+		linkParams.Set("page.max_size", strconv.Itoa(v))
 	}
 
 	if v, err := params.String(request, "page_token", false, ""); err != nil {
 		return nil, err
 	} else if v != "" {
-		query.Set("page.token", v)
+		queryParams.SetPageToken(ptr.To(v))
+		linkParams.Set("page.token", v)
 	}
 
 	if v, err := params.String(request, "order_by", false, ""); err != nil {
 		return nil, err
 	} else if v != "" {
-		query.Set("order.by", v)
+		queryParams.SetOrderBy(ptr.To(v))
+		linkParams.Set("order.by", v)
 	}
 
 	if v, err := params.Bool(request, "order_ascending", false, false); err != nil {
 		return nil, err
 	} else if v {
-		query.Set("order.ascending", "true")
+		queryParams.SetOrderAscending(ptr.To(v))
+		linkParams.Set("order.ascending", "true")
 	}
 
 	if v, err := params.Int(request, "lookback_secs", false, 0); err != nil {
 		return nil, err
 	} else if v > 0 {
-		query.Set("lookback_secs", strconv.Itoa(v))
+		queryParams.SetLookbackSecs(ptr.To(int32(v)))
+		linkParams.Set("lookback_secs", strconv.Itoa(v))
 	}
 
 	if v, err := params.String(request, "label_name_glob", false, ""); err != nil {
 		return nil, err
 	} else if v != "" {
-		query.Set("label_name_glob", v)
+		queryParams.SetLabelNameGlob(ptr.To(v))
+		linkParams.Set("label_name_glob", v)
 	}
 
 	if v, err := params.Bool(request, "include_counts_by_type", false, false); err != nil {
 		return nil, err
 	} else if v {
-		query.Set("include_counts_by_type", "true")
+		queryParams.SetIncludeCountsByType(ptr.To(v))
+		linkParams.Set("include_counts_by_type", "true")
 	}
 
-	resp, err := t.client.get(ctx, "/api/v1/state/metric-usages-by-label-name", query)
+	resp, err := t.api.MetricUsagesByLabelName.ListMetricUsagesByLabelName(queryParams)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list metric usages by label name: %w", err)
 	}
 
 	return &tools.Result{
-		JSONContent: resp,
+		JSONContent: resp.Payload,
 		ChronosphereLink: t.linkBuilder.Custom("/api/v1/state/metric-usages-by-label-name").
-			WithParams(query).
+			WithParams(linkParams).
 			String(),
 	}, nil
 }
 
 func (t *Tools) listRuleEvaluations(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
-	query := url.Values{}
+	queryParams := rule_evaluations.NewListRuleEvaluationsParams().
+		WithContext(ctx)
+	linkParams := url.Values{}
 
 	if v, err := params.Int(request, "page_max_size", false, 0); err != nil {
 		return nil, err
 	} else if v > 0 {
-		query.Set("page.max_size", strconv.Itoa(v))
+		queryParams.SetPageMaxSize(ptr.To(int64(v)))
+		linkParams.Set("page.max_size", strconv.Itoa(v))
 	}
 
 	if v, err := params.String(request, "page_token", false, ""); err != nil {
 		return nil, err
 	} else if v != "" {
-		query.Set("page.token", v)
+		queryParams.SetPageToken(ptr.To(v))
+		linkParams.Set("page.token", v)
 	}
 
-	resp, err := t.client.get(ctx, "/api/v1/state/rule-evaluations", query)
+	resp, err := t.api.RuleEvaluations.ListRuleEvaluations(queryParams)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list rule evaluations: %w", err)
 	}
 
 	return &tools.Result{
-		JSONContent: resp,
+		JSONContent: resp.Payload,
 		ChronosphereLink: t.linkBuilder.Custom("/api/v1/state/rule-evaluations").
-			WithParams(query).
+			WithParams(linkParams).
 			String(),
 	}, nil
-}
-
-// get makes a GET request to the State V1 API.
-func (c *StateV1Client) get(ctx context.Context, path string, query url.Values) (any, error) {
-	reqURL := c.baseURL + path
-	if len(query) > 0 {
-		reqURL += "?" + query.Encode()
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(body))
-	}
-
-	var result any
-	if err := json.Unmarshal(body, &result); err != nil {
-		return nil, fmt.Errorf("failed to parse JSON response: %w", err)
-	}
-
-	return result, nil
 }

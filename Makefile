@@ -13,7 +13,7 @@ install-tools: go-version-check
 go-version-check:
 	# make sure you're running the right version of Go, otherwise builds/codegen/tests
 	# may have inconsistent results that are hard to debug.
-	go version | grep "go1.25.1" || (echo "Error: you must be running go1.25.1" && exit 1)
+	go version | grep "go1.25.8" || (echo "Error: you must be running go1.25.8" && exit 1)
 
 .PHONY: swagger-gen
 swagger-gen: install-tools

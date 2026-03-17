@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"go.opentelemetry.io/otel"
@@ -79,7 +80,7 @@ func (r *RoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	if credentials := FetchSessionAPIToken(req.Context()); !credentials.IsEmpty() {
 		// forward the api token & access token cookie from context if available
 		req2.Header.Set("Authorization", "Bearer "+credentials.APIToken)
-		req2.Header.Set("Cookie", fmt.Sprintf("%s=%s", _chronoAccessTokenHeaderName, credentials.AccessTokenCookie))
+		req2.Header.Set("Cookie", fmt.Sprintf("%s=%s", _chronoAccessTokenHeaderName, url.QueryEscape(credentials.AccessTokenCookie)))
 	} else if r.token != "" {
 		req2.Header.Set("Authorization", "Bearer "+r.token)
 	}

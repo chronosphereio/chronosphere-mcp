@@ -18,6 +18,7 @@ package params
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -91,8 +92,14 @@ func intParser(param interface{}) (int, error) {
 	case int:
 		return v, nil
 	case int64:
+		if v > math.MaxInt || v < math.MinInt {
+			return 0, fmt.Errorf("value %d exceeds int bounds", v)
+		}
 		return int(v), nil
 	case float64:
+		if v > float64(math.MaxInt) || v < float64(math.MinInt) {
+			return 0, fmt.Errorf("value %f exceeds int bounds", v)
+		}
 		return int(v), nil
 	default:
 		return 0, fmt.Errorf("must be a number, got %T", param)

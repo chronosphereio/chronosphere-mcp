@@ -19,6 +19,7 @@ import "context"
 
 type sessionAPITokenKey struct{}
 type disabledToolsKey struct{}
+type writesEnabledKey struct{}
 
 type SessionCredentials struct {
 	APIToken          string
@@ -55,4 +56,26 @@ func FetchDisabledTools(ctx context.Context) map[string]struct{} {
 		return nil
 	}
 	return disabledTools
+}
+
+// SetWritesEnabled records whether write tools are enabled for the request.
+func SetWritesEnabled(ctx context.Context, enabled bool) context.Context {
+	return context.WithValue(ctx, writesEnabledKey{}, enabled)
+}
+
+// FetchWritesEnabled reports whether write tools are enabled for the request.
+func FetchWritesEnabled(ctx context.Context) bool {
+	enabled, ok := ctx.Value(writesEnabledKey{}).(bool)
+	return ok && enabled
+}
+
+// WritesEnabled reports whether the server and, when present, request both enable writes.
+// HTTP and SSE middleware always records a request preference. Stdio has no request
+// preference, so the server setting alone controls writes for that transport.
+func WritesEnabled(ctx context.Context, serverEnabled bool) bool {
+	if !serverEnabled {
+		return false
+	}
+	requestEnabled, hasRequestPreference := ctx.Value(writesEnabledKey{}).(bool)
+	return !hasRequestPreference || requestEnabled
 }

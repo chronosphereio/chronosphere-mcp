@@ -25,6 +25,7 @@ import (
 type Config struct {
 	Disabled                []string `yaml:"disabled"`
 	EnableClassicDashboards bool     `yaml:"enableClassicDashboards"`
+	EnableWrites            bool     `yaml:"enableWrites"`
 }
 
 type Result struct {
@@ -61,6 +62,7 @@ type Session struct {
 type MCPTool struct {
 	Metadata Metadata
 	Handler  Handler
+	Write    bool
 }
 
 func NewMetadata(name string, opts ...mcp.ToolOption) Metadata {

@@ -29,6 +29,14 @@ Use this header to hide specific tools from the tool list exposed to your MCP cl
 - **Example value**: `query_logs_range,render_prometheus_range_query`
 - **Notes**: whitespace is ignored; unknown tool names are ignored
 
+#### Enable writes (`X-Chrono-MCP-Enable-Writes`)
+Write tools are hidden and cannot be called by default. The server operator must first permit writes with
+`server.tools.enableWrites: true`. HTTP and SSE clients must additionally set this header to `true`; the header cannot
+override a disabled server setting. Other values do not enable writes.
+
+Stdio has no request headers, so the server setting alone enables writes for that transport. The Chronosphere credentials
+used by the server must still authorize the underlying API operation.
+
 #### Cursor/VSCode
 ```json
 {
@@ -153,6 +161,7 @@ The MCP project provides an inspector useful for directly calling tools APIs. To
 | configapi | list_recording_rules | List recording-rules resources |
 | configapi | list_rollup_rules | List rollup-rules resources |
 | configapi | list_slos | List slos resources |
+| configapi | update_dashboard | Replace a dashboard identified by slug. Use dry_run to validate without saving. |
 | events | get_events_metadata | List properties you can query on events |
 | events | list_events | List events from a given query |
 | events | list_events_label_values | List values for a given label name |

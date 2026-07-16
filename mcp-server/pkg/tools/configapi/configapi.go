@@ -54,6 +54,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 	mcpTools := []tools.MCPTool{
 		configv1.GetDashboard(t.client, t.logger),
 		configv1.ListDashboards(t.client, t.logger),
+		UpdateDashboard(t.client),
 		configv1.GetDropRule(t.client, t.logger),
 		configv1.ListDropRules(t.client, t.logger),
 		configv1.GetMappingRule(t.client, t.logger),

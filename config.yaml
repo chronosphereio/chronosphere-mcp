@@ -17,6 +17,8 @@ server:
     # Classic dashboards are a legacy dashboard format. Enable this if you still use
     # classic dashboards.
     enableClassicDashboards: false
+    # Write tools are disabled by default. Enable this for all transports, including stdio.
+    enableWrites: false
 
   chronosphere:
     apiURL: https://${CHRONOSPHERE_ORG_NAME:""}.chronosphere.io

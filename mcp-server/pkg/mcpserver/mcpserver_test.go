@@ -299,6 +299,136 @@ func TestServer_DynamicToolDisabling(t *testing.T) {
 	}
 }
 
+func TestFilterTools_WriteTools(t *testing.T) {
+	allTools := []mcp.Tool{
+		{Name: "get_dashboard"},
+		{Name: "update_dashboard"},
+	}
+	writeToolNames := map[string]struct{}{
+		"update_dashboard": {},
+	}
+	tests := []struct {
+		name                 string
+		configEnabled        bool
+		hasRequestPreference bool
+		headerEnabled        bool
+		expectedTools        []mcp.Tool
+		disabledTools        map[string]struct{}
+	}{
+		{
+			name:          "writes disabled by default",
+			expectedTools: allTools[:1],
+		},
+		{
+			name:          "stdio writes enabled by config",
+			configEnabled: true,
+			expectedTools: allTools,
+		},
+		{
+			name:                 "header cannot override disabled server",
+			hasRequestPreference: true,
+			headerEnabled:        true,
+			expectedTools:        allTools[:1],
+		},
+		{
+			name:                 "HTTP writes require header",
+			configEnabled:        true,
+			hasRequestPreference: true,
+			expectedTools:        allTools[:1],
+		},
+		{
+			name:                 "HTTP writes enabled by config and header",
+			configEnabled:        true,
+			hasRequestPreference: true,
+			headerEnabled:        true,
+			expectedTools:        allTools,
+		},
+		{
+			name:          "explicit tool disable still wins",
+			configEnabled: true,
+			disabledTools: map[string]struct{}{"update_dashboard": {}},
+			expectedTools: allTools[:1],
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := t.Context()
+			if tt.hasRequestPreference {
+				ctx = authcontext.SetWritesEnabled(ctx, tt.headerEnabled)
+			}
+			if tt.disabledTools != nil {
+				ctx = authcontext.SetDisabledTools(ctx, tt.disabledTools)
+			}
+
+			assert.Equal(t, tt.expectedTools, filterTools(ctx, allTools, writeToolNames, tt.configEnabled))
+		})
+	}
+}
+
+func TestLoggingTool_WriteGate(t *testing.T) {
+	handlerCalled := false
+	writeTool := tools.MCPTool{
+		Write: true,
+		Handler: func(_ context.Context, _ mcp.CallToolRequest) (*tools.Result, error) {
+			handlerCalled = true
+			return &tools.Result{TextContent: "updated"}, nil
+		},
+	}
+
+	t.Run("disabled", func(t *testing.T) {
+		handlerCalled = false
+		result := (&loggingTool{
+			logger: zap.NewNop(),
+			tool:   writeTool,
+		}).mustHandle(t.Context(), mcp.CallToolRequest{})
+
+		assert.False(t, handlerCalled)
+		assert.Equal(t, mcp.NewToolResultError(
+			"write tools are disabled; enable server.tools.enableWrites and, for HTTP/SSE, X-Chrono-MCP-Enable-Writes",
+		).Content, result.Content)
+	})
+
+	t.Run("stdio enabled by config", func(t *testing.T) {
+		handlerCalled = false
+		result := (&loggingTool{
+			logger:       zap.NewNop(),
+			tool:         writeTool,
+			enableWrites: true,
+		}).mustHandle(t.Context(), mcp.CallToolRequest{})
+
+		assert.True(t, handlerCalled)
+		assert.Equal(t, []mcp.Content{mcp.NewTextContent("updated")}, result.Content)
+	})
+
+	t.Run("header cannot override disabled server", func(t *testing.T) {
+		handlerCalled = false
+		ctx := authcontext.SetWritesEnabled(t.Context(), true)
+		result := (&loggingTool{
+			logger: zap.NewNop(),
+			tool:   writeTool,
+		}).mustHandle(ctx, mcp.CallToolRequest{})
+
+		assert.False(t, handlerCalled)
+		assert.Equal(t, mcp.NewToolResultError(
+			"write tools are disabled; enable server.tools.enableWrites and, for HTTP/SSE, X-Chrono-MCP-Enable-Writes",
+		).Content, result.Content)
+	})
+
+	t.Run("HTTP enabled by config and header", func(t *testing.T) {
+		handlerCalled = false
+		ctx := authcontext.SetWritesEnabled(t.Context(), true)
+		result := (&loggingTool{
+			logger:       zap.NewNop(),
+			tool:         writeTool,
+			enableWrites: true,
+		}).mustHandle(ctx, mcp.CallToolRequest{})
+
+		assert.True(t, handlerCalled)
+		assert.Equal(t, []mcp.Content{mcp.NewTextContent("updated")}, result.Content)
+	})
+}
+
 type mockToolGroup struct {
 	tools []tools.MCPTool
 }

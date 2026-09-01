@@ -92,6 +92,64 @@ func TestHTTPInboundContextFunc_DisabledTools(t *testing.T) {
 	}
 }
 
+func TestHTTPInboundContextFunc_EnableWrites(t *testing.T) {
+	tests := []struct {
+		name        string
+		headerValue string
+		expected    bool
+	}{
+		{name: "missing header"},
+		{name: "true", headerValue: "true", expected: true},
+		{name: "case insensitive", headerValue: "TRUE", expected: true},
+		{name: "surrounding whitespace", headerValue: "  true  ", expected: true},
+		{name: "false", headerValue: "false"},
+		{name: "numeric value", headerValue: "1"},
+		{name: "arbitrary value", headerValue: "yes"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			if tt.headerValue != "" {
+				req.Header.Set("X-Chrono-MCP-Enable-Writes", tt.headerValue)
+			}
+
+			ctx := HTTPInboundContextFunc(t.Context(), req)
+
+			assert.Equal(t, tt.expected, FetchWritesEnabled(ctx))
+		})
+	}
+}
+
+func TestWritesEnabled(t *testing.T) {
+	tests := []struct {
+		name           string
+		serverEnabled  bool
+		requestEnabled *bool
+		expected       bool
+	}{
+		{name: "disabled by default"},
+		{name: "stdio enabled by server", serverEnabled: true, expected: true},
+		{name: "header cannot override server", requestEnabled: boolPointer(true)},
+		{name: "HTTP requires header", serverEnabled: true, requestEnabled: new(bool)},
+		{name: "HTTP enabled by server and header", serverEnabled: true, requestEnabled: boolPointer(true), expected: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := t.Context()
+			if tt.requestEnabled != nil {
+				ctx = SetWritesEnabled(ctx, *tt.requestEnabled)
+			}
+			assert.Equal(t, tt.expected, WritesEnabled(ctx, tt.serverEnabled))
+		})
+	}
+}
+
+func boolPointer(value bool) *bool {
+	return &value
+}
+
 func TestHTTPInboundContextFunc_Credentials(t *testing.T) {
 	tests := []struct {
 		name                string

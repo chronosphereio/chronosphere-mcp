@@ -44,6 +44,7 @@ type Server struct {
 type Options struct {
 	Logger         *zap.Logger
 	DisabledTools  map[string]struct{}
+	EnableWrites   bool
 	ToolGroups     []tools.MCPTools
 	TracerProvider trace.TracerProvider
 	MeterProvider  *metric.MeterProvider
@@ -53,6 +54,15 @@ func NewServer(
 	opts Options,
 	logger *zap.Logger,
 ) (*Server, error) {
+	writeToolNames := make(map[string]struct{})
+	for _, group := range opts.ToolGroups {
+		for _, tool := range group.MCPTools() {
+			if tool.Write {
+				writeToolNames[tool.Metadata.Name] = struct{}{}
+			}
+		}
+	}
+
 	// Build server options
 	serverOptions := []server.ServerOption{
 		server.WithResourceCapabilities(true, true),
@@ -62,19 +72,9 @@ func NewServer(
 		server.WithResourceHandlerMiddleware(instrumentfx.ResourceTracingMiddleware(opts.TracerProvider)),
 		server.WithResourceHandlerMiddleware(instrumentfx.ResourceMetricsMiddleware(opts.MeterProvider)),
 		server.WithLogging(),
-		// Filter tools based on disabled tools from request context
+		// Filter tools based on request context.
 		server.WithToolFilter(func(ctx context.Context, tools []mcp.Tool) []mcp.Tool {
-			disabledTools := authcontext.FetchDisabledTools(ctx)
-			if len(disabledTools) == 0 {
-				return tools
-			}
-			filtered := make([]mcp.Tool, 0, len(tools))
-			for _, tool := range tools {
-				if _, disabled := disabledTools[tool.Name]; !disabled {
-					filtered = append(filtered, tool)
-				}
-			}
-			return filtered
+			return filterTools(ctx, tools, writeToolNames, opts.EnableWrites)
 		}),
 	}
 
@@ -102,8 +102,9 @@ func NewServer(
 			}
 
 			wrapper := &loggingTool{
-				logger: logger,
-				tool:   tool,
+				logger:       logger,
+				tool:         tool,
+				enableWrites: opts.EnableWrites,
 			}
 			s.server.AddTool(tool.MCPGoTool(), wrapper.handle)
 		}
@@ -114,6 +115,31 @@ func NewServer(
 	}
 
 	return s, nil
+}
+
+func filterTools(
+	ctx context.Context,
+	mcpTools []mcp.Tool,
+	writeToolNames map[string]struct{},
+	enableWrites bool,
+) []mcp.Tool {
+	disabledTools := authcontext.FetchDisabledTools(ctx)
+	writesEnabled := authcontext.WritesEnabled(ctx, enableWrites)
+	if len(disabledTools) == 0 && writesEnabled {
+		return mcpTools
+	}
+
+	filtered := make([]mcp.Tool, 0, len(mcpTools))
+	for _, tool := range mcpTools {
+		if _, disabled := disabledTools[tool.Name]; disabled {
+			continue
+		}
+		if _, write := writeToolNames[tool.Name]; write && !writesEnabled {
+			continue
+		}
+		filtered = append(filtered, tool)
+	}
+	return filtered
 }
 
 func (s *Server) StdioServer() *server.StdioServer {
@@ -140,8 +166,9 @@ func (s *Server) StreamableHTTPServer(options ...server.StreamableHTTPOption) *s
 var _ server.ToolHandlerFunc = (*loggingTool)(nil).handle
 
 type loggingTool struct {
-	logger *zap.Logger
-	tool   tools.MCPTool
+	logger       *zap.Logger
+	tool         tools.MCPTool
+	enableWrites bool
 }
 
 func (t *loggingTool) handle(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -168,6 +195,12 @@ func (t *loggingTool) handle(ctx context.Context, request mcp.CallToolRequest) (
 }
 
 func (t *loggingTool) mustHandle(ctx context.Context, request mcp.CallToolRequest) *mcp.CallToolResult {
+	if t.tool.Write && !authcontext.WritesEnabled(ctx, t.enableWrites) {
+		return mcp.NewToolResultError(
+			"write tools are disabled; enable server.tools.enableWrites and, for HTTP/SSE, X-Chrono-MCP-Enable-Writes",
+		)
+	}
+
 	resp, err := t.tool.Handler(ctx, request)
 	if err != nil {
 		t.logger.Info("received error from handler",

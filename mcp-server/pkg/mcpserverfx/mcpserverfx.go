@@ -77,6 +77,7 @@ func invoke(p params) (*Transports, error) {
 			Logger:         p.Logger,
 			ToolGroups:     p.ToolGroups,
 			DisabledTools:  disabledTools,
+			EnableWrites:   cfg.Tools.EnableWrites,
 			TracerProvider: p.TracerProvider,
 			MeterProvider:  p.MeterProvider,
 		},

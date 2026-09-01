@@ -28,6 +28,7 @@ import (
 const (
 	_chronoAccessTokenHeaderName = "chrono-accesstoken"
 	_disableToolsHeaderName      = "X-Chrono-MCP-Disable-Tools"
+	_enableWritesHeaderName      = "X-Chrono-MCP-Enable-Writes"
 )
 
 // HTTPInboundContextFunc extracts the Authorization header from the HTTP request and sets it in the context.
@@ -56,6 +57,9 @@ func HTTPInboundContextFunc(ctx context.Context, r *http.Request) context.Contex
 		}
 		ctx = SetDisabledTools(ctx, disabledTools)
 	}
+
+	enableWritesHeader := strings.TrimSpace(r.Header.Get(_enableWritesHeaderName))
+	ctx = SetWritesEnabled(ctx, strings.EqualFold(enableWritesHeader, "true"))
 
 	return ctx
 }

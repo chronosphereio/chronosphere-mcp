@@ -51,6 +51,10 @@ type Metadata struct {
 	InputSchema mcp.ToolInputSchema `json:"inputSchema"`
 	// Alternative to InputSchema - allows arbitrary JSON Schema to be provided
 	RawInputSchema json.RawMessage `json:"-"` // Hide this from JSON marshaling
+	// A JSON Schema object defining the expected output returned by the tool.
+	OutputSchema mcp.ToolOutputSchema `json:"outputSchema,omitempty"`
+	// Alternative to OutputSchema - allows arbitrary JSON Schema to be provided
+	RawOutputSchema json.RawMessage `json:"-"`
 	// Optional properties describing tool behavior
 	Annotations mcp.ToolAnnotation `json:"annotations"`
 }
@@ -68,21 +72,25 @@ type MCPTool struct {
 func NewMetadata(name string, opts ...mcp.ToolOption) Metadata {
 	mcpTool := mcp.NewTool(name, opts...)
 	return Metadata{
-		Name:           name,
-		Description:    mcpTool.Description,
-		InputSchema:    mcpTool.InputSchema,
-		RawInputSchema: mcpTool.RawInputSchema,
-		Annotations:    mcpTool.Annotations,
+		Name:            name,
+		Description:     mcpTool.Description,
+		InputSchema:     mcpTool.InputSchema,
+		RawInputSchema:  mcpTool.RawInputSchema,
+		OutputSchema:    mcpTool.OutputSchema,
+		RawOutputSchema: mcpTool.RawOutputSchema,
+		Annotations:     mcpTool.Annotations,
 	}
 }
 
 func (t MCPTool) MCPGoTool() mcp.Tool {
 	return mcp.Tool{
-		Name:           t.Metadata.Name,
-		Description:    t.Metadata.Description,
-		InputSchema:    t.Metadata.InputSchema,
-		RawInputSchema: t.Metadata.RawInputSchema,
-		Annotations:    t.Metadata.Annotations,
+		Name:            t.Metadata.Name,
+		Description:     t.Metadata.Description,
+		InputSchema:     t.Metadata.InputSchema,
+		RawInputSchema:  t.Metadata.RawInputSchema,
+		OutputSchema:    t.Metadata.OutputSchema,
+		RawOutputSchema: t.Metadata.RawOutputSchema,
+		Annotations:     t.Metadata.Annotations,
 	}
 }
 

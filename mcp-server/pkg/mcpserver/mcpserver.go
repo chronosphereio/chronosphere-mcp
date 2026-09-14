@@ -36,9 +36,12 @@ import (
 )
 
 type Server struct {
-	server *server.MCPServer
-	logger *zap.Logger
-	opts   Options
+	server         *server.MCPServer
+	logger         *zap.Logger
+	enableWrites   bool
+	tools          []mcp.Tool
+	resources      []mcp.Resource
+	writeToolNames map[string]struct{}
 }
 
 type Options struct {
@@ -84,8 +87,9 @@ func NewServer(
 			version.Version,
 			serverOptions...,
 		),
-		logger: logger,
-		opts:   opts,
+		logger:         logger,
+		enableWrites:   opts.EnableWrites,
+		writeToolNames: writeToolNames,
 	}
 
 	var (
@@ -106,11 +110,14 @@ func NewServer(
 				tool:         tool,
 				enableWrites: opts.EnableWrites,
 			}
-			s.server.AddTool(tool.MCPGoTool(), wrapper.handle)
+			mcpTool := tool.MCPGoTool()
+			s.tools = append(s.tools, mcpTool)
+			s.server.AddTool(mcpTool, wrapper.handle)
 		}
 	}
 
 	for _, resource := range resources {
+		s.resources = append(s.resources, resource.Resource)
 		s.server.AddResource(resource.Resource, resource.Handler)
 	}
 

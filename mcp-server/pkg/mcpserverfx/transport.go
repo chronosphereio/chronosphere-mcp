@@ -17,6 +17,7 @@ package mcpserverfx
 import (
 	"context"
 	"errors"
+	"net/http"
 	"os"
 	"sync"
 	"time"
@@ -75,7 +76,7 @@ type Transports struct {
 	sse           *SSETransportConfig
 	http          *HTTPTransportConfig
 	sseServer     *server.SSEServer
-	httpServer    *server.StreamableHTTPServer
+	httpServer    *http.Server
 	cancelContext context.CancelFunc
 	wg            sync.WaitGroup
 }
@@ -135,13 +136,17 @@ func (t *Transports) Start(ctx context.Context) {
 
 	if t.http.IsEnabled() {
 		t.wg.Add(1)
-		t.httpServer = t.server.StreamableHTTPServer()
+		t.httpServer = &http.Server{
+			Addr:              t.http.Address,
+			Handler:           t.server.HTTPHandler(),
+			ReadHeaderTimeout: 10 * time.Second,
+		}
 		go func() {
 			defer t.wg.Done()
 
 			t.logger.Info("serving streamable http transport",
 				zap.String("address", t.http.Address))
-			if err := t.httpServer.Start(t.http.Address); err != nil {
+			if err := t.httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 				t.logger.Error("error serving streamable http transport", zap.Error(err))
 			}
 		}()

@@ -25,15 +25,22 @@
           "type": "array"
         },
         "series": {
+          "description": "This field is deprecated.",
           "items": {
             "$ref": "#/definitions/SignalStatusSeriesStatus"
           },
           "type": "array"
+        },
+        "started_at": {
+          "description": "When the signal started firing: the earliest among its firing severities.",
+          "format": "date-time",
+          "type": "string"
         }
       },
       "type": "object"
     },
     "SignalStatusSeriesStatus": {
+      "description": "This message is deprecated.",
       "properties": {
         "state": {
           "$ref": "#/definitions/stateunstableAlertingState"
@@ -245,7 +252,7 @@
             "type": "boolean"
           },
           {
-            "description": "include_signal_statuses must be true for include_series_statuses to be true.",
+            "description": "include_signal_statuses must be true for include_series_statuses to be true.\nThis field is deprecated.",
             "in": "query",
             "name": "include_series_statuses",
             "type": "boolean"

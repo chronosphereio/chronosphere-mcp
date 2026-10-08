@@ -58,7 +58,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 	return []tools.MCPTool{
 		{
 			Metadata: tools.NewMetadata("list_monitor_statuses",
-				mcp.WithDescription("Lists the current status of monitors in Chronosphere. Returns monitor statuses with alert states and optional signal and series details."),
+				mcp.WithDescription("Lists the current status of monitors in Chronosphere. Returns monitor statuses with alert states and optional signal details. Each signal carries started_at, when it started firing."),
 				params.WithStringArray("monitor_slugs",
 					mcp.Description("Filter by monitor slug. If all filters are empty, return status for all monitors."),
 				),
@@ -69,11 +69,11 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					mcp.Description("Filter monitor state by owning team."),
 				),
 				mcp.WithBoolean("include_signal_statuses",
-					mcp.Description("Include signal status details in the response."),
+					mcp.Description("Include signal status details in the response. Each signal includes started_at, the earliest time any of its firing severities started firing."),
 					mcp.DefaultBool(false),
 				),
 				mcp.WithBoolean("include_series_statuses",
-					mcp.Description("Include series status details in the response. Requires include_signal_statuses to be true."),
+					mcp.Description("Deprecated: returns no series once a tenant serves alert status from ClickHouse; use each signal's started_at instead. Include series status details in the response. Requires include_signal_statuses to be true."),
 					mcp.DefaultBool(false),
 				),
 				mcp.WithString("sort_by",

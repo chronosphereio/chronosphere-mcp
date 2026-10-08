@@ -70,7 +70,8 @@ type ListMonitorStatusesParams struct {
 
 	/* IncludeSeriesStatuses.
 
-	   include_signal_statuses must be true for include_series_statuses to be true.
+	     include_signal_statuses must be true for include_series_statuses to be true.
+	This field is deprecated.
 	*/
 	IncludeSeriesStatuses *bool
 

@@ -180,7 +180,7 @@ The MCP project provides an inspector useful for directly calling tools APIs. To
 | metric_usage | list_metric_usages_by_label_name | Lists metric usage statistics grouped by label name. Use this to find unused or high-cardinality labels that could be dropped. |
 | metric_usage | list_metric_usages_by_metric_name | Lists metric usage statistics grouped by metric name. Use this to find unused or underutilized metrics that could be dropped to reduce costs. |
 | metric_usage | list_rule_evaluations | Lists rule evaluation issues for monitors and recording rules. Use this to identify monitors or recording rules that are failing or having problems. |
-| monitors | list_monitor_statuses | Lists the current status of monitors in Chronosphere. Returns monitor statuses with alert states and optional signal and series details. |
+| monitors | list_monitor_statuses | Lists the current status of monitors in Chronosphere. Returns monitor statuses with alert states and optional signal details. Each signal carries started_at, when it started firing. |
 | traces | list_traces | List traces from a given query |
 
 *Note: To regenerate this table after tool updates, run: `make tools-gen && go run scripts/generate-tools-table.go`*

@@ -15,7 +15,7 @@ import (
 	"github.com/go-openapi/validate"
 )
 
-// SignalStatusSeriesStatus signal status series status
+// SignalStatusSeriesStatus This message is deprecated.
 //
 // swagger:model SignalStatusSeriesStatus
 type SignalStatusSeriesStatus struct {

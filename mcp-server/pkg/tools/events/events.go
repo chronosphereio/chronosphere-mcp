@@ -18,14 +18,14 @@ package events
 import (
 	"context"
 	"fmt"
+	"sort"
+	"time"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/mark3labs/mcp-go/mcp"
 	"go.uber.org/zap"
 
 	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/dataunstable"
-	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/dataunstable/data_unstable"
-	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/models"
 	"github.com/chronosphereio/chronosphere-mcp/generated/datav1/datav1"
 	"github.com/chronosphereio/chronosphere-mcp/generated/datav1/datav1/version1"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools"
@@ -37,25 +37,25 @@ import (
 var _ tools.MCPTools = (*Tools)(nil)
 
 type Tools struct {
-	logger          *zap.Logger
-	dataV1API       *datav1.DataV1API
-	dataUnstableAPI *dataunstable.DataUnstableAPI
-	linkBuilder     *links.Builder
+	logger      *zap.Logger
+	dataV1API   *datav1.DataV1API
+	linkBuilder *links.Builder
 }
 
+// NewTools builds the events tools. The DataUnstable client is unused and is
+// kept only so existing callers keep compiling.
 func NewTools(
 	dataV1API *datav1.DataV1API,
-	dataUnstableAPI *dataunstable.DataUnstableAPI,
+	_ *dataunstable.DataUnstableAPI,
 	logger *zap.Logger,
 	linkBuilder *links.Builder,
 ) (*Tools, error) {
 	logger.Info("events tool configured")
 
 	return &Tools{
-		logger:          logger,
-		dataV1API:       dataV1API,
-		dataUnstableAPI: dataUnstableAPI,
-		linkBuilder:     linkBuilder,
+		logger:      logger,
+		dataV1API:   dataV1API,
+		linkBuilder: linkBuilder,
 	}, nil
 }
 
@@ -106,109 +106,220 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 		},
 		{
 			Metadata: tools.NewMetadata("get_events_metadata",
-				mcp.WithDescription("List properties you can query on events"),
+				mcp.WithDescription(
+					"List properties you can query on events: the distinct categories, sources, types and label names "+
+						"of events that happened in the time range. Values are drawn from at most 10,000 of the most "+
+						"recent events in the range; truncated is true when that limit was reached and the lists may be partial."),
+				withFacetTimeRange(),
 			),
-			Handler: func(ctx context.Context, _ mcp.CallToolRequest) (*tools.Result, error) {
-				resp, err := t.dataUnstableAPI.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
-					Context: ctx,
-					Field:   ptr.To(string(models.DataunstableEventFieldCATEGORYEVENTFIELD)),
-				})
-
-				eventsMetadata := struct {
-					Categories       []string `json:"categories"`
-					Sources          []string `json:"sources"`
-					Types            []string `json:"types"`
-					LabelNames       []string `json:"label_names"`
-					LensServiceNames []string `json:"lens_service_names"`
-				}{}
-
+			Handler: func(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
+				timeRange, err := parseFacetTimeRange(request)
 				if err != nil {
-					return nil, fmt.Errorf("failed to get categories for events: %s", err)
-				}
-				eventsMetadata.Categories = resp.Payload.Values
-
-				resp, err = t.dataUnstableAPI.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
-					Context: ctx,
-					Field:   ptr.To(string(models.DataunstableEventFieldLABELNAMEEVENTFIELD)),
-				})
-				if err != nil {
-					return nil, fmt.Errorf("failed to get label names for events: %s", err)
+					return nil, err
 				}
 
-				eventsMetadata.LabelNames = resp.Payload.Values
-
-				resp, err = t.dataUnstableAPI.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
-					Context: ctx,
-					Field:   ptr.To(string(models.DataunstableEventFieldSOURCEEVENTFIELD)),
-				})
+				facets, err := t.collectEventFacets(ctx, timeRange, "", "", maxFacetEvents)
 				if err != nil {
-					return nil, fmt.Errorf("failed to get sources for events: %s", err)
+					return nil, err
 				}
 
-				eventsMetadata.Sources = resp.Payload.Values
-
-				resp, err = t.dataUnstableAPI.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
-					Context: ctx,
-					Field:   ptr.To(string(models.DataunstableEventFieldTYPEEVENTFIELD)),
-				})
-				if err != nil {
-					return nil, fmt.Errorf("failed to get types for events: %s", err)
-				}
-
-				eventsMetadata.Types = resp.Payload.Values
-
-				resp, err = t.dataUnstableAPI.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
-					Context: ctx,
-					Field:   ptr.To(string(models.DataunstableEventFieldLABELNAMEEVENTFIELD)),
-				})
-				if err != nil {
-					return nil, fmt.Errorf("failed to get label names for events: %s", err)
-				}
-
-				eventsMetadata.LabelNames = resp.Payload.Values
-
-				resp, err = t.dataUnstableAPI.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
-					Context: ctx,
-					Field:   ptr.To(string(models.DataunstableEventFieldLENSSERVICEEVENTFIELD)),
-				})
-				if err != nil {
-					return nil, fmt.Errorf("failed to get lens service names for events: %s", err)
-				}
-
-				eventsMetadata.LensServiceNames = resp.Payload.Values
 				return &tools.Result{
-					JSONContent:      eventsMetadata,
-					ChronosphereLink: t.linkBuilder.EventExplorer().String(),
+					JSONContent: struct {
+						Categories []string `json:"categories"`
+						Sources    []string `json:"sources"`
+						Types      []string `json:"types"`
+						LabelNames []string `json:"label_names"`
+						Truncated  bool     `json:"truncated"`
+					}{
+						Categories: sortedKeys(facets.categories),
+						Sources:    sortedKeys(facets.sources),
+						Types:      sortedKeys(facets.types),
+						LabelNames: sortedKeys(facets.labelNames),
+						Truncated:  facets.truncated,
+					},
+					ChronosphereLink: t.linkBuilder.EventExplorer().
+						WithTimeRange(timeRange.Start, timeRange.End).
+						String(),
 				}, nil
 			},
 		},
 		{
 			Metadata: tools.NewMetadata("list_events_label_values",
-				mcp.WithDescription("List values for a given label name"),
+				mcp.WithDescription(
+					"List the distinct values of a label across events that happened in the time range and match the "+
+						"optional query. Values are drawn from at most 10,000 of the most recent matching events; "+
+						"truncated is true when that limit was reached and the list may be partial."),
 				mcp.WithString("label_name",
 					mcp.Required(),
+					mcp.Description("The label name to list values for."),
 				),
+				mcp.WithString("query",
+					mcp.Description("Optional. The query to filter events e.g. categories, types, sources and arbitrary labels.")),
+				withFacetTimeRange(),
 			),
 			Handler: func(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
 				labelName, err := params.String(request, "label_name", true, "")
 				if err != nil {
 					return nil, err
 				}
-
-				resp, err := t.dataUnstableAPI.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
-					Context:   ctx,
-					LabelName: ptr.To(labelName),
-					Field:     ptr.To(string(models.DataunstableEventFieldLABELVALUEEVENTFIELD)),
-				})
+				query, err := params.String(request, "query", false, "")
 				if err != nil {
-					return nil, fmt.Errorf("failed to list label values for events: %s", err)
+					return nil, err
 				}
+				timeRange, err := parseFacetTimeRange(request)
+				if err != nil {
+					return nil, err
+				}
+
+				facets, err := t.collectEventFacets(ctx, timeRange, query, labelName, maxFacetEvents)
+				if err != nil {
+					return nil, err
+				}
+
 				return &tools.Result{
-					JSONContent: resp,
-					ChronosphereLink: t.linkBuilder.Custom("/api/unstable/data/events:field-values").
-						WithParam("field", "LABEL_VALUE_EVENT_FIELD").WithParam("label_name", labelName).String(),
+					JSONContent: struct {
+						LabelName string   `json:"label_name"`
+						Values    []string `json:"values"`
+						Truncated bool     `json:"truncated"`
+					}{
+						LabelName: labelName,
+						Values:    sortedKeys(facets.labelValues),
+						Truncated: facets.truncated,
+					},
+					ChronosphereLink: t.linkBuilder.EventExplorer().
+						WithQuery(query).
+						WithTimeRange(timeRange.Start, timeRange.End).
+						String(),
 				}, nil
 			},
 		},
 	}
+}
+
+// maxFacetEvents bounds how many events the metadata tools read, matching the
+// most ListEvents returns for a single query.
+const maxFacetEvents = 10000
+
+// defaultFacetWindow is how far back the metadata tools look when no start is given.
+const defaultFacetWindow = 24 * time.Hour
+
+func withFacetTimeRange() mcp.ToolOption {
+	return func(tool *mcp.Tool) {
+		mcp.WithString("start",
+			mcp.Description("Optional. Start time in RFC3339 format or timestamp in seconds. Defaults to end - 24 hours."),
+		)(tool)
+		mcp.WithString("end",
+			mcp.Description("Optional. End time in RFC3339 format or timestamp in seconds. Defaults to the current time."),
+		)(tool)
+	}
+}
+
+func parseFacetTimeRange(request mcp.CallToolRequest) (*params.TimeRange, error) {
+	end, err := params.Time(request, "end", false, time.Now())
+	if err != nil {
+		return nil, err
+	}
+	start, err := params.Time(request, "start", false, end.Add(-defaultFacetWindow))
+	if err != nil {
+		return nil, err
+	}
+	return &params.TimeRange{Start: start, End: end}, nil
+}
+
+// eventFacets holds the distinct values seen across a set of events.
+type eventFacets struct {
+	categories  map[string]struct{}
+	sources     map[string]struct{}
+	types       map[string]struct{}
+	labelNames  map[string]struct{}
+	labelValues map[string]struct{}
+	// truncated is true when maxEvents events were read, so more may exist.
+	truncated bool
+}
+
+// collectEventFacets pages through ListEvents for the time range and query,
+// reading at most maxEvents events, and collects their distinct categories,
+// sources, types and label names. When labelName is set, it also collects the
+// distinct values of that label.
+func (t *Tools) collectEventFacets(
+	ctx context.Context,
+	timeRange *params.TimeRange,
+	query string,
+	labelName string,
+	maxEvents int,
+) (*eventFacets, error) {
+	facets := &eventFacets{
+		categories:  map[string]struct{}{},
+		sources:     map[string]struct{}{},
+		types:       map[string]struct{}{},
+		labelNames:  map[string]struct{}{},
+		labelValues: map[string]struct{}{},
+	}
+
+	var (
+		read      int
+		pageToken string
+	)
+	for {
+		queryParams := &version1.ListEventsParams{
+			Context:        ctx,
+			HappenedAfter:  (*strfmt.DateTime)(ptr.To(timeRange.Start)),
+			HappenedBefore: (*strfmt.DateTime)(ptr.To(timeRange.End)),
+		}
+		if query != "" {
+			queryParams.Query = ptr.To(query)
+		}
+		if pageToken != "" {
+			queryParams.PageToken = ptr.To(pageToken)
+		}
+
+		resp, err := t.dataV1API.Version1.ListEvents(queryParams)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list events: %s", err)
+		}
+
+		for _, event := range resp.Payload.Events {
+			if read >= maxEvents {
+				break
+			}
+			read++
+			if event == nil {
+				continue
+			}
+			addNonEmpty(facets.categories, event.Category)
+			addNonEmpty(facets.sources, event.Source)
+			addNonEmpty(facets.types, event.Type)
+			for name, value := range event.Labels {
+				addNonEmpty(facets.labelNames, name)
+				if labelName != "" && name == labelName {
+					addNonEmpty(facets.labelValues, value)
+				}
+			}
+		}
+
+		if read >= maxEvents {
+			facets.truncated = true
+			return facets, nil
+		}
+		if resp.Payload.Page == nil || resp.Payload.Page.NextToken == "" || len(resp.Payload.Events) == 0 {
+			return facets, nil
+		}
+		pageToken = resp.Payload.Page.NextToken
+	}
+}
+
+func addNonEmpty(set map[string]struct{}, value string) {
+	if value != "" {
+		set[value] = struct{}{}
+	}
+}
+
+// sortedKeys returns the set's members in sorted order, never nil.
+func sortedKeys(set map[string]struct{}) []string {
+	keys := make([]string, 0, len(set))
+	for k := range set {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
 }

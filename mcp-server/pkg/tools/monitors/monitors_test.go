@@ -21,14 +21,20 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/go-openapi/strfmt"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
 
+	"github.com/chronosphereio/chronosphere-mcp/generated/datav1/datav1"
+	datav1models "github.com/chronosphereio/chronosphere-mcp/generated/datav1/models"
 	"github.com/chronosphereio/chronosphere-mcp/generated/statev1/models"
 	"github.com/chronosphereio/chronosphere-mcp/generated/statev1/statev1"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/pkg/params"
 )
 
 func TestParseLabelMatcher(t *testing.T) {
@@ -325,16 +331,14 @@ func TestListMonitorStatuses(t *testing.T) {
 			client := statev1.NewHTTPClientWithConfig(nil, statev1.DefaultTransportConfig().
 				WithHost(strings.TrimPrefix(server.URL, "http://")).
 				WithSchemes([]string{"http"}))
-			monitorTools, err := NewTools(client, zaptest.NewLogger(t))
+			monitorTools, err := NewTools(client, nil, zaptest.NewLogger(t))
 			require.NoError(t, err)
 
-			mcpTools := monitorTools.MCPTools()
-			require.Len(t, mcpTools, 1)
 			request := mcp.CallToolRequest{}
 			request.Params.Name = "list_monitor_statuses"
 			request.Params.Arguments = tt.args
 
-			result, err := mcpTools[0].Handler(t.Context(), request)
+			result, err := findTool(t, monitorTools, "list_monitor_statuses").Handler(t.Context(), request)
 			assert.Equal(t, !tt.skipRequest, requested)
 			if tt.wantErr != "" {
 				require.ErrorContains(t, err, tt.wantErr)
@@ -348,6 +352,288 @@ func TestListMonitorStatuses(t *testing.T) {
 			want, err := json.Marshal(tt.wantResult)
 			require.NoError(t, err)
 			assert.JSONEq(t, string(want), string(got))
+		})
+	}
+}
+
+func findTool(t *testing.T, monitorTools *Tools, name string) tools.MCPTool {
+	t.Helper()
+	for _, tool := range monitorTools.MCPTools() {
+		if tool.Metadata.Name == name {
+			return tool
+		}
+	}
+	require.Failf(t, "tool not found", "no tool named %q", name)
+	return tools.MCPTool{}
+}
+
+func TestListAlertsRequest(t *testing.T) {
+	start := time.Date(2026, 1, 2, 3, 0, 0, 0, time.UTC)
+	end := start.Add(time.Hour)
+	timeRange := params.TimeRange{Start: start, End: end}
+	window := &datav1models.Datav1TimeRange{Start: strfmt.DateTime(start), End: strfmt.DateTime(end)}
+
+	tests := []struct {
+		name    string
+		args    listAlertsArgs
+		want    *datav1models.Datav1ListAlertsRequest
+		wantErr string
+	}{
+		{
+			name: "defaults to triggered window and newest first",
+			args: listAlertsArgs{timeRange: timeRange},
+			want: &datav1models.Datav1ListAlertsRequest{
+				Filter:    &datav1models.Datav1AlertsFilter{TriggerTimeRange: window},
+				SortOrder: datav1models.ListAlertsRequestSortOrderTRIGGEREDDESC,
+			},
+		},
+		{
+			name: "active time filter sets the active window",
+			args: listAlertsArgs{timeRange: timeRange, timeFilter: "active", sort: "oldest"},
+			want: &datav1models.Datav1ListAlertsRequest{
+				Filter:    &datav1models.Datav1AlertsFilter{ActiveTimeRange: window},
+				SortOrder: datav1models.ListAlertsRequestSortOrderTRIGGEREDASC,
+			},
+		},
+		{
+			name: "every filter",
+			args: listAlertsArgs{
+				timeRange:           timeRange,
+				timeFilter:          "triggered",
+				firingStatus:        "resolved",
+				severity:            "critical",
+				muteStatus:          "not_muted",
+				sourceType:          "slo",
+				monitorSlugs:        []string{"mon"},
+				monitorNameContains: "api",
+				sloSlugs:            []string{"slo"},
+				sloNameContains:     "latency",
+				alertTitleContains:  "down",
+				collectionSlugs:     []string{"coll"},
+				teamSlugs:           []string{"team"},
+				notifierSlugs:       []string{"pager"},
+				signalLabels:        []string{"service=api"},
+				monitorLabels:       []string{"env!=dev"},
+				alertIDs:            []string{"id-1"},
+				pageSize:            10,
+				pageToken:           "next",
+			},
+			want: &datav1models.Datav1ListAlertsRequest{
+				Filter: &datav1models.Datav1AlertsFilter{
+					TriggerTimeRange:      window,
+					FiringStatus:          datav1models.Datav1FiringStatusRESOLVED,
+					Severity:              datav1models.Datav1SeverityCRITICAL,
+					MuteStatus:            datav1models.Datav1MuteStatusNOTMUTED,
+					SourceType:            datav1models.Datav1SourceTypeSLO,
+					MonitorSlugs:          []string{"mon"},
+					MonitorNameContains:   "api",
+					SloSlugs:              []string{"slo"},
+					SloNameContains:       "latency",
+					AlertTitleContains:    "down",
+					SourceCollectionSlugs: []string{"coll"},
+					SourceTeamSlugs:       []string{"team"},
+					NotifierSlugs:         []string{"pager"},
+					AlertIds:              []string{"id-1"},
+					LabelFilters: []*datav1models.Datav1LabelFilter{{
+						MatchStrategy: datav1models.LabelFilterMatchStrategySUBSETMATCH,
+						LabelMatchers: []*datav1models.LabelFilterLabelMatcher{
+							{
+								FilterTarget: datav1models.LabelMatcherFilterTargetSIGNAL,
+								Matcher:      &datav1models.CommonPromQLMatcher{Name: "service", Type: datav1models.CommonPromQLMatcherTypeMatchEqual, Value: "api"},
+							},
+							{
+								FilterTarget: datav1models.LabelMatcherFilterTargetMONITOR,
+								Matcher:      &datav1models.CommonPromQLMatcher{Name: "env", Type: datav1models.CommonPromQLMatcherTypeMatchNotEqual, Value: "dev"},
+							},
+						},
+					}},
+				},
+				SortOrder: datav1models.ListAlertsRequestSortOrderTRIGGEREDDESC,
+				Page:      &datav1models.Configv1PageParams{MaxSize: 10, Token: "next"},
+			},
+		},
+		{
+			name:    "invalid time filter",
+			args:    listAlertsArgs{timeFilter: "resolved"},
+			wantErr: `invalid time_filter "resolved"`,
+		},
+		{
+			name:    "invalid firing status",
+			args:    listAlertsArgs{firingStatus: "FIRING"},
+			wantErr: `invalid firing_status "FIRING": must be one of firing, resolved`,
+		},
+		{
+			name:    "invalid severity",
+			args:    listAlertsArgs{severity: "info"},
+			wantErr: `invalid severity "info"`,
+		},
+		{
+			name:    "invalid mute status",
+			args:    listAlertsArgs{muteStatus: "unmuted"},
+			wantErr: `invalid mute_status "unmuted"`,
+		},
+		{
+			name:    "invalid source type",
+			args:    listAlertsArgs{sourceType: "dashboard"},
+			wantErr: `invalid source_type "dashboard"`,
+		},
+		{
+			name:    "invalid sort",
+			args:    listAlertsArgs{sort: "asc"},
+			wantErr: `invalid sort "asc"`,
+		},
+		{
+			name:    "invalid label matcher",
+			args:    listAlertsArgs{monitorLabels: []string{"env=~dev.*", "team"}},
+			wantErr: "invalid monitor_labels",
+		},
+		{
+			name:    "negative page size",
+			args:    listAlertsArgs{pageSize: -1},
+			wantErr: "invalid page_size",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := listAlertsRequest(tt.args)
+			if tt.wantErr != "" {
+				require.ErrorContains(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestListAlerts(t *testing.T) {
+	tests := []struct {
+		name        string
+		args        map[string]any
+		status      int
+		response    string
+		wantBody    string
+		wantResult  string
+		wantErr     string
+		skipRequest bool
+	}{
+		{
+			name: "pages and maps the response",
+			args: map[string]any{
+				"start":         "2026-01-02T03:00:00Z",
+				"end":           "2026-01-02T04:00:00Z",
+				"monitor_slugs": []any{"api-errors"},
+				"page_size":     2,
+				"page_token":    "page-2",
+			},
+			status: http.StatusOK,
+			response: `{
+				"alerts": [
+					{"alert_id": "a1", "monitor_slug": "api-errors", "severity": "CRITICAL", "firing_status": "FIRING", "triggered_at": "2026-01-02T03:30:00Z"},
+					{"alert_id": "a2", "monitor_slug": "api-errors", "severity": "WARN", "firing_status": "RESOLVED", "triggered_at": "2026-01-02T03:10:00Z", "resolved_at": "2026-01-02T03:20:00Z"}
+				],
+				"page": {"next_token": "page-3"},
+				"total_count": "5"
+			}`,
+			wantBody: `{
+				"filter": {
+					"trigger_time_range": {"start": "2026-01-02T03:00:00.000Z", "end": "2026-01-02T04:00:00.000Z"},
+					"monitor_slugs": ["api-errors"],
+					"alert_ids": null,
+					"external_connections": null,
+					"label_filters": null,
+					"notifier_slugs": null,
+					"slo_slugs": null,
+					"source_collection_slugs": null,
+					"source_team_slugs": null
+				},
+				"page": {"max_size": 2, "token": "page-2"},
+				"sort_order": "TRIGGERED_DESC"
+			}`,
+			wantResult: `{
+				"total_count": 5,
+				"alerts": [
+					{"alert_id": "a1", "monitor_slug": "api-errors", "severity": "CRITICAL", "firing_status": "FIRING", "triggered_at": "2026-01-02T03:30:00.000Z", "external_connections": null, "notifier_slugs": null},
+					{"alert_id": "a2", "monitor_slug": "api-errors", "severity": "WARN", "firing_status": "RESOLVED", "triggered_at": "2026-01-02T03:10:00.000Z", "resolved_at": "2026-01-02T03:20:00.000Z", "external_connections": null, "notifier_slugs": null}
+				],
+				"next_page_token": "page-3"
+			}`,
+		},
+		{
+			name:       "last page",
+			args:       map[string]any{},
+			status:     http.StatusOK,
+			response:   `{"alerts": [], "page": {}, "total_count": "0"}`,
+			wantResult: `{"total_count": 0, "alerts": []}`,
+		},
+		{
+			name:     "not found means not enabled",
+			args:     map[string]any{},
+			status:   http.StatusNotFound,
+			response: `{"message": "not found"}`,
+			wantErr:  "alerts API is not enabled for this tenant",
+		},
+		{
+			name:     "other errors are reported",
+			args:     map[string]any{},
+			status:   http.StatusInternalServerError,
+			response: `{"message": "boom"}`,
+			wantErr:  "failed to list alerts",
+		},
+		{
+			name:     "malformed total count",
+			args:     map[string]any{},
+			status:   http.StatusOK,
+			response: `{"total_count": "many"}`,
+			wantErr:  "invalid total_count",
+		},
+		{
+			name:        "invalid enum sends no request",
+			args:        map[string]any{"severity": "info"},
+			wantErr:     `invalid severity "info"`,
+			skipRequest: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var requested bool
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				requested = true
+				assert.Equal(t, http.MethodPost, r.Method)
+				assert.Equal(t, "/api/v1/data/alerts", r.URL.Path)
+				body, err := io.ReadAll(r.Body)
+				assert.NoError(t, err)
+				if tt.wantBody != "" {
+					assert.JSONEq(t, tt.wantBody, string(body))
+				}
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tt.status)
+				_, err = w.Write([]byte(tt.response))
+				assert.NoError(t, err)
+			}))
+			defer server.Close()
+
+			client := datav1.NewHTTPClientWithConfig(nil, datav1.DefaultTransportConfig().
+				WithHost(strings.TrimPrefix(server.URL, "http://")).
+				WithSchemes([]string{"http"}))
+			monitorTools, err := NewTools(nil, client, zaptest.NewLogger(t))
+			require.NoError(t, err)
+
+			request := mcp.CallToolRequest{}
+			request.Params.Name = "list_alerts"
+			request.Params.Arguments = tt.args
+
+			result, err := findTool(t, monitorTools, "list_alerts").Handler(t.Context(), request)
+			assert.Equal(t, !tt.skipRequest, requested)
+			if tt.wantErr != "" {
+				require.ErrorContains(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+
+			got, err := json.Marshal(result.JSONContent)
+			require.NoError(t, err)
+			assert.JSONEq(t, tt.wantResult, string(got))
 		})
 	}
 }

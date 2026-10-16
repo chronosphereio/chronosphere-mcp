@@ -188,6 +188,7 @@ The MCP project provides an inspector useful for directly calling tools APIs. To
 | metrics | query_prometheus_instant | Evaluates a Prometheus instant query at a single point in time |
 | metrics | query_prometheus_range | Executes a Prometheus PromQL query over a specified time range and returns time series data points as JSON. Supports standard PromQL syntax plus Chronosphere custom functions: - cardinality_estimat... |
 | metrics | render_prometheus_range_query | Evaluates a Prometheus expression query over a range of time and renders it as a PNG image. |
+| monitors | list_alerts | Lists alerts raised by monitors and SLOs in Chronosphere, newest first by default. The five search filters (monitor_slugs, monitor_name_contains, slo_slugs, slo_name_contains and alert_title_contai... |
 | monitors | list_monitor_statuses | Lists the current status of monitors in Chronosphere. Returns every monitor matching the filters with a firing alert. Monitors that are not firing are omitted from the results. Each status carries ... |
 | traces | list_traces | List traces from a given query |
 

@@ -628,7 +628,7 @@ func TestListLogFieldValuesTool(t *testing.T) {
 }
 
 func TestListLogFieldNamesRetired(t *testing.T) {
-	const withQuery = "list_log_field_names is no longer supported: Chronosphere's public API does not expose log field names.\n" +
+	const withQuery = "list_log_field_names is no longer supported.\n" +
 		"To approximate it:\n" +
 		"1. Call query_logs_range with query `service=\"gateway\" | project logID, payload | limit 20` over the same time range.\n" +
 		"2. Collect the keys that appear across the returned payloads. Fields present on more of the sampled logs are\n" +
@@ -636,7 +636,7 @@ func TestListLogFieldNamesRetired(t *testing.T) {
 		"3. To confirm a candidate field and see its values, call list_log_field_values with that field_name.\n" +
 		"This finds fields in the raw log body. It can miss labels added by the ingestion pipeline and OTLP attributes\n" +
 		"that are not in the payload, so if you know a field name, try list_log_field_values directly."
-	const withoutQuery = "list_log_field_names is no longer supported: Chronosphere's public API does not expose log field names.\n" +
+	const withoutQuery = "list_log_field_names is no longer supported.\n" +
 		"To approximate it:\n" +
 		"1. Call query_logs_range with query `project logID, payload | limit 20` over the same time range.\n" +
 		"2. Collect the keys that appear across the returned payloads. Fields present on more of the sampled logs are\n" +

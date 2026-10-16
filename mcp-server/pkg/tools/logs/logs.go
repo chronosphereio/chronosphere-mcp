@@ -366,7 +366,7 @@ func listLogFieldNamesRetiredError(query string) error {
 	if q := strings.TrimSpace(query); q != "" {
 		sampleQuery = q + " | " + sampleQuery
 	}
-	return errors.New(`list_log_field_names is no longer supported: Chronosphere's public API does not expose log field names.
+	return errors.New(`list_log_field_names is no longer supported.
 To approximate it:
 1. Call query_logs_range with query ` + "`" + sampleQuery + "`" + ` over the same time range.
 2. Collect the keys that appear across the returned payloads. Fields present on more of the sampled logs are

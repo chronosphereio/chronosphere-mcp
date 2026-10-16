@@ -97,7 +97,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 	return []tools.MCPTool{
 		{
 			Metadata: tools.NewMetadata("list_monitor_statuses",
-				mcp.WithDescription("Lists the current status of monitors in Chronosphere. Returns every monitor with a firing alert, plus a PASS entry for each requested monitor slug that is not firing. Each status carries its state (ALERTING, MUTED or PASS), its most severe alert severity, and optionally its firing signals."),
+				mcp.WithDescription("Lists the current status of monitors in Chronosphere. Returns every monitor with a firing alert; monitors that are not firing are omitted, except that each slug passed in monitor_slugs that is not firing is reported with state PASS. Each status carries its state (ALERTING, MUTED or PASS), its most severe alert severity, and optionally its firing signals."),
 				params.WithStringArray("monitor_slugs",
 					mcp.Description("Filter by monitor slug. If all filters are empty, return status for all firing monitors."),
 				),

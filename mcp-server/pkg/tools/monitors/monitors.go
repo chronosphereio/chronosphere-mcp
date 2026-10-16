@@ -41,14 +41,12 @@ const sortByState = "SORT_BY_STATE"
 const (
 	stateAlerting = "ALERTING"
 	stateMuted    = "MUTED"
-	statePass     = "PASS"
 )
 
-// stateOrder orders states for SORT_BY_STATE: alerting first, then muted, then passing.
+// stateOrder orders states for SORT_BY_STATE: alerting first, then muted.
 var stateOrder = map[string]int{
 	stateAlerting: 0,
 	stateMuted:    1,
-	statePass:     2,
 }
 
 // severityOrder orders severities for SORT_BY_STATE: critical first, then warn, then none.
@@ -80,7 +78,7 @@ func (t *Tools) GroupName() string {
 // MonitorStatus is the status of one monitor as returned by list_monitor_statuses.
 type MonitorStatus struct {
 	MonitorSlug string `json:"monitor_slug"`
-	// State is ALERTING, MUTED (every firing alert is muted) or PASS (not firing).
+	// State is ALERTING, or MUTED when every firing alert is muted.
 	State    string                        `json:"state"`
 	Muted    bool                          `json:"muted,omitempty"`
 	Severity models.Datav1Severity         `json:"severity,omitempty"`
@@ -97,7 +95,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 	return []tools.MCPTool{
 		{
 			Metadata: tools.NewMetadata("list_monitor_statuses",
-				mcp.WithDescription("Lists the current status of monitors in Chronosphere. Returns every monitor matching the filters with a firing alert. Monitors that are not firing are omitted from the results, except those explicitly requested by slug via monitor_slugs. Each status carries its state (ALERTING, MUTED or PASS), its most severe alert severity, and optionally its firing signals."),
+				mcp.WithDescription("Lists the current status of monitors in Chronosphere. Returns every monitor matching the filters with a firing alert. Monitors that are not firing are omitted from the results. Each status carries its state (ALERTING or MUTED), its most severe alert severity, and optionally its firing signals."),
 				params.WithStringArray("monitor_slugs",
 					mcp.Description("Filter by monitor slug. If all filters are empty, return status for all firing monitors."),
 				),
@@ -212,7 +210,7 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 
 				return &tools.Result{
 					JSONContent: &ListMonitorStatusesResult{
-						MonitorStatuses: toMonitorStatuses(firing, monitorSlugs, sortBy),
+						MonitorStatuses: toMonitorStatuses(firing, sortBy),
 					},
 				}, nil
 			},
@@ -289,11 +287,9 @@ func parseLabelMatcher(s string) (*models.CommonPromQLMatcher, error) {
 	}, nil
 }
 
-// toMonitorStatuses converts the firing monitors into the tool's result, adds
-// a PASS entry for each requested slug that is not firing, and sorts.
-func toMonitorStatuses(firing []*models.Statev1MonitorStatus, requestedSlugs []string, sortBy string) []*MonitorStatus {
-	statuses := make([]*MonitorStatus, 0, len(firing)+len(requestedSlugs))
-	seen := make(map[string]struct{}, len(firing))
+// toMonitorStatuses converts the firing monitors into the tool's result and sorts.
+func toMonitorStatuses(firing []*models.Statev1MonitorStatus, sortBy string) []*MonitorStatus {
+	statuses := make([]*MonitorStatus, 0, len(firing))
 	for _, f := range firing {
 		if f == nil {
 			continue
@@ -308,17 +304,6 @@ func toMonitorStatuses(firing []*models.Statev1MonitorStatus, requestedSlugs []s
 			Muted:       f.Muted,
 			Severity:    f.Severity,
 			Signals:     f.Signals,
-		})
-		seen[f.MonitorSlug] = struct{}{}
-	}
-	for _, slug := range requestedSlugs {
-		if _, ok := seen[slug]; ok {
-			continue
-		}
-		seen[slug] = struct{}{}
-		statuses = append(statuses, &MonitorStatus{
-			MonitorSlug: slug,
-			State:       statePass,
 		})
 	}
 

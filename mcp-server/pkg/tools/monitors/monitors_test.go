@@ -165,11 +165,10 @@ func TestToMonitorStatuses(t *testing.T) {
 		return &models.Statev1MonitorStatus{MonitorSlug: slug, Muted: muted, Severity: severity}
 	}
 	tests := []struct {
-		name           string
-		firing         []*models.Statev1MonitorStatus
-		requestedSlugs []string
-		sortBy         string
-		want           []*MonitorStatus
+		name   string
+		firing []*models.Statev1MonitorStatus
+		sortBy string
+		want   []*MonitorStatus
 	}{
 		{
 			name:   "no results",
@@ -188,16 +187,6 @@ func TestToMonitorStatuses(t *testing.T) {
 			},
 		},
 		{
-			name:           "requested slugs that are not firing pass",
-			firing:         []*models.Statev1MonitorStatus{firing("b", false, models.Datav1SeverityWARN)},
-			requestedSlugs: []string{"c", "b", "a", "c"},
-			want: []*MonitorStatus{
-				{MonitorSlug: "a", State: statePass},
-				{MonitorSlug: "b", State: stateAlerting, Severity: models.Datav1SeverityWARN},
-				{MonitorSlug: "c", State: statePass},
-			},
-		},
-		{
 			name: "sort by state then severity then slug",
 			firing: []*models.Statev1MonitorStatus{
 				firing("muted-crit", true, models.Datav1SeverityCRITICAL),
@@ -205,20 +194,18 @@ func TestToMonitorStatuses(t *testing.T) {
 				firing("z-crit", false, models.Datav1SeverityCRITICAL),
 				firing("a-warn", false, models.Datav1SeverityWARN),
 			},
-			requestedSlugs: []string{"aaa-pass"},
-			sortBy:         sortByState,
+			sortBy: sortByState,
 			want: []*MonitorStatus{
 				{MonitorSlug: "z-crit", State: stateAlerting, Severity: models.Datav1SeverityCRITICAL},
 				{MonitorSlug: "a-warn", State: stateAlerting, Severity: models.Datav1SeverityWARN},
 				{MonitorSlug: "b-warn", State: stateAlerting, Severity: models.Datav1SeverityWARN},
 				{MonitorSlug: "muted-crit", State: stateMuted, Muted: true, Severity: models.Datav1SeverityCRITICAL},
-				{MonitorSlug: "aaa-pass", State: statePass},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, toMonitorStatuses(tt.firing, tt.requestedSlugs, tt.sortBy))
+			assert.Equal(t, tt.want, toMonitorStatuses(tt.firing, tt.sortBy))
 		})
 	}
 }
@@ -279,7 +266,6 @@ func TestListMonitorStatuses(t *testing.T) {
 							},
 						}},
 					},
-					{MonitorSlug: "quiet", State: statePass},
 				},
 			},
 		},

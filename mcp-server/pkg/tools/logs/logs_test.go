@@ -15,12 +15,16 @@
 package logs
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
@@ -244,4 +248,464 @@ func TestQueryLogsRangeAPICall(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotNil(t, resp)
 	assert.NotNil(t, resp.Payload)
+}
+
+func TestQuoteField(t *testing.T) {
+	tests := []struct {
+		name    string
+		field   string
+		want    string
+		wantErr bool
+	}{
+		{name: "bare", field: "service", want: "service"},
+		{name: "dotted path", field: "kubernetes.namespace_name", want: "kubernetes.namespace_name"},
+		{name: "hyphen and slash", field: "app/k8s-name", want: "app/k8s-name"},
+		{name: "leading at", field: "@timestamp", want: "@timestamp"},
+		{name: "space", field: "http status", want: "['http status']"},
+		{name: "colon", field: "k8s:pod", want: "['k8s:pod']"},
+		{name: "leading hyphen", field: "-x", want: "['-x']"},
+		{name: "empty segment", field: "a..b", want: "['a..b']"},
+		{name: "keyword", field: "by", want: "['by']"},
+		{name: "quote", field: "it's", wantErr: true},
+		{name: "pipe", field: "a|b", wantErr: true},
+		{name: "empty", field: "", wantErr: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := quoteField(tt.field)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestGetLogQuery(t *testing.T) {
+	tests := []struct {
+		name string
+		id   string
+		want string
+	}{
+		{
+			name: "plain id",
+			id:   "abc123",
+			want: `logID = "abc123" | project logID, _timestamp, service, severity, message, payload`,
+		},
+		{
+			name: "id with quote is escaped",
+			id:   `a"b`,
+			want: `logID = "a\"b" | project logID, _timestamp, service, severity, message, payload`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, getLogQuery(tt.id))
+		})
+	}
+}
+
+func TestHistogramQuery(t *testing.T) {
+	tests := []struct {
+		name    string
+		query   string
+		step    time.Duration
+		groupBy []string
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "no query, no group by",
+			step: 36 * time.Second,
+			want: "make-series count() step 36s",
+		},
+		{
+			name:  "query with group by",
+			query: `service="gateway"`,
+			step:  time.Minute,
+			groupBy: []string{
+				"service", "severity",
+			},
+			want: `service="gateway" | make-series count() step 60s by service, severity`,
+		},
+		{
+			name:    "quoted group by field",
+			query:   "error",
+			step:    90 * time.Second,
+			groupBy: []string{"http status"},
+			want:    "error | make-series count() step 90s by ['http status']",
+		},
+		{
+			name: "sub-second step rounds up to 1s",
+			step: 300 * time.Millisecond,
+			want: "make-series count() step 1s",
+		},
+		{
+			name: "fractional step truncates to whole seconds",
+			step: 1500 * time.Millisecond,
+			want: "make-series count() step 1s",
+		},
+		{
+			name:    "unquotable group by field",
+			step:    time.Minute,
+			groupBy: []string{"a|b"},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := histogramQuery(tt.query, tt.step, tt.groupBy)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestFieldValuesQuery(t *testing.T) {
+	tests := []struct {
+		name    string
+		query   string
+		field   string
+		limit   int
+		want    string
+		wantErr bool
+	}{
+		{
+			name:  "no query",
+			field: "service",
+			limit: 100,
+			want:  "filter service exists | summarize n = count() by service | sort by n desc | limit 100",
+		},
+		{
+			name:  "with query",
+			query: `severity="ERROR"`,
+			field: "kubernetes.pod_name",
+			limit: 10,
+			want:  `severity="ERROR" | filter kubernetes.pod_name exists | summarize n = count() by kubernetes.pod_name | sort by n desc | limit 10`,
+		},
+		{
+			name:  "quoted field",
+			field: "http status",
+			limit: 5,
+			want:  "filter ['http status'] exists | summarize n = count() by ['http status'] | sort by n desc | limit 5",
+		},
+		{
+			name:    "unquotable field",
+			field:   `a"b`,
+			limit:   5,
+			wantErr: true,
+		},
+		{
+			name:    "non-positive limit",
+			field:   "service",
+			limit:   0,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := fieldValuesQuery(tt.query, tt.field, tt.limit)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+// fakeLogsServer serves a fixed QueryLogsRange response and records the query parameters of each request.
+type fakeLogsServer struct {
+	*httptest.Server
+	requests []url.Values
+}
+
+func newFakeLogsServer(t *testing.T, body string) *fakeLogsServer {
+	f := &fakeLogsServer{}
+	f.Server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "/api/v1/data/logs:range", r.URL.Path)
+		f.requests = append(f.requests, r.URL.Query())
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if _, err := w.Write([]byte(body)); err != nil {
+			t.Errorf("failed to write response: %v", err)
+		}
+	}))
+	t.Cleanup(f.Close)
+	return f
+}
+
+func newTestTools(t *testing.T, serverURL string) *Tools {
+	transport := datav1.DefaultTransportConfig().
+		WithHost(serverURL[len("http://"):]).
+		WithSchemes([]string{"http"})
+	client := datav1.NewHTTPClientWithConfig(nil, transport)
+	tools, err := NewTools(client, nil, zaptest.NewLogger(t), links.NewBuilder("https://test.chronosphere.io"))
+	require.NoError(t, err)
+	return tools
+}
+
+func callTool(t *testing.T, tools *Tools, name string, args map[string]any) (any, error) {
+	for _, tool := range tools.MCPTools() {
+		if tool.Metadata.Name != name {
+			continue
+		}
+		req := mcp.CallToolRequest{}
+		req.Params.Name = name
+		req.Params.Arguments = args
+		res, err := tool.Handler(t.Context(), req)
+		if err != nil {
+			return nil, err
+		}
+		return res.JSONContent, nil
+	}
+	t.Fatalf("tool %q not registered", name)
+	return nil, nil
+}
+
+func toJSON(t *testing.T, v any) string {
+	b, err := json.Marshal(v)
+	require.NoError(t, err)
+	return string(b)
+}
+
+func TestGetLogTool(t *testing.T) {
+	server := newFakeLogsServer(t, `{
+		"grid_data": {
+			"columns": [
+				{"name": "logID", "type": "STRING"},
+				{"name": "severity", "type": "STRING"},
+				{"name": "message", "type": "STRING"},
+				{"name": "payload", "type": "STRING"}
+			],
+			"rows": [{"values": [
+				{"string_value": "abc"},
+				{"string_value": "ERROR"},
+				{"string_value": "boom"},
+				{"string_value": "{\"k\":\"v\"}"}
+			]}]
+		}
+	}`)
+	tools := newTestTools(t, server.URL)
+
+	t.Run("default 7 day window", func(t *testing.T) {
+		got, err := callTool(t, tools, "get_log", map[string]any{"id": "abc"})
+		require.NoError(t, err)
+		assert.JSONEq(t, `{"logID":"abc","severity":"ERROR","message":"boom","payload":"{\"k\":\"v\"}"}`, toJSON(t, got))
+
+		req := server.requests[len(server.requests)-1]
+		assert.Equal(t, getLogQuery("abc"), req.Get("query"))
+		after, err := time.Parse(time.RFC3339, req.Get("time_range.after"))
+		require.NoError(t, err)
+		before, err := time.Parse(time.RFC3339, req.Get("time_range.before"))
+		require.NoError(t, err)
+		assert.InDelta(t, getLogDefaultLookback.Seconds(), before.Sub(after).Seconds(), 1)
+	})
+
+	t.Run("explicit window", func(t *testing.T) {
+		_, err := callTool(t, tools, "get_log", map[string]any{
+			"id":    "abc",
+			"start": "2026-01-01T00:00:00Z",
+			"end":   "2026-01-02T00:00:00Z",
+		})
+		require.NoError(t, err)
+		req := server.requests[len(server.requests)-1]
+		after, err := time.Parse(time.RFC3339, req.Get("time_range.after"))
+		require.NoError(t, err)
+		before, err := time.Parse(time.RFC3339, req.Get("time_range.before"))
+		require.NoError(t, err)
+		assert.True(t, after.Equal(time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)))
+		assert.True(t, before.Equal(time.Date(2026, 1, 2, 0, 0, 0, 0, time.UTC)))
+	})
+}
+
+func TestGetLogToolNotFound(t *testing.T) {
+	server := newFakeLogsServer(t, `{"grid_data": {"columns": [{"name": "logID"}], "rows": []}}`)
+	tools := newTestTools(t, server.URL)
+
+	_, err := callTool(t, tools, "get_log", map[string]any{"id": "missing"})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "not found")
+}
+
+func TestGetLogHistogramTool(t *testing.T) {
+	server := newFakeLogsServer(t, `{
+		"time_series_data": {
+			"group_by_dimension_names": ["service"],
+			"series": [{
+				"aggregation_name": "count",
+				"group_by_dimension_values": ["gateway"],
+				"buckets": [{"start_time": "2026-01-01T00:00:00Z", "end_time": "2026-01-01T00:01:00Z", "float_value": 3}]
+			}]
+		}
+	}`)
+	tools := newTestTools(t, server.URL)
+
+	got, err := callTool(t, tools, "get_log_histogram", map[string]any{
+		"query":    `severity="ERROR"`,
+		"start":    "2026-01-01T00:00:00Z",
+		"end":      "2026-01-01T01:40:00Z",
+		"group_by": []any{"service"},
+	})
+	require.NoError(t, err)
+
+	require.Len(t, server.requests, 1)
+	assert.Equal(t, `severity="ERROR" | make-series count() step 60s by service`, server.requests[0].Get("query"))
+
+	ts, ok := got.(*models.QueryLogsRangeResponseTimeSeriesData)
+	require.True(t, ok)
+	require.Len(t, ts.Series, 1)
+	assert.Equal(t, []string{"gateway"}, ts.Series[0].GroupByDimensionValues)
+	require.Len(t, ts.Series[0].Buckets, 1)
+	assert.Equal(t, float64(3), ts.Series[0].Buckets[0].FloatValue)
+}
+
+func TestListLogFieldValuesTool(t *testing.T) {
+	tests := []struct {
+		name string
+		body string
+		want string
+	}{
+		{
+			name: "value column first",
+			body: `{"grid_data": {
+				"columns": [{"name": "service", "type": "STRING"}, {"name": "n", "type": "FLOAT"}],
+				"rows": [
+					{"values": [{"string_value": "gateway"}, {"float_value": 12}]},
+					{"values": [{"string_value": "api"}, {"float_value": 3}]}
+				]
+			}}`,
+			want: `{"values":[{"value":"gateway","count":12},{"value":"api","count":3}]}`,
+		},
+		{
+			name: "count column first",
+			body: `{"grid_data": {
+				"columns": [{"name": "n", "type": "FLOAT"}, {"name": "service", "type": "STRING"}],
+				"rows": [{"values": [{"float_value": 7}, {"string_value": "gateway"}]}]
+			}}`,
+			want: `{"values":[{"value":"gateway","count":7}]}`,
+		},
+		{
+			name: "numeric field values",
+			body: `{"grid_data": {
+				"columns": [{"name": "status", "type": "FLOAT"}, {"name": "n", "type": "FLOAT"}],
+				"rows": [{"values": [{"float_value": 500}, {"float_value": 2}]}]
+			}}`,
+			want: `{"values":[{"value":"500","count":2}]}`,
+		},
+		{
+			name: "no rows",
+			body: `{"grid_data": {"columns": [{"name": "service"}, {"name": "n"}], "rows": []}}`,
+			want: `{"values":[]}`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := newFakeLogsServer(t, tt.body)
+			tools := newTestTools(t, server.URL)
+
+			got, err := callTool(t, tools, "list_log_field_values", map[string]any{
+				"query":      `severity="ERROR"`,
+				"field_name": "service",
+				"limit":      float64(5),
+			})
+			require.NoError(t, err)
+			assert.JSONEq(t, tt.want, toJSON(t, got))
+
+			require.Len(t, server.requests, 1)
+			assert.Equal(t,
+				`severity="ERROR" | filter service exists | summarize n = count() by service | sort by n desc | limit 5`,
+				server.requests[0].Get("query"))
+		})
+	}
+}
+
+func TestListLogFieldNamesRetired(t *testing.T) {
+	const withQuery = "list_log_field_names is no longer supported: Chronosphere's public API does not expose log field names.\n" +
+		"To approximate it:\n" +
+		"1. Call query_logs_range with query `service=\"gateway\" | project logID, payload | limit 20` over the same time range.\n" +
+		"2. Collect the keys that appear across the returned payloads. Fields present on more of the sampled logs are\n" +
+		"   the common ones.\n" +
+		"3. To confirm a candidate field and see its values, call list_log_field_values with that field_name.\n" +
+		"This finds fields in the raw log body. It can miss labels added by the ingestion pipeline and OTLP attributes\n" +
+		"that are not in the payload, so if you know a field name, try list_log_field_values directly."
+	const withoutQuery = "list_log_field_names is no longer supported: Chronosphere's public API does not expose log field names.\n" +
+		"To approximate it:\n" +
+		"1. Call query_logs_range with query `project logID, payload | limit 20` over the same time range.\n" +
+		"2. Collect the keys that appear across the returned payloads. Fields present on more of the sampled logs are\n" +
+		"   the common ones.\n" +
+		"3. To confirm a candidate field and see its values, call list_log_field_values with that field_name.\n" +
+		"This finds fields in the raw log body. It can miss labels added by the ingestion pipeline and OTLP attributes\n" +
+		"that are not in the payload, so if you know a field name, try list_log_field_values directly."
+
+	tests := []struct {
+		name    string
+		args    map[string]any
+		wantErr string
+	}{
+		{
+			name:    "with query",
+			args:    map[string]any{"query": `service="gateway"`, "start": "2026-01-01T00:00:00Z", "limit": float64(10)},
+			wantErr: withQuery,
+		},
+		{
+			name:    "without query",
+			args:    map[string]any{},
+			wantErr: withoutQuery,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := newFakeLogsServer(t, `{}`)
+			tools := newTestTools(t, server.URL)
+
+			var found bool
+			for _, tool := range tools.MCPTools() {
+				if tool.Metadata.Name != "list_log_field_names" {
+					continue
+				}
+				found = true
+				assert.True(t, strings.HasPrefix(tool.Metadata.Description, "Deprecated: no longer supported, always returns an error."))
+				for _, p := range []string{"query", "start", "end", "limit"} {
+					assert.Contains(t, tool.Metadata.InputSchema.Properties, p)
+				}
+			}
+			require.True(t, found, "list_log_field_names must stay registered")
+
+			_, err := callTool(t, tools, "list_log_field_names", tt.args)
+			require.Error(t, err)
+			assert.Equal(t, tt.wantErr, err.Error())
+			assert.Empty(t, server.requests, "list_log_field_names must not call the API")
+		})
+	}
+}
+
+func TestCreateCompactSummary(t *testing.T) {
+	resp := &models.Datav1QueryLogsRangeResponse{
+		GridData: &models.QueryLogsRangeResponseGridData{
+			Columns: []*models.QueryLogsRangeResponseColumnMeta{{Name: "logID"}, {Name: "message"}},
+			Rows: []*models.QueryLogsRangeResponseRow{
+				{Values: []*models.QueryLogsRangeResponseRowValue{{StringValue: "a"}, {StringValue: "x|y"}}},
+			},
+		},
+		Metadata: &models.QueryLogsRangeResponseMetadata{LimitEnforced: true},
+	}
+
+	got := createCompactSummary(resp)
+	assert.Equal(t, 1, got.TotalLogs)
+	assert.Equal(t, []string{"logID", "message"}, got.Columns)
+	assert.Equal(t, []string{"logID|message", "a|x￨y"}, got.Logs)
+	assert.Equal(t, "Found 1 log entries. Columns: logID, message. All entries shown below in pipe-separated format", got.Summary)
+	assert.True(t, got.Metadata.LimitEnforced)
+
+	encoded := toJSON(t, got)
+	assert.NotContains(t, encoded, "available_fields")
+	assert.NotContains(t, encoded, "field_suggestion")
 }

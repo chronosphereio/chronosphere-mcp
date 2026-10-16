@@ -46,7 +46,7 @@ type TraceSearchFilterSpanFilter struct {
 	// span count
 	SpanCount *TraceSearchFilterCountFilter `json:"span_count,omitempty"`
 
-	// Matches the tags of the candidate.
+	// Matches the tags of the candidate span.
 	Tags []*TraceSearchFilterTagFilter `json:"tags"`
 }
 

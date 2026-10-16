@@ -19,12 +19,12 @@ import (
 // swagger:model configv1RollupRuleLabelPolicy
 type Configv1RollupRuleLabelPolicy struct {
 
-	// Labels that should be discarded in the output metric. If set, then the
-	// keep field must be empty.
+	// Labels to discard in the output metric. If set, the `keep` field must be
+	// empty.
 	Discard []string `json:"discard"`
 
-	// Labels that should be retained in the output metric. If set, then the
-	// discard field must be empty.
+	// Labels to retain in the output metric. If set, the `discard` field must
+	// be empty.
 	Keep []string `json:"keep"`
 }
 

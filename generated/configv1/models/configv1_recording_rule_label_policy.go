@@ -17,7 +17,7 @@ import (
 // swagger:model configv1RecordingRuleLabelPolicy
 type Configv1RecordingRuleLabelPolicy struct {
 
-	// Labels to add or overwrite before storing the result.
+	// A list of labels to add or overwrite before storing the result.
 	Add map[string]string `json:"add,omitempty"`
 }
 

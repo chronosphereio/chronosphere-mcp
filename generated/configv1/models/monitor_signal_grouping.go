@@ -17,16 +17,16 @@ import (
 // swagger:model MonitorSignalGrouping
 type MonitorSignalGrouping struct {
 
-	// Set of labels names used to split series into signals.
-	// Each unique combination of labels will result in its own signal.
-	// For example, if label_names is ["service", "code"] then all series including labels {service="foo",code="404"}
-	// will be grouped together in the same signal.
+	// Set of label names used to split series into signals. Each unique combination
+	// of labels result in its own signal. For example, if `label_names` is
+	// `["service", "code"]`, then all series including labels
+	// `{service="foo",code="404"}` will be grouped together in the same signal.
 	//
-	// Cannot be used if graphite_query is set.
+	// Cannot be used if `graphite_query` is set.
 	LabelNames []string `json:"label_names"`
 
-	// If this is true, each series will have its own signal.
-	// If this is true then label_names cannot be set.
+	// If set to `true`, each series will have its own signal. Cannot be used with
+	// `label_names`.
 	SignalPerSeries bool `json:"signal_per_series,omitempty"`
 }
 

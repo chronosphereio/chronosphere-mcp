@@ -19,22 +19,25 @@ import (
 // swagger:model configv1ResourcePoolsAllocation
 type Configv1ResourcePoolsAllocation struct {
 
-	// Fixed values optionally override `percent_of_license` allocations for specified licenses.
-	// When defining fixed values for a license, all pools must have an explicit fixed value
-	// specification for that given license. The default pool receives all remaining quota left
-	// within the license, after subtracting the sum of fixed values across pools for that license.
+	// Optional. Specifies overrides for the `percent_of_license` allocations for
+	// specified licenses. When defining fixed values for a license, all pools must
+	// have an explicit fixed value specification for that given license. The default
+	// pool receives all remaining quota left within the license, after subtracting
+	// the sum of fixed values across pools for that license.
 	FixedValues []*AllocationFixedValue `json:"fixed_values"`
 
-	// Percent of the license to allocate to this pool. Must be between 0
-	// and 100 inclusive. The percent_of_license values across all pools
-	// (excluding the default pool) must be <= 100. default_pool need not specify
-	// an allocation, and implicitly receives any remaining allocation. If default_pool does
-	// explicitly specify an allocation, the sum of percent_of_license across all pools
-	// (including the default pool) must exactly equal 100.
+	// Percent of the license to allocate to this pool. This value must be between
+	// `0` and `100`, inclusive. The `percent_of_license` values across all pools,
+	// excluding the default pool, must be less than or equal to 100. The
+	// `default_pool` receives any remaining allocation, so you don't need to specify
+	// a value for it explicitly. If you specify an allocation for the
+	// `default_pool`, the sum of `percent_of_license` across all pools (including
+	// the default pool) must exactly equal `100`.
 	PercentOfLicense float64 `json:"percent_of_license,omitempty"`
 
-	// Optional. For supported licenses, defines thresholds with strict limits for
-	// when to drop new consumption of the license for a pool. Currently, only
+	// Defines thresholds with strict limits for when to drop new consumption of the
+	// persisted cardinality license for a pool. Setting `priority_thresholds` is
+	// required to set limits for cardinality licenses. Only
 	// `PERSISTED_CARDINALITY_STANDARD` and `PERSISTED_CARDINALITY_HISTOGRAM` are
 	// supported.
 	PriorityThresholds []*AllocationThresholds `json:"priority_thresholds"`

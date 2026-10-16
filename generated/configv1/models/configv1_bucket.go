@@ -30,7 +30,7 @@ type Configv1Bucket struct {
 	// Optional labels marking the bucket.
 	Labels map[string]string `json:"labels,omitempty"`
 
-	// Required name of the Bucket. May be modified after the Bucket is created.
+	// The name of the Bucket. You can modify this value after the Bucket is created.
 	Name string `json:"name,omitempty"`
 
 	// Slug of the notification policy used by default for monitors in this bucket.
@@ -39,7 +39,7 @@ type Configv1Bucket struct {
 	// This does not override the policy used when a monitor explicitly references a policy.
 	NotificationPolicySlug string `json:"notification_policy_slug,omitempty"`
 
-	// Unique identifier of the Bucket. If slug is not provided, one will be generated based of the name field. Cannot be modified after the Bucket is created.
+	// The unique identifier of the Bucket. If a `slug` isn't provided, one is generated based on the `name` field. You can't modify this field after the Bucket is created.
 	Slug string `json:"slug,omitempty"`
 
 	// Optional slug of the team the bucket belongs to.

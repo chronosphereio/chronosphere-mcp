@@ -17,7 +17,9 @@ import (
 // swagger:model DefinitionTimeWindow
 type DefinitionTimeWindow struct {
 
-	// duration as a string in the format "28d" or "24h", etc.
+	// Time window that defines the evaluation period as a string, in the format
+	// like `"28d"` (28 days) or `"24h"` (24 hours).
+	// Example: \"30d\
 	Duration string `json:"duration,omitempty"`
 }
 

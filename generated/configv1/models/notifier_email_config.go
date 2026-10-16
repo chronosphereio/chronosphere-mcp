@@ -17,13 +17,14 @@ import (
 // swagger:model NotifierEmailConfig
 type NotifierEmailConfig struct {
 
-	// Optional HTML body of the email.
+	// The body of the email to send, in HTML format.
 	HTML string `json:"html,omitempty"`
 
-	// Optional text body of the email.
+	// The body of the email to send, in plain text format.
 	Text string `json:"text,omitempty"`
 
-	// Required email address to send notifications to.
+	// The email address to send notifications to. Required if including an
+	// `email` object in your request body.
 	To string `json:"to,omitempty"`
 }
 

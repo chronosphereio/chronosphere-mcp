@@ -24,29 +24,30 @@ type Configv1Notifier struct {
 	// Format: date-time
 	CreatedAt strfmt.DateTime `json:"created_at,omitempty"`
 
-	// If set, enables the "discard" integration which simply discards all
-	// notifications. Cannot set if another integration is set.
+	// If `true`, enables the `discard` integration, which discards all
+	// notifications. Cannot be set if another integration is set.
 	Discard bool `json:"discard,omitempty"`
 
 	// email
 	Email *NotifierEmailConfig `json:"email,omitempty"`
 
-	// Required name of the Notifier. May be modified after the Notifier is created.
+	// The name of the Notifier. You can modify this value after the Notifier is created.
 	Name string `json:"name,omitempty"`
 
 	// ops genie
-	OpsGenie *NotifierOpsGenieConfig `json:"ops_genie,omitempty"`
+	OpsGenie *Configv1NotifierOpsGenieConfig `json:"ops_genie,omitempty"`
 
 	// pagerduty
-	Pagerduty *NotifierPagerdutyConfig `json:"pagerduty,omitempty"`
+	Pagerduty *Configv1NotifierPagerdutyConfig `json:"pagerduty,omitempty"`
 
-	// If true, do not notify on resolved alerts. Cannot set if discard is set.
+	// If `true`, disables notifications for resolved alerts. Cannot be set if
+	// `discard` equals `true`.
 	SkipResolved bool `json:"skip_resolved,omitempty"`
 
 	// slack
-	Slack *NotifierSlackConfig `json:"slack,omitempty"`
+	Slack *Configv1NotifierSlackConfig `json:"slack,omitempty"`
 
-	// Unique identifier of the Notifier. If slug is not provided, one will be generated based of the name field. Cannot be modified after the Notifier is created.
+	// The unique identifier of the Notifier. If a `slug` isn't provided, one is generated based on the `name` field. You can't modify this field after the Notifier is created.
 	Slug string `json:"slug,omitempty"`
 
 	// Timestamp of when the Notifier was last updated. Cannot be set by clients.
@@ -55,10 +56,10 @@ type Configv1Notifier struct {
 	UpdatedAt strfmt.DateTime `json:"updated_at,omitempty"`
 
 	// victor ops
-	VictorOps *NotifierVictorOpsConfig `json:"victor_ops,omitempty"`
+	VictorOps *Configv1NotifierVictorOpsConfig `json:"victor_ops,omitempty"`
 
 	// webhook
-	Webhook *NotifierWebhookConfig `json:"webhook,omitempty"`
+	Webhook *Configv1NotifierWebhookConfig `json:"webhook,omitempty"`
 }
 
 // Validate validates this configv1 notifier

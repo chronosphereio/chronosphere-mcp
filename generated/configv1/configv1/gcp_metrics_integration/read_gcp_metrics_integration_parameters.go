@@ -61,7 +61,10 @@ ReadGcpMetricsIntegrationParams contains all the parameters to send to the API e
 */
 type ReadGcpMetricsIntegrationParams struct {
 
-	// Slug.
+	/* Slug.
+
+	   The unique slug that identifies the GcpMetricsIntegration to read.
+	*/
 	Slug string
 
 	timeout    time.Duration

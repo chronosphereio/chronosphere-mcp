@@ -19,7 +19,9 @@ import (
 // swagger:model configv1RecordingRule
 type Configv1RecordingRule struct {
 
-	// Optional slug of the bucket the RecordingRule belongs to.
+	// The slug of the bucket the recording rule belongs to. Required if
+	// `execution_group` is not set. If both `bucket_slug` and `execution_group`
+	// are set, their values must match.
 	BucketSlug string `json:"bucket_slug,omitempty"`
 
 	// Timestamp of when the RecordingRule was created. Cannot be set by clients.
@@ -27,29 +29,42 @@ type Configv1RecordingRule struct {
 	// Format: date-time
 	CreatedAt strfmt.DateTime `json:"created_at,omitempty"`
 
-	// Optional execution_group in which this rule is to be evaluated.
-	// At least one of bucket_slug and execution_group must be set. If both are set, then they are expected to match.
+	// The slug of the execution group in which the recording rule will be evaluated.
+	// Rules in the same execution group run at intervals. All rules in a group must
+	// complete before the rules in that group run again. Required if `bucket_slug`
+	// isn't set. If both `bucket_slug` and `execution_group` are set, their values
+	// must match.
+	//
+	// Creating too many rules in an execution group can cause delays in execution of
+	// the next iteration. Palo Alto Networks recommends limiting the number of rules in an
+	// execution group to 200-300 maximum.
 	ExecutionGroup string `json:"execution_group,omitempty"`
 
-	// Optional interval for evaluating the recording rule.
+	// execution mode
+	ExecutionMode RecordingRuleExecutionMode `json:"execution_mode,omitempty"`
+
+	// Specifies how often to evaluate the recording rule. Default: `60s`.
 	IntervalSecs int32 `json:"interval_secs,omitempty"`
 
 	// label policy
 	LabelPolicy *Configv1RecordingRuleLabelPolicy `json:"label_policy,omitempty"`
 
-	// The name of the time series to use for output, which must be a valid
-	// metric name.
+	// The name of the time series to use for the output of `prometheus_expr`.
+	// This value must be a valid metric name. If you don't set this value,
+	// the output of `prometheus_expr` is output to a time series with a name
+	// defined by the value of `name`.
 	MetricName string `json:"metric_name,omitempty"`
 
-	// Required name of the RecordingRule. May be modified after the RecordingRule is created.
+	// The name of the RecordingRule. You can modify this value after the RecordingRule is created.
 	Name string `json:"name,omitempty"`
 
-	// The PromQL expression to evaluate at the time of each evaluation cycle.
-	// The result is recorded as a new time series with its metric name
-	// defined by the metric_name (or name) field.
+	// The PromQL expression to evaluate at the time of each evaluation cycle. The
+	// result is output to a new time series with a name defined by the value of
+	// `metric_name`. If `metric_name` is unset, the result is output to a
+	// time series defined by the value of `name`.
 	PrometheusExpr string `json:"prometheus_expr,omitempty"`
 
-	// Unique identifier of the RecordingRule. If slug is not provided, one will be generated based of the name field. Cannot be modified after the RecordingRule is created.
+	// The unique identifier of the RecordingRule. If a `slug` isn't provided, one is generated based on the `name` field. You can't modify this field after the RecordingRule is created.
 	Slug string `json:"slug,omitempty"`
 
 	// Timestamp of when the RecordingRule was last updated. Cannot be set by clients.
@@ -63,6 +78,10 @@ func (m *Configv1RecordingRule) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateCreatedAt(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateExecutionMode(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -86,6 +105,23 @@ func (m *Configv1RecordingRule) validateCreatedAt(formats strfmt.Registry) error
 	}
 
 	if err := validate.FormatOf("created_at", "body", "date-time", m.CreatedAt.String(), formats); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *Configv1RecordingRule) validateExecutionMode(formats strfmt.Registry) error {
+	if swag.IsZero(m.ExecutionMode) { // not required
+		return nil
+	}
+
+	if err := m.ExecutionMode.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("execution_mode")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("execution_mode")
+		}
 		return err
 	}
 
@@ -131,6 +167,10 @@ func (m *Configv1RecordingRule) ContextValidate(ctx context.Context, formats str
 		res = append(res, err)
 	}
 
+	if err := m.contextValidateExecutionMode(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.contextValidateLabelPolicy(ctx, formats); err != nil {
 		res = append(res, err)
 	}
@@ -148,6 +188,24 @@ func (m *Configv1RecordingRule) ContextValidate(ctx context.Context, formats str
 func (m *Configv1RecordingRule) contextValidateCreatedAt(ctx context.Context, formats strfmt.Registry) error {
 
 	if err := validate.ReadOnly(ctx, "created_at", "body", strfmt.DateTime(m.CreatedAt)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *Configv1RecordingRule) contextValidateExecutionMode(ctx context.Context, formats strfmt.Registry) error {
+
+	if swag.IsZero(m.ExecutionMode) { // not required
+		return nil
+	}
+
+	if err := m.ExecutionMode.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("execution_mode")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("execution_mode")
+		}
 		return err
 	}
 

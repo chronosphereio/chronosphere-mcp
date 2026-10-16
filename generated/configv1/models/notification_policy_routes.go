@@ -22,10 +22,11 @@ type NotificationPolicyRoutes struct {
 	// defaults
 	Defaults *RoutesSeverityNotifiers `json:"defaults,omitempty"`
 
-	// Optional list of overrides to use for alerts having matching labels.
-	// Each override defines labels that potentially match an alert's labels.
-	// If one or more overrides match an alert, the notifiers of the first matching
-	// override are used instead of the defaults.
+	// A list of overrides to use for alert notification policies. Each
+	// override defines the labels that potentially match an alert. If an alert has
+	// matching labels, the override notification policy is used for that alert
+	// instead of the default notification policy. If multiple overrides match
+	// the same alert, the first matching override notification policy is used.
 	Overrides []*NotificationPolicyRoutesOverride `json:"overrides"`
 }
 

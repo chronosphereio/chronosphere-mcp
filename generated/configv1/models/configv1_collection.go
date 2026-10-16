@@ -24,21 +24,23 @@ type Configv1Collection struct {
 	// Format: date-time
 	CreatedAt strfmt.DateTime `json:"created_at,omitempty"`
 
-	// Optional description of the collection.
+	// A description of the collection.
 	Description string `json:"description,omitempty"`
 
-	// Required name of the Collection. May be modified after the Collection is created.
+	// The name of the Collection. You can modify this value after the Collection is created.
 	Name string `json:"name,omitempty"`
 
-	// Slug of the notification policy used by default for monitors in this collection.
-	// This is optional if the collection does not contain monitors or all of its monitors explicitly reference a policy.
-	// This does not override the policy used when a monitor explicitly references a policy.
+	// The slug of the default notification policy for monitors in this collection.
+	// This value is only required when the collection contains monitors and one
+	// or more of those monitors don't explicitly reference a policy. This value does
+	// not override the policy used when a monitor explicitly references a different
+	// policy.
 	NotificationPolicySlug string `json:"notification_policy_slug,omitempty"`
 
-	// Unique identifier of the Collection. If slug is not provided, one will be generated based of the name field. Cannot be modified after the Collection is created.
+	// The unique identifier of the Collection. If a `slug` isn't provided, one is generated based on the `name` field. You can't modify this field after the Collection is created.
 	Slug string `json:"slug,omitempty"`
 
-	// Required slug of the team the collection belongs to.
+	// The slug of the team that the collection belongs to.
 	TeamSlug string `json:"team_slug,omitempty"`
 
 	// Timestamp of when the Collection was last updated. Cannot be set by clients.

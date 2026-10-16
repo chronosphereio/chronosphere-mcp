@@ -17,7 +17,7 @@ import (
 // swagger:model configv1GcpMetricsIntegrationServiceAccount
 type Configv1GcpMetricsIntegrationServiceAccount struct {
 
-	// Email address of the service account to impersonate.
+	// The email address of the Google Cloud service account to impersonate for authentication.
 	ClientEmail string `json:"client_email,omitempty"`
 }
 

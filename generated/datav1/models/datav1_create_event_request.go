@@ -13,7 +13,7 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// Datav1CreateEventRequest datav1 create event request
+// Datav1CreateEventRequest Request to create an event.
 //
 // swagger:model datav1CreateEventRequest
 type Datav1CreateEventRequest struct {

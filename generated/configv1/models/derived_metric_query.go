@@ -19,13 +19,13 @@ import (
 // swagger:model DerivedMetricQuery
 type DerivedMetricQuery struct {
 
-	// Required PromQL expression which the derived metric executes. Should
+	// PromQL expression the derived metric executes. The expression should
 	// include all configured variables.
 	// Example: cpu_usage{$service, $instance} / sum(cpu_usage{$service})
 	PrometheusExpr string `json:"prometheus_expr,omitempty"`
 
-	// Optional variables which may be used in the derived metric as label
-	// selectors.
+	// Optional. Specifies the variables that can be used in the derived metric as
+	// label selectors.
 	Variables []*DerivedMetricVariable `json:"variables"`
 }
 

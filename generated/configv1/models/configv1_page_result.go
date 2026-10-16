@@ -17,8 +17,8 @@ import (
 // swagger:model configv1PageResult
 type Configv1PageResult struct {
 
-	// Opaque page token which identifies the next page of items which the
-	// client should request. An empty next_token indicates that there are no
+	// An opaque page token that identifies the next page of items that the
+	// client should request. An empty value indicates that there are no
 	// more items to return.
 	NextToken string `json:"next_token,omitempty"`
 }

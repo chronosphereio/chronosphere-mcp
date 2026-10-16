@@ -20,7 +20,7 @@ import (
 // swagger:model configv1MutingRule
 type Configv1MutingRule struct {
 
-	// Optional comment that explains why the muting rule was created.
+	// Descriptive comment that explains why the muting rule was created.
 	Comment string `json:"comment,omitempty"`
 
 	// Timestamp of when the MutingRule was created. Cannot be set by clients.
@@ -28,23 +28,28 @@ type Configv1MutingRule struct {
 	// Format: date-time
 	CreatedAt strfmt.DateTime `json:"created_at,omitempty"`
 
-	// Timestamp of when the muting rule stops being active.
+	// Required. Timestamp of when the muting rule stops being active. On a
+	// recurring rule this bounds the recurrence as a whole rather than any one
+	// occurrence.
 	// Format: date-time
 	EndsAt strfmt.DateTime `json:"ends_at,omitempty"`
 
-	// Specify which series are silenced by the muting rule. Alerting series must
-	// match all muting rule matchers to be silenced.
-	// This value cannot be updated. Updates must specify the original value.
+	// Required. Specifies which series are silenced by the muting rule. Alerting
+	// series must match all muting rule matchers to be silenced. You can't update this
+	// value. Updates must specify the original value.
 	LabelMatchers []*Configv1MutingRuleLabelMatcher `json:"label_matchers"`
 
-	// Required name of the MutingRule. May be modified after the MutingRule is created.
+	// The name of the MutingRule. You can modify this value after the MutingRule is created.
 	Name string `json:"name,omitempty"`
 
-	// Unique identifier of the MutingRule. If slug is not provided, one will be generated based of the name field. Cannot be modified after the MutingRule is created.
+	// recurrence
+	Recurrence *MutingRuleRecurrence `json:"recurrence,omitempty"`
+
+	// The unique identifier of the MutingRule. If a `slug` isn't provided, one is generated based on the `name` field. You can't modify this field after the MutingRule is created.
 	Slug string `json:"slug,omitempty"`
 
-	// Timestamp of when the muting rule becomes active.
-	// This value cannot be updated. Updates must specify the original value.
+	// Required. Timestamp of when the muting rule becomes active. You can't update
+	// this value. Updates must specify the original value.
 	// Format: date-time
 	StartsAt strfmt.DateTime `json:"starts_at,omitempty"`
 
@@ -67,6 +72,10 @@ func (m *Configv1MutingRule) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateLabelMatchers(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateRecurrence(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -134,6 +143,25 @@ func (m *Configv1MutingRule) validateLabelMatchers(formats strfmt.Registry) erro
 	return nil
 }
 
+func (m *Configv1MutingRule) validateRecurrence(formats strfmt.Registry) error {
+	if swag.IsZero(m.Recurrence) { // not required
+		return nil
+	}
+
+	if m.Recurrence != nil {
+		if err := m.Recurrence.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("recurrence")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("recurrence")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (m *Configv1MutingRule) validateStartsAt(formats strfmt.Registry) error {
 	if swag.IsZero(m.StartsAt) { // not required
 		return nil
@@ -167,6 +195,10 @@ func (m *Configv1MutingRule) ContextValidate(ctx context.Context, formats strfmt
 	}
 
 	if err := m.contextValidateLabelMatchers(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateRecurrence(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -209,6 +241,27 @@ func (m *Configv1MutingRule) contextValidateLabelMatchers(ctx context.Context, f
 			}
 		}
 
+	}
+
+	return nil
+}
+
+func (m *Configv1MutingRule) contextValidateRecurrence(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Recurrence != nil {
+
+		if swag.IsZero(m.Recurrence) { // not required
+			return nil
+		}
+
+		if err := m.Recurrence.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("recurrence")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("recurrence")
+			}
+			return err
+		}
 	}
 
 	return nil

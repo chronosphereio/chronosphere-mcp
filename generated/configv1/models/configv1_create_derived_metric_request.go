@@ -21,7 +21,7 @@ type Configv1CreateDerivedMetricRequest struct {
 	// derived metric
 	DerivedMetric *Configv1DerivedMetric `json:"derived_metric,omitempty"`
 
-	// If true, the DerivedMetric will not be created, and no response DerivedMetric will be returned. The response will return an error if the given DerivedMetric is invalid.
+	// If `true`, validates the specified configuration without creating the DerivedMetric. If the specified configuration is valid, the endpoint returns a partial response without the DerivedMetric. If the specified configuration is invalid, the endpoint returns an error.
 	DryRun bool `json:"dry_run,omitempty"`
 }
 

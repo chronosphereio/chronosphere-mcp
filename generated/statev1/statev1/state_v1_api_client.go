@@ -12,6 +12,7 @@ import (
 
 	"github.com/chronosphereio/chronosphere-mcp/generated/statev1/statev1/metric_usages_by_label_name"
 	"github.com/chronosphereio/chronosphere-mcp/generated/statev1/statev1/metric_usages_by_metric_name"
+	"github.com/chronosphereio/chronosphere-mcp/generated/statev1/statev1/monitor_statuses"
 	"github.com/chronosphereio/chronosphere-mcp/generated/statev1/statev1/rule_evaluations"
 )
 
@@ -59,6 +60,7 @@ func New(transport runtime.ClientTransport, formats strfmt.Registry) *StateV1API
 	cli.Transport = transport
 	cli.MetricUsagesByLabelName = metric_usages_by_label_name.New(transport, formats)
 	cli.MetricUsagesByMetricName = metric_usages_by_metric_name.New(transport, formats)
+	cli.MonitorStatuses = monitor_statuses.New(transport, formats)
 	cli.RuleEvaluations = rule_evaluations.New(transport, formats)
 	return cli
 }
@@ -108,6 +110,8 @@ type StateV1API struct {
 
 	MetricUsagesByMetricName metric_usages_by_metric_name.ClientService
 
+	MonitorStatuses monitor_statuses.ClientService
+
 	RuleEvaluations rule_evaluations.ClientService
 
 	Transport runtime.ClientTransport
@@ -118,5 +122,6 @@ func (c *StateV1API) SetTransport(transport runtime.ClientTransport) {
 	c.Transport = transport
 	c.MetricUsagesByLabelName.SetTransport(transport)
 	c.MetricUsagesByMetricName.SetTransport(transport)
+	c.MonitorStatuses.SetTransport(transport)
 	c.RuleEvaluations.SetTransport(transport)
 }

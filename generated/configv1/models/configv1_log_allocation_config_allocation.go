@@ -17,7 +17,7 @@ import (
 // swagger:model configv1LogAllocationConfigAllocation
 type Configv1LogAllocationConfigAllocation struct {
 
-	// percent of license
+	// Sets the percentage of the license limit to allocate to the default dataset.
 	PercentOfLicense float64 `json:"percent_of_license,omitempty"`
 }
 

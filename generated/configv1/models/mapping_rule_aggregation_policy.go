@@ -21,12 +21,10 @@ type MappingRuleAggregationPolicy struct {
 	// aggregation
 	Aggregation Configv1AggregationType `json:"aggregation,omitempty"`
 
-	// Deprecated: This field is no longer supported.
+	// Deprecated: This parameter is no longer supported.
 	DropTimestamp bool `json:"drop_timestamp,omitempty"`
 
-	// Interval between aggregated data points, equivalent to the resolution
-	// field in storage policy. If set, then the storage_policy field can't be
-	// set.
+	// The interval between aggregated data points.
 	Interval string `json:"interval,omitempty"`
 
 	// storage policy

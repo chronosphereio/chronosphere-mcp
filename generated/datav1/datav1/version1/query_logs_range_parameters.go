@@ -14,6 +14,7 @@ import (
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
+	"github.com/go-openapi/swag"
 )
 
 // NewQueryLogsRangeParams creates a new QueryLogsRangeParams object,
@@ -61,6 +62,12 @@ QueryLogsRangeParams contains all the parameters to send to the API endpoint
 */
 type QueryLogsRangeParams struct {
 
+	/* IncludeLongTermStorage.
+
+	   When true, the query will include data from long-term storage.
+	*/
+	IncludeLongTermStorage *bool
+
 	/* PageToken.
 
 	     Opaque page token identifying which page to request. An empty token
@@ -76,17 +83,19 @@ type QueryLogsRangeParams struct {
 
 	/* TimeRangeAfter.
 
-	   Returns only log messages with a timestamp after this time.
+	     Returns only log messages with a timestamp after this time. If omitted,
+	defaults to the last 30 minutes.
 
-	   Format: date-time
+	     Format: date-time
 	*/
 	TimeRangeAfter *strfmt.DateTime
 
 	/* TimeRangeBefore.
 
-	   Returns only log messages with a timestamp before this time.
+	     Returns only log messages with a timestamp before this time. If omitted,
+	defaults to the last 30 minutes.
 
-	   Format: date-time
+	     Format: date-time
 	*/
 	TimeRangeBefore *strfmt.DateTime
 
@@ -143,6 +152,17 @@ func (o *QueryLogsRangeParams) SetHTTPClient(client *http.Client) {
 	o.HTTPClient = client
 }
 
+// WithIncludeLongTermStorage adds the includeLongTermStorage to the query logs range params
+func (o *QueryLogsRangeParams) WithIncludeLongTermStorage(includeLongTermStorage *bool) *QueryLogsRangeParams {
+	o.SetIncludeLongTermStorage(includeLongTermStorage)
+	return o
+}
+
+// SetIncludeLongTermStorage adds the includeLongTermStorage to the query logs range params
+func (o *QueryLogsRangeParams) SetIncludeLongTermStorage(includeLongTermStorage *bool) {
+	o.IncludeLongTermStorage = includeLongTermStorage
+}
+
 // WithPageToken adds the pageToken to the query logs range params
 func (o *QueryLogsRangeParams) WithPageToken(pageToken *string) *QueryLogsRangeParams {
 	o.SetPageToken(pageToken)
@@ -194,6 +214,23 @@ func (o *QueryLogsRangeParams) WriteToRequest(r runtime.ClientRequest, reg strfm
 		return err
 	}
 	var res []error
+
+	if o.IncludeLongTermStorage != nil {
+
+		// query param include_long_term_storage
+		var qrIncludeLongTermStorage bool
+
+		if o.IncludeLongTermStorage != nil {
+			qrIncludeLongTermStorage = *o.IncludeLongTermStorage
+		}
+		qIncludeLongTermStorage := swag.FormatBool(qrIncludeLongTermStorage)
+		if qIncludeLongTermStorage != "" {
+
+			if err := r.SetQueryParam("include_long_term_storage", qIncludeLongTermStorage); err != nil {
+				return err
+			}
+		}
+	}
 
 	if o.PageToken != nil {
 

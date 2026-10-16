@@ -53,6 +53,9 @@ const (
 
 	// ConditionOpNOTEXISTS captures enum value "NOT_EXISTS"
 	ConditionOpNOTEXISTS ConditionOp = "NOT_EXISTS"
+
+	// ConditionOpSIGNALNOTEXISTS captures enum value "SIGNAL_NOT_EXISTS"
+	ConditionOpSIGNALNOTEXISTS ConditionOp = "SIGNAL_NOT_EXISTS"
 )
 
 // for schema
@@ -60,7 +63,7 @@ var conditionOpEnum []interface{}
 
 func init() {
 	var res []ConditionOp
-	if err := json.Unmarshal([]byte(`["GEQ","GT","LEQ","LT","EQ","NEQ","EXISTS","NOT_EXISTS"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["GEQ","GT","LEQ","LT","EQ","NEQ","EXISTS","NOT_EXISTS","SIGNAL_NOT_EXISTS"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {

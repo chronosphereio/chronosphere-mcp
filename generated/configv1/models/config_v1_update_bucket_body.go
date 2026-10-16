@@ -21,10 +21,10 @@ type ConfigV1UpdateBucketBody struct {
 	// bucket
 	Bucket *Configv1Bucket `json:"bucket,omitempty"`
 
-	// If true, the Bucket will be created if it does not already exist, identified by slug. If false, an error will be returned if the Bucket does not already exist.
+	// If `true`, the Bucket will be created if it does not already exist, identified by `slug`. If `false`, an error will be returned if the Bucket does not already exist.
 	CreateIfMissing bool `json:"create_if_missing,omitempty"`
 
-	// If true, the Bucket will not be created nor updated, and no response Bucket will be returned. The response will return an error if the given Bucket is invalid.
+	// If `true`, validates the specified configuration without creating or updating the Bucket. If the specified configuration is valid, the endpoint returns a partial response without the Bucket. If the specified configuration is invalid, the endpoint returns an error.
 	DryRun bool `json:"dry_run,omitempty"`
 }
 

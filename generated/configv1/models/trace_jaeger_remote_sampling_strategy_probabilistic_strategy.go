@@ -17,7 +17,8 @@ import (
 // swagger:model TraceJaegerRemoteSamplingStrategyProbabilisticStrategy
 type TraceJaegerRemoteSamplingStrategyProbabilisticStrategy struct {
 
-	// Value in the range [0, 1] that defines the probability of sampling any trace.
+	// Value in the range `[0, 1]` that defines the percentage probability of
+	// sampling any trace, where `0` is zero percent and `1` equals 100 percent.
 	SamplingRate float64 `json:"sampling_rate,omitempty"`
 }
 

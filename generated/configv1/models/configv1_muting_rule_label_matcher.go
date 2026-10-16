@@ -18,13 +18,13 @@ import (
 // swagger:model configv1MutingRuleLabelMatcher
 type Configv1MutingRuleLabelMatcher struct {
 
-	// name always matches against an exact label name.
+	// Required. Always matches against an exact label name.
 	Name string `json:"name,omitempty"`
 
 	// type
 	Type Configv1MutingRuleLabelMatcherMatcherType `json:"type,omitempty"`
 
-	// value matches against a label value based on the configured type.
+	// Required. Matches against a label value based on the configured type.
 	Value string `json:"value,omitempty"`
 }
 

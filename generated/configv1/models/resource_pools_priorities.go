@@ -19,14 +19,14 @@ import (
 // swagger:model ResourcePoolsPriorities
 type ResourcePoolsPriorities struct {
 
-	// Required filters which define which metrics are high priority, where any
-	// metric which matches at least one filter is considered high priority.
-	// High priority metrics are dropped last when the license limit is exceeded.
+	// Optional. Filters that define which metrics are high priority. Any metric that
+	// matches at least one filter is considered high priority. High priority metrics
+	// are dropped last when the license limit is exceeded.
 	HighPriorityFilters []*Configv1LabelFilter `json:"high_priority_filters"`
 
-	// Required filters which define which metrics are low priority, where any
-	// metric which matches at least one filter is considered low priority. Low
-	// priority metrics are dropped first when the license limit is exceeded.
+	// Optional. Filters that define which metrics are low priority. Any metric that
+	// matches at least one filter is considered low priority. Low priority metrics
+	// are dropped first when the license limit is exceeded.
 	LowPriorityFilters []*Configv1LabelFilter `json:"low_priority_filters"`
 }
 

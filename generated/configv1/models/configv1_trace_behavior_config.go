@@ -29,31 +29,35 @@ type Configv1TraceBehaviorConfig struct {
 	// Format: date-time
 	CreatedAt strfmt.DateTime `json:"created_at,omitempty"`
 
-	// List of dataset priorities. This list specifies the order in which datasets
-	// are considered when determining the behavior to follow for a trace. Dataset
+	// List of dataset priorities. This list specifies the order in which datasets are
+	// considered when determining the behavior to follow for a trace. Dataset
 	// priorities are used to break ties when a trace matches more than one dataset
 	// with an active behavior.
 	// * Each entry in this list must refer to the slug of an existing dataset.
 	// * The order of the list is the order in which the datasets are considered.
-	// * The list must contain all datasets referenced in either main_behavior_assignments
-	//   and override_behavior_assignments.
-	// * The list may contain datasets that are not referenced in either of the above.
+	// * The list must contain all datasets referenced in either
+	//   `main_behavior_assignments` or `override_behavior_assignments`.
+	// * The list can contain datasets that are not referenced in either of these
+	//   assignments.
 	DatasetPriorities []string `json:"dataset_priorities"`
 
-	// List of assignments for the main behavior. The referenced datasets are datasets
-	// to be enrolled in behaviors. The referenced behaviors are the active behaviors
-	// for the dataset when there is no override in place.
-	// * Only one main behavior can be assigned to a dataset.
+	// List of assignments for the main behavior. The referenced datasets will be
+	// enrolled in behaviors. The referenced behaviors are the active behaviors for the
+	// dataset when there is no active override. Only one main behavior can be assigned
+	// to a dataset. See the documentation for
+	// [customizing your sampling
+	// strategy](https://docs.chronosphere.io/control/shaping/sample-traces/behaviors#customize-your-sampling-strategy)
+	// for more information.
 	MainBehaviorAssignments []*TraceBehaviorConfigMainBehaviorAssignment `json:"main_behavior_assignments"`
 
-	// List of assignments for the override behavior. OverrideBehaviorAssignments are used to
-	// specify the active behavior for a dataset over a specific time range.
-	// * Only one override behavior can be assigned to a dataset.
+	// List of assignments for the override behavior. These assignments specify the
+	// active behavior for a dataset over a specific time range. Only one override
+	// behavior can be assigned to a dataset.
 	OverrideBehaviorAssignments []*TraceBehaviorConfigOverrideBehaviorAssignment `json:"override_behavior_assignments"`
 
-	// List of assignments for the preview behavior. The
-	// referenced behaviors are in preview mode for the assigned dataset.
-	// You can assign only one preview behavior to a dataset.
+	// List of assignments for the preview behavior. The referenced behaviors are in
+	// preview mode for the assigned dataset. You can assign only one preview behavior
+	// to a dataset.
 	PreviewBehaviorAssignments []*TraceBehaviorConfigOverrideBehaviorAssignment `json:"preview_behavior_assignments"`
 
 	// Timestamp of when the TraceBehaviorConfig was last updated. Cannot be set by clients.

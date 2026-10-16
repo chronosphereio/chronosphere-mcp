@@ -17,18 +17,22 @@ import (
 // swagger:model DefinitionBurnRateDefinition
 type DefinitionBurnRateDefinition struct {
 
-	// budget defines the amount of errors that are allowed during a given
-	// time window. It is a value between 0.0 and 100.0 exclusive.
+	// The amount of allowed errors during a given time window, expressed as a
+	// percentage of the error budget. Must be a value between `0.0` and `100.0`,
+	// exclusive.
+	// Example: 50.0
 	Budget float64 `json:"budget,omitempty"`
 
-	// labels to attach to the burn rate alerts.
+	// Labels to attach when this burn rate triggers. If you add these labels to
+	// `signal_groupings`, you can route them in the notification policy, and can
+	// route different burn rates to other notifiers.
 	Labels map[string]string `json:"labels,omitempty"`
 
-	// Severity may only be one of: critical, warn.
-	// This is also a string in the monitor schema
+	// Defines the alert severity level, which can only be one of `critical` or
+	// `warn`.
 	Severity string `json:"severity,omitempty"`
 
-	// window
+	// Time window for the burn rate calculation.
 	Window string `json:"window,omitempty"`
 }
 

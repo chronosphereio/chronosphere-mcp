@@ -18,13 +18,13 @@ import (
 // swagger:model ConfigV1UpdateDerivedLabelBody
 type ConfigV1UpdateDerivedLabelBody struct {
 
-	// If true, the DerivedLabel will be created if it does not already exist, identified by slug. If false, an error will be returned if the DerivedLabel does not already exist.
+	// If `true`, the DerivedLabel will be created if it does not already exist, identified by `slug`. If `false`, an error will be returned if the DerivedLabel does not already exist.
 	CreateIfMissing bool `json:"create_if_missing,omitempty"`
 
 	// derived label
 	DerivedLabel *Configv1DerivedLabel `json:"derived_label,omitempty"`
 
-	// If true, the DerivedLabel will not be created nor updated, and no response DerivedLabel will be returned. The response will return an error if the given DerivedLabel is invalid.
+	// If `true`, validates the specified configuration without creating or updating the DerivedLabel. If the specified configuration is valid, the endpoint returns a partial response without the DerivedLabel. If the specified configuration is invalid, the endpoint returns an error.
 	DryRun bool `json:"dry_run,omitempty"`
 }
 

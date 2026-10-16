@@ -17,13 +17,13 @@ import (
 // swagger:model DerivedMetricVariable
 type DerivedMetricVariable struct {
 
-	// Required PromQL label selector which must match the given variable name.
-	// If the variable is not specified in the derived metric usage, then this
-	// default selector is used.
+	// PromQL label selector, which must match the given variable name. If the
+	// variable is not specified in the derived metric usage, then the default
+	// selector is used.
 	// Example: service=~\".*\
 	DefaultPrometheusSelector string `json:"default_prometheus_selector,omitempty"`
 
-	// Required name of the variable.
+	// Name of the variable.
 	// Example: service
 	Name string `json:"name,omitempty"`
 }

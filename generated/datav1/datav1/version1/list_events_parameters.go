@@ -64,8 +64,8 @@ type ListEventsParams struct {
 
 	/* HappenedAfter.
 
-	     Only events which happened_at after this time will be returned. If set, happened_before must also be set.
-	If no time range is set, defaults to 1 hour ago.
+	     Lower bound for the event occurrence time. Set together with `happened_before`.
+	If both time bounds are omitted, defaults to one hour before the current time.
 
 	     Format: date-time
 	*/
@@ -73,8 +73,8 @@ type ListEventsParams struct {
 
 	/* HappenedBefore.
 
-	     Only events which happened_at before this will be returned. If set, happened_after must also be set.
-	If no time range is set, defaults to now.
+	     Upper bound for the event occurrence time. Set together with `happened_after`.
+	If both time bounds are omitted, defaults to the current time.
 
 	     Format: date-time
 	*/
@@ -99,16 +99,18 @@ type ListEventsParams struct {
 
 	/* Query.
 
-	     A query string specifying the query.
-	The query supports the following operators:  `(=, =~, !=, !~, AND, OR)`
-	The query supports nesting using parentheses, and also searching for label values by using a dot operator.
-	The query supports using either `'` or `"` for identifying strings
+	     Query expression used to filter events.
 
-	Example queries:
-	`type = "my-type"`
-	`type="my-type"`
-	`type != 'my-type' AND source !~ "my-source|my-other-source"`
-	`type =~ "my-type|my-other-type" OR (source != "my-source" AND labels.cluster =~ "my-cluster")`
+	Supported comparison operators: `=`, `=~`, `!=`, and `!~`.
+	Supported logical operators: `AND` and `OR`.
+	Parentheses group nested expressions. Dot notation selects label values.
+	Single or double quotation marks delimit string literals.
+
+	Examples:
+	 * `type = "my-type"`
+	 * `type != 'my-type'`
+	 * `source !~ "my-source|my-other-source"`
+	 * `(source != "my-source" AND labels.cluster =~ "my-cluster")`
 	*/
 	Query *string
 

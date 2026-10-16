@@ -18,14 +18,14 @@ import (
 // swagger:model TraceBehaviorSlowSampleOptions
 type TraceBehaviorSlowSampleOptions struct {
 
-	// Whether or not to use these options.
+	// Determines whether or not to define options for slow traces.
 	Enabled bool `json:"enabled,omitempty"`
 
-	// Duration in seconds over which traces are sampled
-	// according to the given sample rate.
+	// Duration in seconds under which traces are sampled according to the given
+	// sample rate.
 	MinDurationSeconds float64 `json:"min_duration_seconds,omitempty"`
 
-	// Sample rate.
+	// Defines the sample rate for traces during a specified duration.
 	SampleRate float64 `json:"sample_rate,omitempty"`
 
 	// sampling type

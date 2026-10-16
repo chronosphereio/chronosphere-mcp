@@ -64,21 +64,22 @@ type ListCollectionsParams struct {
 
 	/* Names.
 
-	   Filters results by name, where any Collection with a matching name in the given list (and matches all other filters) is returned.
+	   Filters results by name, where any Collection with a matching name in the given list (and matches all other filters) will be returned.
 	*/
 	Names []string
 
 	/* NotificationPolicySlugs.
 
-	   Get collections that directly reference notifications policies by the referenced policy slugs.
+	     Get collections that directly reference notification policies specified in
+	this array. To specify a notification policy, include its slug.
 	*/
 	NotificationPolicySlugs []string
 
 	/* PageMaxSize.
 
-	     Page size preference (i.e. how many items are returned in the next
-	page). If zero, the server will use a default. Regardless of what size
-	is given, clients must never assume how many items will be returned.
+	     Sets the preferred number of items to return per page. If set to `0`, the
+	server will use its default value. Regardless of the value specified, clients
+	must never assume how many items will be returned.
 
 	     Format: int64
 	*/
@@ -86,20 +87,20 @@ type ListCollectionsParams struct {
 
 	/* PageToken.
 
-	     Opaque page token identifying which page to request. An empty token
-	identifies the first page.
+	     An opaque page token that identifies which page the client should request.
+	An empty value indicates the first page.
 	*/
 	PageToken *string
 
 	/* Slugs.
 
-	   Filters results by slug, where any Collection with a matching slug in the given list (and matches all other filters) is returned.
+	   Filters results by slug, where any Collection with a matching slug in the given list (and matches all other filters) will be returned.
 	*/
 	Slugs []string
 
 	/* TeamSlugs.
 
-	   Filters results by team_slug, where any Collection with a matching team_slug in the given list (and matches all other filters) is returned.
+	   Filters results by team_slug, where any Collection with a matching team_slug in the given list (and matches all other filters) will be returned.
 	*/
 	TeamSlugs []string
 

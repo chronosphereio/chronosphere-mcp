@@ -35,6 +35,9 @@ const (
 
 	// Configv1DropRuleModeDISABLED captures enum value "DISABLED"
 	Configv1DropRuleModeDISABLED Configv1DropRuleMode = "DISABLED"
+
+	// Configv1DropRuleModePREVIEW captures enum value "PREVIEW"
+	Configv1DropRuleModePREVIEW Configv1DropRuleMode = "PREVIEW"
 )
 
 // for schema
@@ -42,7 +45,7 @@ var configv1DropRuleModeEnum []interface{}
 
 func init() {
 	var res []Configv1DropRuleMode
-	if err := json.Unmarshal([]byte(`["ENABLED","DISABLED"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["ENABLED","DISABLED","PREVIEW"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {

@@ -21,7 +21,7 @@ type Configv1CreateClassicDashboardRequest struct {
 	// classic dashboard
 	ClassicDashboard *Configv1GrafanaDashboard `json:"classic_dashboard,omitempty"`
 
-	// If true, the GrafanaDashboard will not be created, and no response GrafanaDashboard will be returned. The response will return an error if the given GrafanaDashboard is invalid.
+	// If `true`, validates the specified configuration without creating the GrafanaDashboard. If the specified configuration is valid, the endpoint returns a partial response without the GrafanaDashboard. If the specified configuration is invalid, the endpoint returns an error.
 	DryRun bool `json:"dry_run,omitempty"`
 }
 

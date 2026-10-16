@@ -19,8 +19,8 @@ import (
 // swagger:model MonitorSeriesConditionsOverride
 type MonitorSeriesConditionsOverride struct {
 
-	// Set of matchers on a series' labels.
-	// If all labels match then the conditions defined in this override are used.
+	// Set of matchers on a series' labels. If all labels match, then the conditions
+	// defined in this override are used.
 	LabelMatchers []*Configv1LabelMatcher `json:"label_matchers"`
 
 	// severity conditions

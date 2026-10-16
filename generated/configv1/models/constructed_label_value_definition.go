@@ -19,7 +19,7 @@ import (
 // swagger:model ConstructedLabelValueDefinition
 type ConstructedLabelValueDefinition struct {
 
-	// filters
+	// Determine when to apply `name_mappings`, filtering out all other values.
 	Filters []*Configv1LabelFilter `json:"filters"`
 
 	// value

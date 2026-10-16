@@ -17,7 +17,7 @@ import (
 // swagger:model TraceSearchFilterBoolFilter
 type TraceSearchFilterBoolFilter struct {
 
-	// The value the filter compares to the target trace or span field.
+	// The value of the filter compared to the target trace or span field.
 	Value bool `json:"value,omitempty"`
 }
 

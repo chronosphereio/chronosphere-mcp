@@ -3,6 +3,63 @@
     "application/json"
   ],
   "definitions": {
+    "DataV1PutPanelAnnotationBody": {
+      "properties": {
+        "starts_at": {
+          "description": "The start time of the period being annotated.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "title": {
+          "description": "A short description explaining the annotation. Maximum character length: `100`.",
+          "type": "string"
+        },
+        "labels": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Map of user-supplied key:value pairs associated with the event. The\nfollowing maximums apply:\n- Number of labels per event: `50`\n- Key character length: `200`\n- Value character length: `500`",
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "LabelFilterLabelMatcher": {
+      "description": "One matcher, and which of the alert's two label sets it applies to.",
+      "properties": {
+        "filter_target": {
+          "$ref": "#/definitions/LabelMatcherFilterTarget"
+        },
+        "matcher": {
+          "$ref": "#/definitions/commonPromQLMatcher"
+        }
+      },
+      "type": "object"
+    },
+    "LabelFilterMatchStrategy": {
+      "description": "How closely an alert's labels must correspond to the matchers.\n\n - SUBSET_MATCH: EQUAL matchers require the labels to contain all the given labels, but\nthe alert may carry more. NOT_EQUAL excludes an alert when the labels\nmatch any matcher.\n - EXACT_MATCH: EQUAL matchers require exactly the provided labels, no more or less.\nNOT_EQUAL excludes an alert only when every NOT_EQUAL matcher applies.",
+      "enum": [
+        "SUBSET_MATCH",
+        "EXACT_MATCH"
+      ],
+      "type": "string"
+    },
+    "LabelMatcherFilterTarget": {
+      "description": "The label set a matcher reads. An alert carries the labels of the\nsignal that fired (`SIGNAL`) and the labels of the monitor or SLO\nthat raised it (`MONITOR`); the two are matched independently.",
+      "enum": [
+        "MONITOR",
+        "SIGNAL"
+      ],
+      "type": "string"
+    },
+    "ListAlertsRequestSortOrder": {
+      "description": "The order alerts are returned in, by the time they triggered.",
+      "enum": [
+        "TRIGGERED_DESC",
+        "TRIGGERED_ASC"
+      ],
+      "type": "string"
+    },
     "ListTracesRequestQueryType": {
       "enum": [
         "TRACE_IDS",
@@ -35,21 +92,6 @@
         "LESS_THAN_OR_EQUAL"
       ],
       "type": "string"
-    },
-    "QueryLogsRangeRequestTimestampFilter": {
-      "properties": {
-        "after": {
-          "description": "Returns only log messages with a timestamp after this time.",
-          "format": "date-time",
-          "type": "string"
-        },
-        "before": {
-          "description": "Returns only log messages with a timestamp before this time.",
-          "format": "date-time",
-          "type": "string"
-        }
-      },
-      "type": "object"
     },
     "QueryLogsRangeResponseColumnMeta": {
       "properties": {
@@ -304,19 +346,30 @@
       },
       "type": "object"
     },
-    "apiError": {
+    "commonPromQLMatcher": {
       "properties": {
-        "code": {
-          "description": "An optional private error code whose values are undefined.",
-          "format": "int32",
-          "type": "integer"
+        "type": {
+          "$ref": "#/definitions/commonPromQLMatcherType"
         },
-        "message": {
-          "description": "An error message describing what went wrong.",
+        "name": {
+          "description": "Prometheus label name for the matcher",
+          "type": "string"
+        },
+        "value": {
+          "description": "Prometheus label value for the matcher",
           "type": "string"
         }
       },
       "type": "object"
+    },
+    "commonPromQLMatcherType": {
+      "enum": [
+        "MatchEqual",
+        "MatchRegexp",
+        "MatchNotEqual",
+        "MatchNotRegexp"
+      ],
+      "type": "string"
     },
     "configv1PageParams": {
       "properties": {
@@ -341,7 +394,185 @@
       },
       "type": "object"
     },
+    "datav1Alert": {
+      "description": "A single alert instance: one signal crossing one monitor or SLO threshold,\nfrom the moment it triggered until it resolved.",
+      "properties": {
+        "alert_id": {
+          "description": "Unique identifier for the alert.",
+          "type": "string"
+        },
+        "firing_status": {
+          "$ref": "#/definitions/datav1FiringStatus"
+        },
+        "severity": {
+          "$ref": "#/definitions/datav1Severity"
+        },
+        "mute_status": {
+          "$ref": "#/definitions/datav1MuteStatus"
+        },
+        "triggered_at": {
+          "description": "When the alert started firing.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "resolved_at": {
+          "description": "When the alert stopped firing. Unset while the alert is still firing.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "signal": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "The labels of the signal that fired.",
+          "type": "object"
+        },
+        "monitor_labels": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "The labels of the monitor or SLO that raised the alert.",
+          "type": "object"
+        },
+        "monitor_slug": {
+          "description": "The slug of the monitor that raised the alert. Empty for an SLO alert.",
+          "type": "string"
+        },
+        "monitor_name": {
+          "description": "The name of the monitor that raised the alert. Empty for an SLO alert.",
+          "type": "string"
+        },
+        "slo_slug": {
+          "description": "The slug of the SLO that raised the alert. Empty for a monitor alert.",
+          "type": "string"
+        },
+        "slo_name": {
+          "description": "The name of the SLO that raised the alert. Empty for a monitor alert.",
+          "type": "string"
+        },
+        "collection_slug": {
+          "description": "The slug of the collection the monitor or SLO belongs to.",
+          "type": "string"
+        },
+        "notification_policy_slug": {
+          "description": "The slug of the notification policy the alert was routed through.",
+          "type": "string"
+        },
+        "notifier_slugs": {
+          "description": "The notifiers a notification was attempted against for this alert,\nincluding sends that failed. Empty for an alert that was never notified.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "external_connections": {
+          "description": "The (external connection, destination identity) pairs a notification was\nattempted through for this alert, including sends that failed. Empty for an\nalert that was never notified.",
+          "items": {
+            "$ref": "#/definitions/datav1ExternalConnection"
+          },
+          "type": "array"
+        },
+        "alert_title": {
+          "description": "The title of the alert, as rendered when it fired.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "datav1AlertsFilter": {
+      "description": "The set of alerts to return. Filters of different kinds are combined with\nAND: an alert is returned only if it satisfies every filter that is set.\n\nThe search filters (`monitor_slugs`, `monitor_name_contains`, `slo_slugs`,\n`slo_name_contains` and `alert_title_contains`) are the one exception.\nThey are OR'ed with each other into a single search clause, so an alert\nmatches the search as soon as it matches any one of them: setting\n`monitor_slugs` and `alert_title_contains` together returns the alerts\nmatching either, not only the alerts matching both. That clause is then\nAND'ed with every filter outside the group, so `severity` combined with a\nsearch term still requires both to hold.\n\n`notifier_slugs` and `external_connections` form a second such group: they\nare OR'ed with each other into one delivery clause, which is then AND'ed with\neverything else.",
+      "properties": {
+        "firing_status": {
+          "$ref": "#/definitions/datav1FiringStatus"
+        },
+        "severity": {
+          "$ref": "#/definitions/datav1Severity"
+        },
+        "mute_status": {
+          "$ref": "#/definitions/datav1MuteStatus"
+        },
+        "source_type": {
+          "$ref": "#/definitions/datav1SourceType"
+        },
+        "trigger_time_range": {
+          "$ref": "#/definitions/datav1TimeRange"
+        },
+        "active_time_range": {
+          "$ref": "#/definitions/datav1TimeRange"
+        },
+        "label_filters": {
+          "description": "Each LabelFilter is one AND clause; the clauses are OR'ed together. An\nalert is returned if it satisfies at least one of them.",
+          "items": {
+            "$ref": "#/definitions/datav1LabelFilter"
+          },
+          "type": "array"
+        },
+        "monitor_slugs": {
+          "description": "Match alerts raised by monitors with these slugs. This is one of the\nOR'ed search filters, so setting it widens the result set rather than\nnarrowing it: an alert matches the search as soon as it matches any one\nof those filters. See `AlertsFilter` for the full list.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "monitor_name_contains": {
+          "description": "Match alerts raised by monitors whose name or slug contains this string,\ncase-insensitively. This is one of the OR'ed search filters, so setting\nit widens the result set rather than narrowing it: an alert matches the\nsearch as soon as it matches any one of those filters. See\n`AlertsFilter` for the full list.",
+          "type": "string"
+        },
+        "slo_slugs": {
+          "description": "Match alerts raised by SLOs with these slugs. This is one of the OR'ed\nsearch filters, so setting it widens the result set rather than\nnarrowing it: an alert matches the search as soon as it matches any one\nof those filters. See `AlertsFilter` for the full list.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "slo_name_contains": {
+          "description": "Match alerts raised by SLOs whose name or slug contains this string,\ncase-insensitively. This is one of the OR'ed search filters, so setting\nit widens the result set rather than narrowing it: an alert matches the\nsearch as soon as it matches any one of those filters. See\n`AlertsFilter` for the full list.",
+          "type": "string"
+        },
+        "source_collection_slugs": {
+          "description": "Return only alerts whose monitor or SLO belongs to one of these\ncollections.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "source_team_slugs": {
+          "description": "Return only alerts owned by one of these teams. The owning team is\nrecorded when the alert triggers, so re-assigning a collection to a\ndifferent team does not change the team on alerts that already fired.\nAlerts that triggered before this API recorded an owning team match no\nteam.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "notifier_slugs": {
+          "description": "Return only alerts a notification was attempted against one of these\nnotifiers for. A send that failed still matches: the question this answers\nis \"which alerts tried to reach me here\", not \"which reached me\".\n\nThis is OR'ed with `external_connections` rather than AND'ed with it:\nsetting both returns alerts matching either list, because notifiers and\nexternal connections are two spellings of the same idea. The combined\ndelivery filter is then AND'ed with every other filter.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "external_connections": {
+          "description": "Return only alerts a notification was attempted through one of these\n(external connection, destination identity) pairs for. Failed sends match\ntoo, exactly as for `notifier_slugs`, and setting both OR's the two lists\ntogether.\n\nThe pair is matched whole. `destination_identity` is compared exactly, so\nleaving it empty matches only destinations stored without one (PagerDuty,\nOpsGenie, webhook) rather than every identity on the connection.",
+          "items": {
+            "$ref": "#/definitions/datav1ExternalConnection"
+          },
+          "type": "array"
+        },
+        "alert_title_contains": {
+          "description": "Match alerts whose title contains this string, case-insensitively. Only\nthe title is matched, never the name or slug of the monitor or SLO that\nraised the alert. This is one of the OR'ed search filters, so setting it\nwidens the result set rather than narrowing it: an alert matches the\nsearch as soon as it matches any one of those filters. See\n`AlertsFilter` for the full list.",
+          "type": "string"
+        },
+        "alert_ids": {
+          "description": "Return only the alerts with these IDs.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
     "datav1CreateEventRequest": {
+      "description": "Request to create an event.",
       "properties": {
         "event": {
           "$ref": "#/definitions/datav1Event"
@@ -350,60 +581,191 @@
       "type": "object"
     },
     "datav1CreateEventResponse": {
+      "description": "Response returned after an event is created.",
       "type": "object"
     },
-    "datav1Event": {
+    "datav1CreatePanelAnnotationRequest": {
       "properties": {
-        "title": {
-          "description": "A short description of the event that occurred, such as a commit message of\na code deploy. Max length: 100 characters.",
+        "type": {
+          "$ref": "#/definitions/datav1PanelAnnotationTargetType"
+        },
+        "target_reference": {
+          "description": "The `slug` of the resource being annotated.",
           "type": "string"
         },
-        "happened_at": {
-          "description": "The time the event occurred. Must be between 24 hours in the past or 24 hours\nin the future. Defaults to `now` if not specified.",
+        "starts_at": {
+          "description": "The start time of the period being annotated.",
           "format": "date-time",
           "type": "string"
         },
-        "category": {
-          "description": "Change Event categories are case sensitive. Each of the listed categories are\nlowercase and must be queried in all lowercase. For example, `\"category\":\n\"alerts\"` is valid, but `\"category\": \"Alerts\"` is invalid.\n\nChronosphere Support can add and remove custom categories upon request.\nBecause categories are case sensitive, custom categories must be queried using\nthe same case they were created. For example, if you create a category called\n`INGEST`, any queries in Changes Explorer must use `INGEST` in all uppercase\nas the category to query.",
-          "title": "The category the event belongs to. Must be one of these categories:\n * `alerts`\n * `broadcasts`\n * `chronosphere`\n * `deploys`\n * `feature_flags`\n * `infrastructure`\n * `third_party`",
-          "type": "string"
-        },
-        "type": {
-          "description": "The event type, which is used to group and differentiate events within a\n`category` or `source`.",
-          "type": "string"
-        },
-        "source": {
-          "description": "Identifies where the data originated, in cases where a change to the\ninstrumentation or integration is needed. Max length: 50 characters.",
+        "title": {
+          "description": "A short description explaining the annotation.\nMax character length: `100`.",
           "type": "string"
         },
         "labels": {
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Map of queryable labels, which are user-supplied key/value pairs associated\nwith the event.\n * Max labels: 200 per event\n * Max key length: 200 characters\n * Max value length: 5,000 characters",
+          "description": "Map of user-supplied key:value pairs associated with the annotation. The\nfollowing maximums apply:\n- Number of labels per annotation: `50`\n- Key character length: `200`\n- Value character length: `500`",
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "datav1Event": {
+      "description": "A change event.",
+      "properties": {
+        "title": {
+          "description": "A short description of the event, such as a deployment commit message.\nMaximum length: 100 characters.",
+          "type": "string"
+        },
+        "happened_at": {
+          "description": "Time when the event occurred. Must be no more than 24 hours before or after\nthe current time. Default: current time.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "category": {
+          "description": "Change Event categories are case sensitive. Each of the listed categories are\nlowercase and must be queried in all lowercase. For example, `\"category\":\n\"alerts\"` is valid, but `\"category\": \"Alerts\"` is invalid.\n\nPalo Alto Networks Support can add and remove custom categories upon request.\nBecause categories are case sensitive, custom categories must be queried using\nthe same case they were created. For example, if you create a category called\n`INGEST`, any queries in Changes Explorer must use `INGEST` in all uppercase\nas the category to query.",
+          "title": "Category used to group the event. Built-in categories:\n * `alerts`\n * `broadcasts`\n * `chronosphere`\n * `deploys`\n * `feature_flags`\n * `infrastructure`\n * `third_party`",
+          "type": "string"
+        },
+        "type": {
+          "description": "Event type used to group and distinguish events within a `category` or\n`source`.",
+          "type": "string"
+        },
+        "source": {
+          "description": "System or integration from which the event originated. Use this value to\nidentify the instrumentation or integration to update.\nMaximum length: 50 characters.",
+          "type": "string"
+        },
+        "labels": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Map of queryable, user-supplied key-value pairs associated with the event.\n * Maximum labels: 200 per event\n * Maximum key length: 200 characters\n * Maximum value length: 5,000 characters",
           "type": "object"
         },
         "payload_json": {
-          "description": "A string-escaped representation of the original event in JSON format. You can\nset only `payload_json` or `payload_object`. This field is not queryable. Max\nlength: 100,000 characters.",
+          "description": "Original event as a string-escaped JSON value. Set either `payload_json` or\n`payload_object`, but not both. This field is not queryable.\nMaximum length: 100,000 characters.",
           "type": "string"
         },
         "payload_object": {
-          "description": "The JSON payload, if the original event was in key/value format. You can set\nonly `payload_json` or `payload_object`. Max length: 100,000 characters.\nThis field is input only.",
+          "description": "Input only. JSON payload for an original event in key-value format. Set either\n`payload_json` or `payload_object`, but not both.\nMaximum length: 100,000 characters.",
           "type": "object"
         },
         "id": {
-          "description": "Unique identifier for the change event.",
+          "description": "Output only. Unique identifier for the change event.",
           "readOnly": true,
           "type": "string"
         }
       },
       "type": "object"
     },
+    "datav1ExternalConnection": {
+      "description": "An (external connection, destination identity) pair a notification was sent\nthrough. Used both to filter alerts and to report what an alert was notified\nthrough.",
+      "properties": {
+        "slug": {
+          "description": "Slug of the external connection. Required when used as a filter.",
+          "type": "string"
+        },
+        "destination_identity": {
+          "description": "Identity within the connection, such as a Slack channel or an email\naddress. Empty for connection types that have none (PagerDuty, OpsGenie,\nwebhook).",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "datav1FiringStatus": {
+      "description": "Whether an alert is currently firing or has resolved.",
+      "enum": [
+        "RESOLVED",
+        "FIRING"
+      ],
+      "type": "string"
+    },
+    "datav1LabelFilter": {
+      "description": "A set of label matchers evaluated together as a single AND clause.",
+      "properties": {
+        "match_strategy": {
+          "$ref": "#/definitions/LabelFilterMatchStrategy"
+        },
+        "label_matchers": {
+          "description": "The matchers that make up this clause. An alert must satisfy all of\nthem. A filter with no matchers is ignored rather than matching\neverything.",
+          "items": {
+            "$ref": "#/definitions/LabelFilterLabelMatcher"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "datav1ListAlertsRequest": {
+      "properties": {
+        "filter": {
+          "$ref": "#/definitions/datav1AlertsFilter"
+        },
+        "sort_order": {
+          "$ref": "#/definitions/ListAlertsRequestSortOrder"
+        },
+        "page": {
+          "$ref": "#/definitions/configv1PageParams"
+        }
+      },
+      "type": "object"
+    },
+    "datav1ListAlertsResponse": {
+      "properties": {
+        "alerts": {
+          "description": "The alerts on this page, in the requested sort order.",
+          "items": {
+            "$ref": "#/definitions/datav1Alert"
+          },
+          "type": "array"
+        },
+        "total_count": {
+          "description": "The number of alerts matching the filter across all pages.",
+          "format": "int64",
+          "type": "string"
+        },
+        "page": {
+          "$ref": "#/definitions/configv1PageResult"
+        }
+      },
+      "type": "object"
+    },
+    "datav1ListEventFieldValuesResponse": {
+      "description": "Response containing values for an event field.",
+      "properties": {
+        "values": {
+          "description": "Values ordered by descending frequency, with ties ordered alphabetically.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
     "datav1ListEventsResponse": {
+      "description": "Response containing a page of events.",
       "properties": {
         "events": {
+          "description": "Events in the current page.",
           "items": {
             "$ref": "#/definitions/datav1Event"
+          },
+          "type": "array"
+        },
+        "page": {
+          "$ref": "#/definitions/configv1PageResult"
+        }
+      },
+      "type": "object"
+    },
+    "datav1ListPanelAnnotationsResponse": {
+      "properties": {
+        "panel_annotations": {
+          "items": {
+            "$ref": "#/definitions/datav1PanelAnnotationResponse"
           },
           "type": "array"
         },
@@ -464,14 +826,87 @@
       },
       "type": "object"
     },
-    "datav1QueryLogsRangeRequestPageParams": {
+    "datav1MetricMetadata": {
+      "description": "MetricMetadata contains metadata information about a metric.",
       "properties": {
-        "token": {
-          "description": "Opaque page token identifying which page to request. An empty token\nidentifies the first page.",
+        "name": {
+          "description": "The name of the metric.",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/datav1MetricType"
+        },
+        "description": {
+          "description": "Human-readable description of what the metric measures.",
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/definitions/datav1Source"
+        }
+      },
+      "type": "object"
+    },
+    "datav1MetricType": {
+      "description": "MetricType defines the canonical metric types supported by the platform.\n\n - CUMULATIVE_COUNTER: A Prom-style cumulative counter, which stores a strictly increasing count\nof distinct events (but may reset to zero). Each datapoint stores the\nrunning total at the given timestamp.\n - GAUGE: A true gauge, which stores an observation of state at a point in time,\nwhere it is impossible to have two different states at a single point in\ntime. Each datapoint stores the value at the given timestamp.\n - DELTA_COUNTER: A delta counter, which stores the same type of data as COUNTER, but where\neach datapoint stores a strictly positive delta increment at the given\ntimestamp.\n - MEASUREMENT: A raw observation with some discrete value, e.g. individual request\nlatency, individual request size, etc. Unlike a counter, each MEASUREMENT\nevent has a discrete value. And unlike a gauge, there can be multiple\nvalues at any point in time.\n - CUMULATIVE_EXPONENTIAL_HISTOGRAM: An exponential histogram, where each datapoint is a structured value (not a\nfloat), which stores compressed buckets of cumulative measurement counts,\nalong with total sum and count.\n - DELTA_EXPONENTIAL_HISTOGRAM: An exponential histogram, where each datapoint is a structured value (not a\nfloat), which stores compressed buckets of measurement count deltas,\nalong with total sum and count.",
+      "enum": [
+        "CUMULATIVE_COUNTER",
+        "GAUGE",
+        "DELTA_COUNTER",
+        "MEASUREMENT",
+        "CUMULATIVE_EXPONENTIAL_HISTOGRAM",
+        "DELTA_EXPONENTIAL_HISTOGRAM"
+      ],
+      "type": "string"
+    },
+    "datav1MuteStatus": {
+      "description": "Whether notifications for an alert are currently muted.",
+      "enum": [
+        "MUTED",
+        "NOT_MUTED"
+      ],
+      "type": "string"
+    },
+    "datav1PanelAnnotationResponse": {
+      "properties": {
+        "id": {
+          "description": "Unique identifier of the panel annotation.",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/datav1PanelAnnotationTargetType"
+        },
+        "target_reference": {
+          "description": "The `slug` of the resource being annotated.",
+          "type": "string"
+        },
+        "starts_at": {
+          "description": "The start of the time period being annotated.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "title": {
+          "description": "A short description explaining the annotation.\nMax length, 100 characters.",
+          "type": "string"
+        },
+        "labels": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Map of user-supplied key:value pairs associated with the annotation. The\nfollowing maximums apply:\n- Number of labels per annotation: `50`\n- Key character length: `200`\n- Value character length: `500`",
+          "type": "object"
+        },
+        "created_by": {
+          "description": "Display name of the creator of this annotation.",
           "type": "string"
         }
       },
       "type": "object"
+    },
+    "datav1PanelAnnotationTargetType": {
+      "enum": [
+        "DASHBOARD"
+      ],
+      "type": "string"
     },
     "datav1QueryLogsRangeResponse": {
       "properties": {
@@ -487,8 +922,65 @@
       },
       "type": "object"
     },
-    "genericError": {
-      "additionalProperties": true,
+    "datav1ReadMetricMetadataResponse": {
+      "description": "ReadMetricMetadataResponse contains the metadata for the requested metric.",
+      "properties": {
+        "metadata": {
+          "$ref": "#/definitions/datav1MetricMetadata"
+        }
+      },
+      "type": "object"
+    },
+    "datav1Severity": {
+      "description": "The severity an alert fired at.",
+      "enum": [
+        "WARN",
+        "CRITICAL"
+      ],
+      "type": "string"
+    },
+    "datav1Source": {
+      "description": "Source is the wire format used to ingest the metric (maps to the __metric_source__ synthetic label).\nMetrics predating CanonicalSource tracking will have UNSPECIFIED.",
+      "enum": [
+        "PROMETHEUS",
+        "STATSD",
+        "OPEN_METRICS",
+        "CARBON",
+        "OPEN_TELEMETRY",
+        "SIGNALFX",
+        "WAVEFRONT",
+        "DOGSTATSD",
+        "CHRONO_GCP",
+        "CLOUDWATCH_METRIC_STREAM",
+        "CHRONO_AZURE",
+        "TAGGED_STATSD",
+        "CHRONO_CLOUDFLARE",
+        "CHRONO_INTEGRATION"
+      ],
+      "type": "string"
+    },
+    "datav1SourceType": {
+      "description": "Whether an alert was raised by a monitor or by an SLO.",
+      "enum": [
+        "MONITOR",
+        "SLO"
+      ],
+      "type": "string"
+    },
+    "datav1TimeRange": {
+      "description": "A closed time interval. Both bounds are required unless the field\ndocuments a default for the one that is missing.",
+      "properties": {
+        "start": {
+          "description": "The inclusive start of the interval.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "end": {
+          "description": "The inclusive end of the interval.",
+          "format": "date-time",
+          "type": "string"
+        }
+      },
       "type": "object"
     },
     "googlerpcStatus": {
@@ -517,10 +1009,6 @@
         }
       },
       "type": "object"
-    },
-    "protobufNullValue": {
-      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\nThe JSON representation for `NullValue` is JSON `null`.",
-      "type": "string"
     },
     "tracev1Status": {
       "description": "The Status type defines a logical error model that is suitable for different\nprogramming environments, including REST APIs and RPC APIs.",
@@ -855,26 +1343,59 @@
     "version": "v1"
   },
   "paths": {
+    "/api/v1/data/alerts": {
+      "post": {
+        "description": "Lists the alerts that fired for this tenant, most recently triggered\nfirst. The trigger time window is always closed and defaults to the last\nhour.",
+        "operationId": "ListAlerts",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/datav1ListAlertsRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/datav1ListAlertsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "DataV1"
+        ]
+      }
+    },
     "/api/v1/data/events": {
       "get": {
         "operationId": "ListEvents",
         "parameters": [
           {
-            "description": "Only events which happened_at after this time will be returned. If set, happened_before must also be set.\nIf no time range is set, defaults to 1 hour ago.",
+            "description": "Lower bound for the event occurrence time. Set together with `happened_before`.\nIf both time bounds are omitted, defaults to one hour before the current time.",
             "format": "date-time",
             "in": "query",
             "name": "happened_after",
             "type": "string"
           },
           {
-            "description": "Only events which happened_at before this will be returned. If set, happened_after must also be set.\nIf no time range is set, defaults to now.",
+            "description": "Upper bound for the event occurrence time. Set together with `happened_after`.\nIf both time bounds are omitted, defaults to the current time.",
             "format": "date-time",
             "in": "query",
             "name": "happened_before",
             "type": "string"
           },
           {
-            "description": "A query string specifying the query.\nThe query supports the following operators:  `(=, =~, !=, !~, AND, OR)`\nThe query supports nesting using parentheses, and also searching for label values by using a dot operator.\nThe query supports using either `'` or `\"` for identifying strings\n\nExample queries:\n`type = \"my-type\"`\n`type=\"my-type\"`\n`type != 'my-type' AND source !~ \"my-source|my-other-source\"`\n`type =~ \"my-type|my-other-type\" OR (source != \"my-source\" AND labels.cluster =~ \"my-cluster\")`",
+            "description": "Query expression used to filter events.\n\nSupported comparison operators: `=`, `=~`, `!=`, and `!~`.\nSupported logical operators: `AND` and `OR`.\nParentheses group nested expressions. Dot notation selects label values.\nSingle or double quotation marks delimit string literals.\n\nExamples:\n * `type = \"my-type\"`\n * `type != 'my-type'`\n * `source !~ \"my-source|my-other-source\"`\n * `(source != \"my-source\" AND labels.cluster =~ \"my-cluster\")`",
             "in": "query",
             "name": "query",
             "type": "string"
@@ -915,6 +1436,7 @@
         "operationId": "CreateEvent",
         "parameters": [
           {
+            "description": "Request to create an event.",
             "in": "body",
             "name": "body",
             "required": true,
@@ -942,6 +1464,81 @@
         ]
       }
     },
+    "/api/v1/data/events:field-values": {
+      "get": {
+        "description": "Lists the known values of an event field, most frequent first.",
+        "operationId": "ListEventFieldValues",
+        "parameters": [
+          {
+            "description": "Field for which to list values.\n\n - CATEGORY: Event category.\n - TYPE: Event type.\n - SOURCE: Event source.\n - LABEL_NAME: Label name.\n - LABEL_VALUE: Label value.\n - LENS_SERVICE: Service associated with the event.",
+            "enum": [
+              "CATEGORY",
+              "TYPE",
+              "SOURCE",
+              "LABEL_NAME",
+              "LABEL_VALUE",
+              "LENS_SERVICE"
+            ],
+            "in": "query",
+            "name": "field",
+            "type": "string"
+          },
+          {
+            "description": "Label for which to list values. Required when `field` is `LABEL_VALUE`.\nMust be empty for every other field.",
+            "in": "query",
+            "name": "label_name",
+            "type": "string"
+          },
+          {
+            "collectionFormat": "multi",
+            "description": "Event categories included in the scope.",
+            "in": "query",
+            "items": {
+              "type": "string"
+            },
+            "name": "scope.categories",
+            "type": "array"
+          },
+          {
+            "collectionFormat": "multi",
+            "description": "Event types included in the scope.",
+            "in": "query",
+            "items": {
+              "type": "string"
+            },
+            "name": "scope.types",
+            "type": "array"
+          },
+          {
+            "collectionFormat": "multi",
+            "description": "Event sources included in the scope.",
+            "in": "query",
+            "items": {
+              "type": "string"
+            },
+            "name": "scope.sources",
+            "type": "array"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/datav1ListEventFieldValuesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "DataV1"
+        ]
+      }
+    },
     "/api/v1/data/logs:range": {
       "get": {
         "description": "Logging",
@@ -954,14 +1551,14 @@
             "type": "string"
           },
           {
-            "description": "Returns only log messages with a timestamp after this time.",
+            "description": "Returns only log messages with a timestamp after this time. If omitted,\ndefaults to the last 30 minutes.",
             "format": "date-time",
             "in": "query",
             "name": "time_range.after",
             "type": "string"
           },
           {
-            "description": "Returns only log messages with a timestamp before this time.",
+            "description": "Returns only log messages with a timestamp before this time. If omitted,\ndefaults to the last 30 minutes.",
             "format": "date-time",
             "in": "query",
             "name": "time_range.before",
@@ -972,6 +1569,12 @@
             "in": "query",
             "name": "page.token",
             "type": "string"
+          },
+          {
+            "description": "When true, the query will include data from long-term storage.",
+            "in": "query",
+            "name": "include_long_term_storage",
+            "type": "boolean"
           }
         ],
         "responses": {
@@ -979,6 +1582,212 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/datav1QueryLogsRangeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "DataV1"
+        ]
+      }
+    },
+    "/api/v1/data/metrics:metadata/{metric_name}": {
+      "get": {
+        "description": "Metric Metadata",
+        "operationId": "ReadMetricMetadata",
+        "parameters": [
+          {
+            "description": "The name of the metric to retrieve metadata for.",
+            "in": "path",
+            "name": "metric_name",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/datav1ReadMetricMetadataResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "DataV1"
+        ]
+      }
+    },
+    "/api/v1/data/panel_annotations": {
+      "get": {
+        "operationId": "ListPanelAnnotations",
+        "parameters": [
+          {
+            "description": "The type of the annotated resources to return.",
+            "enum": [
+              "DASHBOARD"
+            ],
+            "in": "query",
+            "name": "type",
+            "type": "string"
+          },
+          {
+            "description": "Returns only panel annotations after this timestamp with `starts_at`.",
+            "format": "date-time",
+            "in": "query",
+            "name": "happened_after",
+            "type": "string"
+          },
+          {
+            "description": "Returns only panel annotations before this with `starts_at`.\nIf no value is provided, defaults to now.",
+            "format": "date-time",
+            "in": "query",
+            "name": "happened_before",
+            "type": "string"
+          },
+          {
+            "collectionFormat": "multi",
+            "description": "Returns only annotations on resources with these slugs.\nIf no value is provided, all resources of the provided `type` are returned.",
+            "in": "query",
+            "items": {
+              "type": "string"
+            },
+            "name": "target_references",
+            "type": "array"
+          },
+          {
+            "description": "Returns only panel annotations with all of these labels.",
+            "in": "query",
+            "name": "labels[string]",
+            "type": "string"
+          },
+          {
+            "description": "Sets the preferred number of items to return per page. If set to `0`, the\nserver will use its default value. Regardless of the value specified, clients\nmust never assume how many items will be returned.",
+            "format": "int64",
+            "in": "query",
+            "name": "page.max_size",
+            "type": "integer"
+          },
+          {
+            "description": "An opaque page token that identifies which page the client should request.\nAn empty value indicates the first page.",
+            "in": "query",
+            "name": "page.token",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/datav1ListPanelAnnotationsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "DataV1"
+        ]
+      },
+      "post": {
+        "operationId": "CreatePanelAnnotation",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/datav1CreatePanelAnnotationRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/datav1PanelAnnotationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "DataV1"
+        ]
+      }
+    },
+    "/api/v1/data/panel_annotations/{id}": {
+      "delete": {
+        "operationId": "DeletePanelAnnotation",
+        "parameters": [
+          {
+            "description": "Unique identifier of the panel annotation.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/datav1PanelAnnotationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "DataV1"
+        ]
+      },
+      "put": {
+        "operationId": "PutPanelAnnotation",
+        "parameters": [
+          {
+            "description": "Unique identifier of the panel annotation.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DataV1PutPanelAnnotationBody"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/datav1PanelAnnotationResponse"
             }
           },
           "default": {

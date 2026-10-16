@@ -27,7 +27,6 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 	"go.uber.org/zap"
 
-	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/dataunstable"
 	"github.com/chronosphereio/chronosphere-mcp/generated/datav1/datav1"
 	"github.com/chronosphereio/chronosphere-mcp/generated/datav1/datav1/version1"
 	"github.com/chronosphereio/chronosphere-mcp/generated/datav1/models"
@@ -47,10 +46,9 @@ type Tools struct {
 	linkBuilder *links.Builder
 }
 
-// NewTools creates the log tools. The DataUnstable client is no longer used.
+// NewTools creates the log tools.
 func NewTools(
 	dataV1API *datav1.DataV1API,
-	_ *dataunstable.DataUnstableAPI,
 	logger *zap.Logger,
 	linkBuilder *links.Builder,
 ) (*Tools, error) {

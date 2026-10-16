@@ -62,6 +62,12 @@ ListRuleEvaluationsParams contains all the parameters to send to the API endpoin
 */
 type ListRuleEvaluationsParams struct {
 
+	/* IncludeWarnings.
+
+	   When false (default), only failures are returned. Set true to also include non-fatal warnings.
+	*/
+	IncludeWarnings *bool
+
 	/* PageMaxSize.
 
 	     Sets the preferred number of items to return per page. If set to `0`, the
@@ -132,6 +138,17 @@ func (o *ListRuleEvaluationsParams) SetHTTPClient(client *http.Client) {
 	o.HTTPClient = client
 }
 
+// WithIncludeWarnings adds the includeWarnings to the list rule evaluations params
+func (o *ListRuleEvaluationsParams) WithIncludeWarnings(includeWarnings *bool) *ListRuleEvaluationsParams {
+	o.SetIncludeWarnings(includeWarnings)
+	return o
+}
+
+// SetIncludeWarnings adds the includeWarnings to the list rule evaluations params
+func (o *ListRuleEvaluationsParams) SetIncludeWarnings(includeWarnings *bool) {
+	o.IncludeWarnings = includeWarnings
+}
+
 // WithPageMaxSize adds the pageMaxSize to the list rule evaluations params
 func (o *ListRuleEvaluationsParams) WithPageMaxSize(pageMaxSize *int64) *ListRuleEvaluationsParams {
 	o.SetPageMaxSize(pageMaxSize)
@@ -161,6 +178,23 @@ func (o *ListRuleEvaluationsParams) WriteToRequest(r runtime.ClientRequest, reg 
 		return err
 	}
 	var res []error
+
+	if o.IncludeWarnings != nil {
+
+		// query param include_warnings
+		var qrIncludeWarnings bool
+
+		if o.IncludeWarnings != nil {
+			qrIncludeWarnings = *o.IncludeWarnings
+		}
+		qIncludeWarnings := swag.FormatBool(qrIncludeWarnings)
+		if qIncludeWarnings != "" {
+
+			if err := r.SetQueryParam("include_warnings", qIncludeWarnings); err != nil {
+				return err
+			}
+		}
+	}
 
 	if o.PageMaxSize != nil {
 

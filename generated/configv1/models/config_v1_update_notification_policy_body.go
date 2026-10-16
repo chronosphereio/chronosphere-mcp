@@ -18,10 +18,10 @@ import (
 // swagger:model ConfigV1UpdateNotificationPolicyBody
 type ConfigV1UpdateNotificationPolicyBody struct {
 
-	// If true, the NotificationPolicy will be created if it does not already exist, identified by slug. If false, an error will be returned if the NotificationPolicy does not already exist.
+	// If `true`, the NotificationPolicy will be created if it does not already exist, identified by `slug`. If `false`, an error will be returned if the NotificationPolicy does not already exist.
 	CreateIfMissing bool `json:"create_if_missing,omitempty"`
 
-	// If true, the NotificationPolicy will not be created nor updated, and no response NotificationPolicy will be returned. The response will return an error if the given NotificationPolicy is invalid.
+	// If `true`, validates the specified configuration without creating or updating the NotificationPolicy. If the specified configuration is valid, the endpoint returns a partial response without the NotificationPolicy. If the specified configuration is invalid, the endpoint returns an error.
 	DryRun bool `json:"dry_run,omitempty"`
 
 	// notification policy

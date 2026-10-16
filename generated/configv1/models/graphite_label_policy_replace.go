@@ -17,12 +17,12 @@ import (
 // swagger:model GraphiteLabelPolicyReplace
 type GraphiteLabelPolicyReplace struct {
 
-	// Required name of the label whose value should be replaced. Only
-	// `__gX__` labels are allowed (aka positional Graphite labels).
+	// Name of the label to replace the value for. Only positional Graphite labels
+	// such as `__gX__` are allowed.
 	// Example: __g1__
 	Name string `json:"name,omitempty"`
 
-	// Required new value of the replaced label.
+	// New value of the replaced label.
 	// Example: ALL_HOSTS
 	NewValue string `json:"new_value,omitempty"`
 }

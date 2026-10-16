@@ -18,7 +18,7 @@ import (
 // swagger:model TraceSearchFilterTagFilter
 type TraceSearchFilterTagFilter struct {
 
-	// The key (or name) of the span tag that is inspected by this filter.
+	// The key or name of the span tag that this filter inspects.
 	Key string `json:"key,omitempty"`
 
 	// numeric value

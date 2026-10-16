@@ -18,10 +18,10 @@ import (
 // swagger:model ConfigV1UpdateTraceBehaviorBody
 type ConfigV1UpdateTraceBehaviorBody struct {
 
-	// If true, the TraceBehavior will be created if it does not already exist, identified by slug. If false, an error will be returned if the TraceBehavior does not already exist.
+	// If `true`, the TraceBehavior will be created if it does not already exist, identified by `slug`. If `false`, an error will be returned if the TraceBehavior does not already exist.
 	CreateIfMissing bool `json:"create_if_missing,omitempty"`
 
-	// If true, the TraceBehavior will not be created nor updated, and no response TraceBehavior will be returned. The response will return an error if the given TraceBehavior is invalid.
+	// If `true`, validates the specified configuration without creating or updating the TraceBehavior. If the specified configuration is valid, the endpoint returns a partial response without the TraceBehavior. If the specified configuration is invalid, the endpoint returns an error.
 	DryRun bool `json:"dry_run,omitempty"`
 
 	// trace behavior

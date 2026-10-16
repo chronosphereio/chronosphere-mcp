@@ -7,7 +7,9 @@ package models
 
 import (
 	"context"
+	"strconv"
 
+	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 )
@@ -17,20 +19,156 @@ import (
 // swagger:model GcpMetricsIntegrationMetricGroup
 type GcpMetricsIntegrationMetricGroup struct {
 
-	// List of Gcp metric prefixes to ingest.
+	// Rollup rules to apply server-side aggregations to metrics in this group.
+	Filters []*Configv1GcpMetricsIntegrationFilter `json:"filters"`
+
+	// A list of Google Cloud metric prefixes to ingest.
+	//
+	// Filters to apply to metrics in this group.
 	Prefixes []string `json:"prefixes"`
 
-	// Project ID that has access to the metric data.
+	// The Google Cloud project ID that can access the metric data.
 	ProjectID string `json:"project_id,omitempty"`
+
+	// rollup rules
+	RollupRules []*Configv1GcpMetricsIntegrationRollupRule `json:"rollup_rules"`
 }
 
 // Validate validates this gcp metrics integration metric group
 func (m *GcpMetricsIntegrationMetricGroup) Validate(formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.validateFilters(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateRollupRules(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
 	return nil
 }
 
-// ContextValidate validates this gcp metrics integration metric group based on context it is used
+func (m *GcpMetricsIntegrationMetricGroup) validateFilters(formats strfmt.Registry) error {
+	if swag.IsZero(m.Filters) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.Filters); i++ {
+		if swag.IsZero(m.Filters[i]) { // not required
+			continue
+		}
+
+		if m.Filters[i] != nil {
+			if err := m.Filters[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("filters" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("filters" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *GcpMetricsIntegrationMetricGroup) validateRollupRules(formats strfmt.Registry) error {
+	if swag.IsZero(m.RollupRules) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.RollupRules); i++ {
+		if swag.IsZero(m.RollupRules[i]) { // not required
+			continue
+		}
+
+		if m.RollupRules[i] != nil {
+			if err := m.RollupRules[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("rollup_rules" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("rollup_rules" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// ContextValidate validate this gcp metrics integration metric group based on the context it is used
 func (m *GcpMetricsIntegrationMetricGroup) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateFilters(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateRollupRules(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *GcpMetricsIntegrationMetricGroup) contextValidateFilters(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.Filters); i++ {
+
+		if m.Filters[i] != nil {
+
+			if swag.IsZero(m.Filters[i]) { // not required
+				return nil
+			}
+
+			if err := m.Filters[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("filters" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("filters" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *GcpMetricsIntegrationMetricGroup) contextValidateRollupRules(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.RollupRules); i++ {
+
+		if m.RollupRules[i] != nil {
+
+			if swag.IsZero(m.RollupRules[i]) { // not required
+				return nil
+			}
+
+			if err := m.RollupRules[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("rollup_rules" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("rollup_rules" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
 	return nil
 }
 

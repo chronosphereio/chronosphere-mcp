@@ -17,28 +17,54 @@ package monitors
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
+	"sort"
+	"strings"
 
-	"github.com/chronosphereio/chronosphere-mcp/generated/stateunstable/stateunstable"
-	"github.com/chronosphereio/chronosphere-mcp/pkg/ptr"
 	"github.com/mark3labs/mcp-go/mcp"
 	"go.uber.org/zap"
 
-	"github.com/chronosphereio/chronosphere-mcp/generated/stateunstable/stateunstable/state_unstable"
+	"github.com/chronosphereio/chronosphere-mcp/generated/statev1/models"
+	"github.com/chronosphereio/chronosphere-mcp/generated/statev1/statev1"
+	"github.com/chronosphereio/chronosphere-mcp/generated/statev1/statev1/monitor_statuses"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/pkg/params"
 )
 
 var _ tools.MCPTools = (*Tools)(nil)
 
+const sortByState = "SORT_BY_STATE"
+
+// Monitor states reported by list_monitor_statuses.
+const (
+	stateAlerting = "ALERTING"
+	stateMuted    = "MUTED"
+	statePass     = "PASS"
+)
+
+// stateOrder orders states for SORT_BY_STATE: alerting first, then muted, then passing.
+var stateOrder = map[string]int{
+	stateAlerting: 0,
+	stateMuted:    1,
+	statePass:     2,
+}
+
+// severityOrder orders severities for SORT_BY_STATE: critical first, then warn, then none.
+var severityOrder = map[models.Datav1Severity]int{
+	models.Datav1SeverityCRITICAL: 0,
+	models.Datav1SeverityWARN:     1,
+}
+
 // Tools represents the monitor tools.
 type Tools struct {
 	logger *zap.Logger
-	api    *stateunstable.StateUnstableAPI
+	api    *statev1.StateV1API
 }
 
 // NewTools creates a new set of monitor tools.
-func NewTools(api *stateunstable.StateUnstableAPI, logger *zap.Logger) (*Tools, error) {
+func NewTools(api *statev1.StateV1API, logger *zap.Logger) (*Tools, error) {
 	logger.Info("monitor status tool configured")
 
 	return &Tools{
@@ -51,16 +77,29 @@ func (t *Tools) GroupName() string {
 	return "monitors"
 }
 
-// Using the StateUnstableClient method from the Provider
+// MonitorStatus is the status of one monitor as returned by list_monitor_statuses.
+type MonitorStatus struct {
+	MonitorSlug string `json:"monitor_slug"`
+	// State is ALERTING, MUTED (every firing alert is muted) or PASS (not firing).
+	State    string                        `json:"state"`
+	Muted    bool                          `json:"muted,omitempty"`
+	Severity models.Datav1Severity         `json:"severity,omitempty"`
+	Signals  []*models.Statev1SignalStatus `json:"signals,omitempty"`
+}
+
+// ListMonitorStatusesResult is the result of list_monitor_statuses.
+type ListMonitorStatusesResult struct {
+	MonitorStatuses []*MonitorStatus `json:"monitor_statuses"`
+}
 
 // MCPTools returns the list of monitor tools.
 func (t *Tools) MCPTools() []tools.MCPTool {
 	return []tools.MCPTool{
 		{
 			Metadata: tools.NewMetadata("list_monitor_statuses",
-				mcp.WithDescription("Lists the current status of monitors in Chronosphere. Returns monitor statuses with alert states and optional signal and series details."),
+				mcp.WithDescription("Lists the current status of monitors in Chronosphere. Returns every monitor with a firing alert, plus a PASS entry for each requested monitor slug that is not firing. Each status carries its state (ALERTING, MUTED or PASS), its most severe alert severity, and optionally its firing signals."),
 				params.WithStringArray("monitor_slugs",
-					mcp.Description("Filter by monitor slug. If all filters are empty, return status for all monitors."),
+					mcp.Description("Filter by monitor slug. If all filters are empty, return status for all firing monitors."),
 				),
 				params.WithStringArray("collection_slugs",
 					mcp.Description("Filter monitor state by owning collection."),
@@ -68,21 +107,26 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				params.WithStringArray("team_slugs",
 					mcp.Description("Filter monitor state by owning team."),
 				),
-				mcp.WithBoolean("include_signal_statuses",
-					mcp.Description("Include signal status details in the response."),
-					mcp.DefaultBool(false),
+				params.WithStringArray("signal_labels",
+					mcp.Description("Only count alerts whose signal labels match all of these matchers, each of the form name=value or name!=value."),
 				),
-				mcp.WithBoolean("include_series_statuses",
-					mcp.Description("Include series status details in the response. Requires include_signal_statuses to be true."),
+				params.WithStringArray("monitor_labels",
+					mcp.Description("Only count alerts whose monitor labels match all of these matchers, each of the form name=value or name!=value."),
+				),
+				mcp.WithString("severity",
+					mcp.Description("Only count alerts of this severity. If unset, counts both."),
+					mcp.Enum("warn", "critical"),
+				),
+				mcp.WithBoolean("include_signal_statuses",
+					mcp.Description("Include each monitor's firing signals in the response."),
 					mcp.DefaultBool(false),
 				),
 				mcp.WithString("sort_by",
-					mcp.Description("Sort results by a specific field. Currently supports 'SORT_BY_STATE'."),
-					mcp.Enum("SORT_BY_STATE"),
+					mcp.Description("Sort results by a specific field. Currently supports 'SORT_BY_STATE', which orders by state, then severity, then slug. Results are ordered by monitor slug by default."),
+					mcp.Enum(sortByState),
 				),
 			),
 			Handler: func(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
-				// Parse parameters
 				monitorSlugs, err := params.StringArray(request, "monitor_slugs", false, nil)
 				if err != nil {
 					return nil, err
@@ -98,12 +142,22 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					return nil, err
 				}
 
-				includeSignalStatuses, err := params.Bool(request, "include_signal_statuses", false, false)
+				signalLabels, err := params.StringArray(request, "signal_labels", false, nil)
 				if err != nil {
 					return nil, err
 				}
 
-				includeSeriesStatuses, err := params.Bool(request, "include_series_statuses", false, false)
+				monitorLabels, err := params.StringArray(request, "monitor_labels", false, nil)
+				if err != nil {
+					return nil, err
+				}
+
+				severity, err := params.String(request, "severity", false, "")
+				if err != nil {
+					return nil, err
+				}
+
+				includeSignalStatuses, err := params.Bool(request, "include_signal_statuses", false, false)
 				if err != nil {
 					return nil, err
 				}
@@ -112,49 +166,180 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				if err != nil {
 					return nil, err
 				}
-
-				// Construct query parameters
-				queryParams := state_unstable.NewListMonitorStatusesParams().
-					WithContext(ctx)
-
-				if len(monitorSlugs) > 0 {
-					queryParams.SetMonitorSlugs(monitorSlugs)
+				if sortBy != "" && sortBy != sortByState {
+					return nil, fmt.Errorf("invalid sort_by %q: must be %s", sortBy, sortByState)
 				}
 
-				if len(collectionSlugs) > 0 {
-					queryParams.SetCollectionSlugs(collectionSlugs)
+				body := &models.Statev1ListMonitorStatusesRequest{
+					MonitorSlugs:    monitorSlugs,
+					CollectionSlugs: collectionSlugs,
+					TeamSlugs:       teamSlugs,
+					IncludeSignals:  includeSignalStatuses,
 				}
 
-				if len(teamSlugs) > 0 {
-					queryParams.SetTeamSlugs(teamSlugs)
-				}
-
-				if includeSignalStatuses {
-					queryParams.SetIncludeSignalStatuses(ptr.To(includeSignalStatuses))
-				}
-
-				if includeSeriesStatuses {
-					if !includeSignalStatuses {
-						return nil, fmt.Errorf("include_signal_statuses must be true for include_series_statuses to be true")
-					}
-					queryParams.SetIncludeSeriesStatuses(ptr.To(includeSeriesStatuses))
-				}
-
-				if sortBy != "" {
-					queryParams.SetSortBy(ptr.To(sortBy))
-				}
-
-				t.logger.Info("list monitor statuses", zap.Any("params", queryParams))
-
-				resp, err := t.api.StateUnstable.ListMonitorStatuses(queryParams)
+				body.Severity, err = parseSeverity(severity)
 				if err != nil {
+					return nil, err
+				}
+
+				labelFilter, err := labelFilter(signalLabels, monitorLabels)
+				if err != nil {
+					return nil, err
+				}
+				if labelFilter != nil {
+					body.LabelFilters = []*models.Datav1LabelFilter{labelFilter}
+				}
+
+				t.logger.Info("list monitor statuses", zap.Any("request", body))
+
+				resp, err := t.api.MonitorStatuses.ListMonitorStatuses(
+					monitor_statuses.NewListMonitorStatusesParams().
+						WithContext(ctx).
+						WithBody(body),
+				)
+				if err != nil {
+					var statusErr interface{ Code() int }
+					if errors.As(err, &statusErr) && statusErr.Code() == http.StatusNotFound {
+						return nil, errors.New("monitor status API is not enabled for this tenant")
+					}
 					return nil, fmt.Errorf("failed to list monitor statuses: %s", err)
 				}
 
+				var firing []*models.Statev1MonitorStatus
+				if resp.Payload != nil {
+					firing = resp.Payload.MonitorStatuses
+				}
+
 				return &tools.Result{
-					JSONContent: resp,
+					JSONContent: &ListMonitorStatusesResult{
+						MonitorStatuses: toMonitorStatuses(firing, monitorSlugs, sortBy),
+					},
 				}, nil
 			},
 		},
 	}
+}
+
+// parseSeverity maps the tool's severity parameter onto the API's severity.
+func parseSeverity(severity string) (models.Datav1Severity, error) {
+	switch severity {
+	case "":
+		return "", nil
+	case "warn":
+		return models.Datav1SeverityWARN, nil
+	case "critical":
+		return models.Datav1SeverityCRITICAL, nil
+	default:
+		return "", fmt.Errorf("invalid severity %q: must be warn or critical", severity)
+	}
+}
+
+// labelFilter combines signal and monitor label matchers into one SUBSET_MATCH
+// clause, or returns nil when there are none.
+func labelFilter(signalLabels, monitorLabels []string) (*models.Datav1LabelFilter, error) {
+	var matchers []*models.LabelFilterLabelMatcher
+	for _, group := range []struct {
+		param  string
+		target models.LabelMatcherFilterTarget
+		values []string
+	}{
+		{param: "signal_labels", target: models.LabelMatcherFilterTargetSIGNAL, values: signalLabels},
+		{param: "monitor_labels", target: models.LabelMatcherFilterTargetMONITOR, values: monitorLabels},
+	} {
+		for _, value := range group.values {
+			matcher, err := parseLabelMatcher(value)
+			if err != nil {
+				return nil, fmt.Errorf("invalid %s: %w", group.param, err)
+			}
+			matchers = append(matchers, &models.LabelFilterLabelMatcher{
+				FilterTarget: group.target,
+				Matcher:      matcher,
+			})
+		}
+	}
+	if len(matchers) == 0 {
+		return nil, nil
+	}
+	return &models.Datav1LabelFilter{
+		MatchStrategy: models.LabelFilterMatchStrategySUBSETMATCH,
+		LabelMatchers: matchers,
+	}, nil
+}
+
+// parseLabelMatcher parses a matcher of the form name=value or name!=value.
+func parseLabelMatcher(s string) (*models.CommonPromQLMatcher, error) {
+	idx := strings.Index(s, "=")
+	if idx < 0 {
+		return nil, fmt.Errorf("%q must be of the form name=value or name!=value", s)
+	}
+	name, value := s[:idx], s[idx+1:]
+	matchType := models.CommonPromQLMatcherTypeMatchEqual
+	if strings.HasSuffix(name, "!") {
+		name = strings.TrimSuffix(name, "!")
+		matchType = models.CommonPromQLMatcherTypeMatchNotEqual
+	}
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return nil, fmt.Errorf("%q has an empty label name", s)
+	}
+	return &models.CommonPromQLMatcher{
+		Name:  name,
+		Type:  matchType,
+		Value: value,
+	}, nil
+}
+
+// toMonitorStatuses converts the firing monitors into the tool's result, adds
+// a PASS entry for each requested slug that is not firing, and sorts.
+func toMonitorStatuses(firing []*models.Statev1MonitorStatus, requestedSlugs []string, sortBy string) []*MonitorStatus {
+	statuses := make([]*MonitorStatus, 0, len(firing)+len(requestedSlugs))
+	seen := make(map[string]struct{}, len(firing))
+	for _, f := range firing {
+		if f == nil {
+			continue
+		}
+		state := stateAlerting
+		if f.Muted {
+			state = stateMuted
+		}
+		statuses = append(statuses, &MonitorStatus{
+			MonitorSlug: f.MonitorSlug,
+			State:       state,
+			Muted:       f.Muted,
+			Severity:    f.Severity,
+			Signals:     f.Signals,
+		})
+		seen[f.MonitorSlug] = struct{}{}
+	}
+	for _, slug := range requestedSlugs {
+		if _, ok := seen[slug]; ok {
+			continue
+		}
+		seen[slug] = struct{}{}
+		statuses = append(statuses, &MonitorStatus{
+			MonitorSlug: slug,
+			State:       statePass,
+		})
+	}
+
+	sort.SliceStable(statuses, func(i, j int) bool {
+		a, b := statuses[i], statuses[j]
+		if sortBy == sortByState {
+			if stateOrder[a.State] != stateOrder[b.State] {
+				return stateOrder[a.State] < stateOrder[b.State]
+			}
+			if sevOrd(a.Severity) != sevOrd(b.Severity) {
+				return sevOrd(a.Severity) < sevOrd(b.Severity)
+			}
+		}
+		return a.MonitorSlug < b.MonitorSlug
+	})
+	return statuses
+}
+
+func sevOrd(s models.Datav1Severity) int {
+	if ord, ok := severityOrder[s]; ok {
+		return ord
+	}
+	return len(severityOrder)
 }

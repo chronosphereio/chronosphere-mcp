@@ -14,22 +14,21 @@ import (
 )
 
 // AllocationThresholds Thresholds define strict quota limits for each metrics license.
-// **This feature is part of pre-release functionality and is subject to change.**
 //
 // swagger:model AllocationThresholds
 type AllocationThresholds struct {
 
 	// all priorities
-	AllPriorities *AllocationThreshold `json:"all_priorities,omitempty"`
+	AllPriorities *ResourcePoolsAllocationThreshold `json:"all_priorities,omitempty"`
 
 	// default and low priority
-	DefaultAndLowPriority *AllocationThreshold `json:"default_and_low_priority,omitempty"`
+	DefaultAndLowPriority *ResourcePoolsAllocationThreshold `json:"default_and_low_priority,omitempty"`
 
 	// license
 	License ResourcePoolsLicense `json:"license,omitempty"`
 
 	// low priority
-	LowPriority *AllocationThreshold `json:"low_priority,omitempty"`
+	LowPriority *ResourcePoolsAllocationThreshold `json:"low_priority,omitempty"`
 }
 
 // Validate validates this allocation thresholds

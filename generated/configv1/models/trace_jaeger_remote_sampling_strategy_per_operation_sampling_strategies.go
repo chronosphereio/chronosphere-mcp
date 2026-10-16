@@ -19,16 +19,20 @@ import (
 // swagger:model TraceJaegerRemoteSamplingStrategyPerOperationSamplingStrategies
 type TraceJaegerRemoteSamplingStrategyPerOperationSamplingStrategies struct {
 
-	// Defines a minimum number of traces to send for ANY operation in the service, regardless of matching per operation strategy.
+	// Defines a minimum number of traces to send for any operation in the service,
+	// regardless of matching per operation strategy.
 	DefaultLowerBoundTracesPerSecond float64 `json:"default_lower_bound_traces_per_second,omitempty"`
 
-	// Defines the service-wide sampling probability (in the range [0, 1]) when specific operations are not matched.
+	// Defines the service-wide sampling probability (in the range `[0, 1]`) when
+	// specific operations are not matched.
 	DefaultSamplingRate float64 `json:"default_sampling_rate,omitempty"`
 
-	// Defines a maximum number of traces to send for ANY operation in the service, regardless of matching per operation strategy.
+	// Defines a maximum number of traces to send for any operation in the service,
+	// regardless of matching per operation strategy.
 	DefaultUpperBoundTracesPerSecond float64 `json:"default_upper_bound_traces_per_second,omitempty"`
 
-	// Defines explicit operations-specific strategies that take precedence over the default sampling rate.
+	// Defines explicit operations-specific strategies that take precedence over the
+	// default sampling rate.
 	PerOperationStrategies []*PerOperationSamplingStrategiesPerOperationSamplingStrategy `json:"per_operation_strategies"`
 }
 

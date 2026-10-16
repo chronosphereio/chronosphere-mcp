@@ -17,15 +17,9 @@ go-version-check:
 
 .PHONY: swagger-gen
 swagger-gen: install-tools
-	rm -rf generated/dataunstable/dataunstable
-	rm -rf generated/dataunstable/models
-	$(tools_bin_path)/swagger generate client -f generated/dataunstable/spec.json -t generated/dataunstable -c dataunstable
-	rm -rf generated/configv1/dataunstable
+	rm -rf generated/configv1/configv1
 	rm -rf generated/configv1/models
 	$(tools_bin_path)/swagger generate client -f generated/configv1/spec.json -t generated/configv1 -c configv1
-	rm -rf generated/stateunstable/stateunstable
-	rm -rf generated/stateunstable/models
-	$(tools_bin_path)/swagger generate client -f generated/stateunstable/spec.json -t generated/stateunstable -c stateunstable
 	rm -rf generated/statev1/statev1
 	rm -rf generated/statev1/models
 	$(tools_bin_path)/swagger generate client -f generated/statev1/spec.json -t generated/statev1 -c statev1
@@ -33,9 +27,14 @@ swagger-gen: install-tools
 	rm -rf generated/datav1/models
 	$(tools_bin_path)/swagger generate client -f generated/datav1/spec.json -t generated/datav1 -c datav1
 
-.PHONY: swagger-serve-dataunstable
-swagger-serve-dataunstable:
-	$(tools_bin_path)/swagger serve mcp-server/pkg/generated/clients/dataunstable.swagger.json
+# Copies the public API specs from a monorepo checkout. These are the external
+# exports chronoctl syncs from, with hidden paths already removed.
+.PHONY: swagger-sync
+swagger-sync:
+	@test -n "$(MONOREPO)" || (echo "usage: make swagger-sync MONOREPO=<path to monorepo checkout>" && exit 1)
+	cp $(MONOREPO)/src/gateway/publicapiswagger/data/v1_config_swagger.json generated/configv1/spec.json
+	cp $(MONOREPO)/src/gateway/publicapiswagger/data/v1_data_swagger.json generated/datav1/spec.json
+	cp $(MONOREPO)/src/gateway/publicapiswagger/data/v1_state_swagger.json generated/statev1/spec.json
 
 .PHONY: run-server build-server chronomcp run-chronomcp
 chronomcp:

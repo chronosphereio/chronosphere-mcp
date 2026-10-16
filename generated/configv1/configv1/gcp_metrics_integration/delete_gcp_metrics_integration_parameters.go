@@ -61,7 +61,10 @@ DeleteGcpMetricsIntegrationParams contains all the parameters to send to the API
 */
 type DeleteGcpMetricsIntegrationParams struct {
 
-	// Slug.
+	/* Slug.
+
+	   The unique slug that identifies the GcpMetricsIntegration to delete.
+	*/
 	Slug string
 
 	timeout    time.Duration

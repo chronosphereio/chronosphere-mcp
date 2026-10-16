@@ -18,13 +18,13 @@ import (
 // swagger:model ConfigV1UpdateDropRuleBody
 type ConfigV1UpdateDropRuleBody struct {
 
-	// If true, the DropRule will be created if it does not already exist, identified by slug. If false, an error will be returned if the DropRule does not already exist.
+	// If `true`, the DropRule will be created if it does not already exist, identified by `slug`. If `false`, an error will be returned if the DropRule does not already exist.
 	CreateIfMissing bool `json:"create_if_missing,omitempty"`
 
 	// drop rule
 	DropRule *Configv1DropRule `json:"drop_rule,omitempty"`
 
-	// If true, the DropRule will not be created nor updated, and no response DropRule will be returned. The response will return an error if the given DropRule is invalid.
+	// If `true`, validates the specified configuration without creating or updating the DropRule. If the specified configuration is valid, the endpoint returns a partial response without the DropRule. If the specified configuration is invalid, the endpoint returns an error.
 	DryRun bool `json:"dry_run,omitempty"`
 }
 

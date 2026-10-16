@@ -14,12 +14,12 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// Datav1ListEventsResponse datav1 list events response
+// Datav1ListEventsResponse Response containing a page of events.
 //
 // swagger:model datav1ListEventsResponse
 type Datav1ListEventsResponse struct {
 
-	// events
+	// Events in the current page.
 	Events []*Datav1Event `json:"events"`
 
 	// page

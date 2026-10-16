@@ -14,12 +14,12 @@ import (
 	"github.com/go-openapi/validate"
 )
 
-// Datav1Event datav1 event
+// Datav1Event A change event.
 //
 // swagger:model datav1Event
 type Datav1Event struct {
 
-	// The category the event belongs to. Must be one of these categories:
+	// Category used to group the event. Built-in categories:
 	//  * `alerts`
 	//  * `broadcasts`
 	//  * `chronosphere`
@@ -32,49 +32,49 @@ type Datav1Event struct {
 	// lowercase and must be queried in all lowercase. For example, `"category":
 	// "alerts"` is valid, but `"category": "Alerts"` is invalid.
 	//
-	// Chronosphere Support can add and remove custom categories upon request.
+	// Palo Alto Networks Support can add and remove custom categories upon request.
 	// Because categories are case sensitive, custom categories must be queried using
 	// the same case they were created. For example, if you create a category called
 	// `INGEST`, any queries in Changes Explorer must use `INGEST` in all uppercase
 	// as the category to query.
 	Category string `json:"category,omitempty"`
 
-	// The time the event occurred. Must be between 24 hours in the past or 24 hours
-	// in the future. Defaults to `now` if not specified.
+	// Time when the event occurred. Must be no more than 24 hours before or after
+	// the current time. Default: current time.
 	// Format: date-time
 	HappenedAt strfmt.DateTime `json:"happened_at,omitempty"`
 
-	// Unique identifier for the change event.
+	// Output only. Unique identifier for the change event.
 	// Read Only: true
 	ID string `json:"id,omitempty"`
 
-	// Map of queryable labels, which are user-supplied key/value pairs associated
-	// with the event.
-	//  * Max labels: 200 per event
-	//  * Max key length: 200 characters
-	//  * Max value length: 5,000 characters
+	// Map of queryable, user-supplied key-value pairs associated with the event.
+	//  * Maximum labels: 200 per event
+	//  * Maximum key length: 200 characters
+	//  * Maximum value length: 5,000 characters
 	Labels map[string]string `json:"labels,omitempty"`
 
-	// A string-escaped representation of the original event in JSON format. You can
-	// set only `payload_json` or `payload_object`. This field is not queryable. Max
-	// length: 100,000 characters.
+	// Original event as a string-escaped JSON value. Set either `payload_json` or
+	// `payload_object`, but not both. This field is not queryable.
+	// Maximum length: 100,000 characters.
 	PayloadJSON string `json:"payload_json,omitempty"`
 
-	// The JSON payload, if the original event was in key/value format. You can set
-	// only `payload_json` or `payload_object`. Max length: 100,000 characters.
-	// This field is input only.
+	// Input only. JSON payload for an original event in key-value format. Set either
+	// `payload_json` or `payload_object`, but not both.
+	// Maximum length: 100,000 characters.
 	PayloadObject interface{} `json:"payload_object,omitempty"`
 
-	// Identifies where the data originated, in cases where a change to the
-	// instrumentation or integration is needed. Max length: 50 characters.
+	// System or integration from which the event originated. Use this value to
+	// identify the instrumentation or integration to update.
+	// Maximum length: 50 characters.
 	Source string `json:"source,omitempty"`
 
-	// A short description of the event that occurred, such as a commit message of
-	// a code deploy. Max length: 100 characters.
+	// A short description of the event, such as a deployment commit message.
+	// Maximum length: 100 characters.
 	Title string `json:"title,omitempty"`
 
-	// The event type, which is used to group and differentiate events within a
-	// `category` or `source`.
+	// Event type used to group and distinguish events within a `category` or
+	// `source`.
 	Type string `json:"type,omitempty"`
 }
 

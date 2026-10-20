@@ -557,7 +557,7 @@ func trimLogEntries(payload *models.Datav1QueryLogsRangeResponse, limit int, off
 			trimmed.GridData.Rows = payload.GridData.Rows[offset:end]
 			totalTrimmed = offset + (totalRows - end)
 		}
-	} else if payload.TimeSeriesData.GroupByDimensionNames != nil || payload.TimeSeriesData.Series != nil {
+	} else if payload.TimeSeriesData != nil {
 		trimmed.TimeSeriesData = &models.QueryLogsRangeResponseTimeSeriesData{
 			GroupByDimensionNames: payload.TimeSeriesData.GroupByDimensionNames,
 			Series:                make([]*models.TimeSeriesDataTimeSeries, len(payload.TimeSeriesData.Series)),
@@ -595,6 +595,11 @@ func trimLogEntries(payload *models.Datav1QueryLogsRangeResponse, limit int, off
 // createCompactSummary creates a compact summary of log query results from the stable API
 func createCompactSummary(resp *models.Datav1QueryLogsRangeResponse) *CompactLogSummary {
 	summary := &CompactLogSummary{}
+
+	if resp == nil {
+		summary.Summary = "No log data returned"
+		return summary
+	}
 
 	// Extract metadata
 	if resp.Metadata != nil {
@@ -645,7 +650,7 @@ func createCompactSummary(resp *models.Datav1QueryLogsRangeResponse) *CompactLog
 			summaryParts = append(summaryParts, "All entries shown below in pipe-separated format")
 		}
 		summary.Summary = strings.Join(summaryParts, ". ")
-	} else if resp.TimeSeriesData.GroupByDimensionNames != nil || resp.TimeSeriesData.Series != nil {
+	} else if resp.TimeSeriesData != nil && (len(resp.TimeSeriesData.GroupByDimensionNames) > 0 || len(resp.TimeSeriesData.Series) > 0) {
 		// Include full time series data since it's typically not verbose
 		summary.TimeSeriesData = resp.TimeSeriesData
 		summary.TotalLogs = 0

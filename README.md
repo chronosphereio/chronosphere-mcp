@@ -165,10 +165,10 @@ The MCP project provides an inspector useful for directly calling tools APIs. To
 | events | get_events_metadata | List properties you can query on events |
 | events | list_events | List events from a given query |
 | events | list_events_label_values | List values for a given label name |
-| logs | get_log | Get a full log message by its ID. The ID is the unique identifier for the log. |
+| logs | get_log | Get a full log message by its ID. The ID is the unique identifier for the log. Searches the last 7 days unless start or end is set; set them to find an older log. |
 | logs | get_log_histogram | Get histogram of logs from a given query |
-| logs | list_log_field_names | List field names of logs |
-| logs | list_log_field_values | List field values of logs |
+| logs | list_log_field_names | Deprecated: no longer supported, always returns an error. List field names of logs |
+| logs | list_log_field_values | List field values of logs, most frequent first, with the number of matching logs that have each value. To see which fields a log has, pass its logID to the get_log tool. |
 | logs | query_logs_range | Execute a range query for logs. This endpoint returns logs as either timeSeries or gridData. It may return a large amount of data, so be careful putting the result of this direction into context. U... |
 | metrics | list_prometheus_label_names | Returns the list of label names (keys) available on metrics that match the given selectors. Use this tool when you need to discover what labels are available on specific metrics or services. Exampl... |
 | metrics | list_prometheus_label_values | Returns the list of values for a specific label name, optionally filtered by selectors. Use this tool when you know the label name and want to discover what values it has across your metrics. Commo... |

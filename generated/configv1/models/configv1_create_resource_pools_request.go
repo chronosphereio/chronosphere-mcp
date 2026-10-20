@@ -18,7 +18,7 @@ import (
 // swagger:model configv1CreateResourcePoolsRequest
 type Configv1CreateResourcePoolsRequest struct {
 
-	// If true, the ResourcePools will not be created, and no response ResourcePools will be returned. The response will return an error if the given ResourcePools is invalid.
+	// If `true`, validates the specified configuration without creating the ResourcePools. If the specified configuration is valid, the endpoint returns a partial response without the ResourcePools. If the specified configuration is invalid, the endpoint returns an error.
 	DryRun bool `json:"dry_run,omitempty"`
 
 	// resource pools

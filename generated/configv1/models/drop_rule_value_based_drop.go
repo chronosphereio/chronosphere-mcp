@@ -17,10 +17,10 @@ import (
 // swagger:model DropRuleValueBasedDrop
 type DropRuleValueBasedDrop struct {
 
-	// Enables value-based metric dropping.
+	// Enables dropping metrics based on a set value.
 	Enabled bool `json:"enabled,omitempty"`
 
-	// The target datapoint value at which to drop metrics.
+	// The target data point value at which to drop metrics.
 	TargetDropValue float64 `json:"target_drop_value,omitempty"`
 }
 

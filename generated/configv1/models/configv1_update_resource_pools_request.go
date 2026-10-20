@@ -18,10 +18,10 @@ import (
 // swagger:model configv1UpdateResourcePoolsRequest
 type Configv1UpdateResourcePoolsRequest struct {
 
-	// If true, the ResourcePools will be created if it does not already exist. If false, an error will be returned if the ResourcePools does not already exist.
+	// If `true`, the ResourcePools will be created if it does not already exist. If `false`, an error will be returned if the ResourcePools does not already exist.
 	CreateIfMissing bool `json:"create_if_missing,omitempty"`
 
-	// If true, the ResourcePools will not be created nor updated, and no response ResourcePools will be returned. The response will return an error if the given ResourcePools is invalid.
+	// If `true`, validates the specified configuration without creating or updating the ResourcePools. If the specified configuration is valid, the endpoint returns a partial response without the ResourcePools. If the specified configuration is invalid, the endpoint returns an error.
 	DryRun bool `json:"dry_run,omitempty"`
 
 	// resource pools

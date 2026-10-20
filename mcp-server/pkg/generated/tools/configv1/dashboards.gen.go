@@ -53,27 +53,27 @@ func ListDashboards(api *configv1.ConfigV1API, logger *zap.Logger) tools.MCPTool
 			mcp.WithDescription("List dashboards resources"),
 
 			params.WithStringArray("collection_slugs",
-				mcp.Description("Filters results by collection_slug, where any Dashboard with a matching collection_slug in the given list (and matches all other filters) is returned."),
+				mcp.Description("Filters results by collection_slug, where any Dashboard with a matching collection_slug in the given list (and matches all other filters) will be returned."),
 			),
 
 			mcp.WithBoolean("include_dashboard_json",
-				mcp.Description("Optional flag to populate the dashboard_json of the returned dashboards. By default, dashboard_json will be left empty."),
+				mcp.Description("Optional. Flag to populate the `dashboard_json` field of the returned dashboards. By default, `dashboard_json` is empty."),
 			),
 
 			params.WithStringArray("names",
-				mcp.Description("Filters results by name, where any Dashboard with a matching name in the given list (and matches all other filters) is returned."),
+				mcp.Description("Filters results by name, where any Dashboard with a matching name in the given list (and matches all other filters) will be returned."),
 			),
 
 			mcp.WithNumber("page_max_size",
-				mcp.Description("Page size preference (i.e. how many items are returned in the next page). If zero, the server will use a default. Regardless of what size is given, clients must never assume how many items will be returned."),
+				mcp.Description("Sets the preferred number of items to return per page. If set to `0`, the server will use its default value. Regardless of the value specified, clients must never assume how many items will be returned."),
 			),
 
 			mcp.WithString("page_token",
-				mcp.Description("Opaque page token identifying which page to request. An empty token identifies the first page."),
+				mcp.Description("An opaque page token that identifies which page the client should request. An empty value indicates the first page."),
 			),
 
 			params.WithStringArray("slugs",
-				mcp.Description("Filters results by slug, where any Dashboard with a matching slug in the given list (and matches all other filters) is returned."),
+				mcp.Description("Filters results by slug, where any Dashboard with a matching slug in the given list (and matches all other filters) will be returned."),
 			),
 		),
 		Handler: func(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {

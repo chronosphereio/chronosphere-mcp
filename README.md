@@ -131,6 +131,14 @@ This MCP server uses the same authentication methods as chronoctl. By default, t
 make run-chronomcp CHRONOSPHERE_ORG_NAME=<your org here> CHRONOSPHERE_API_TOKEN=<your api token here>
 ```
 
+### API specs
+
+The API clients in `generated/` are built from the Chronosphere public API specs: `generated/configv1/spec.json`, `generated/datav1/spec.json` and `generated/statev1/spec.json` are copies of the monorepo's exports in `src/gateway/publicapiswagger/data/`. To update them, sync all three from a monorepo checkout and regenerate:
+```sh
+make swagger-sync MONOREPO=<path to monorepo checkout>
+make all-gen
+```
+
 ### Debugging MCP Tools
 
 The MCP project provides an inspector useful for directly calling tools APIs. To use:
@@ -170,6 +178,9 @@ The MCP project provides an inspector useful for directly calling tools APIs. To
 | logs | list_log_field_names | Deprecated: no longer supported, always returns an error. List field names of logs |
 | logs | list_log_field_values | List field values of logs, most frequent first, with the number of matching logs that have each value. To see which fields a log has, pass its logID to the get_log tool. |
 | logs | query_logs_range | Execute a range query for logs. This endpoint returns logs as either timeSeries or gridData. It may return a large amount of data, so be careful putting the result of this direction into context. U... |
+| metric_usage | list_metric_usages_by_label_name | Lists metric usage statistics grouped by label name. Use this to find unused or high-cardinality labels that could be dropped. Response fields: - label_name: The name of the label - dpps: Data poin... |
+| metric_usage | list_metric_usages_by_metric_name | Lists metric usage statistics grouped by metric name. Use this to find unused or underutilized metrics that could be dropped to reduce costs. Response fields: - metric_name: The name of the metric ... |
+| metric_usage | list_rule_evaluations | Lists rule evaluation issues for monitors and recording rules. Use this to identify rules that are failing or having problems. Response fields: - rule_slug: Unique identifier of the rule - rule_typ... |
 | metrics | list_prometheus_label_names | Returns the list of label names (keys) available on metrics that match the given selectors. Use this tool when you need to discover what labels are available on specific metrics or services. Exampl... |
 | metrics | list_prometheus_label_values | Returns the list of values for a specific label name, optionally filtered by selectors. Use this tool when you know the label name and want to discover what values it has across your metrics. Commo... |
 | metrics | list_prometheus_series | Returns the complete time series (full label sets with all key-value pairs) that match the given selectors. Each result shows the exact combination of labels for an active time series. Use this too... |
@@ -177,10 +188,7 @@ The MCP project provides an inspector useful for directly calling tools APIs. To
 | metrics | query_prometheus_instant | Evaluates a Prometheus instant query at a single point in time |
 | metrics | query_prometheus_range | Executes a Prometheus PromQL query over a specified time range and returns time series data points as JSON. Supports standard PromQL syntax plus Chronosphere custom functions: - cardinality_estimat... |
 | metrics | render_prometheus_range_query | Evaluates a Prometheus expression query over a range of time and renders it as a PNG image. |
-| metric_usage | list_metric_usages_by_label_name | Lists metric usage statistics grouped by label name. Use this to find unused or high-cardinality labels that could be dropped. |
-| metric_usage | list_metric_usages_by_metric_name | Lists metric usage statistics grouped by metric name. Use this to find unused or underutilized metrics that could be dropped to reduce costs. |
-| metric_usage | list_rule_evaluations | Lists rule evaluation issues for monitors and recording rules. Use this to identify monitors or recording rules that are failing or having problems. |
-| monitors | list_monitor_statuses | Lists the current status of monitors in Chronosphere. Returns monitor statuses with alert states and optional signal and series details. |
+| monitors | list_monitor_statuses | Lists the current status of monitors in Chronosphere. Returns every monitor matching the filters with a firing alert. Monitors that are not firing are omitted from the results. Each status carries ... |
 | traces | list_traces | List traces from a given query |
 
 *Note: To regenerate this table after tool updates, run: `make tools-gen && go run scripts/generate-tools-table.go`*

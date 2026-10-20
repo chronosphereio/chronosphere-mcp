@@ -14,19 +14,22 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// LogAllocationConfigHighLowPriorities HighLowPriorities defines explicit high and low priority match criteria to define which logs
-// should be dropped first (low) and dropped last (high). Anything not matched by either set of rules
-// is considered default priority and thus dropped after low but before high.
+// LogAllocationConfigHighLowPriorities Defines explicit high and low priority match criteria to specify which logs to
+// drop first (low) and last (high). Anything not matched by either set of rules is
+// considered default priority and is dropped after low priority but before high
+// priority data.
 //
 // swagger:model LogAllocationConfigHighLowPriorities
 type LogAllocationConfigHighLowPriorities struct {
 
-	// A list of search filters defining which logs are considered high priority in this dataset.
-	// The filters are ORed together so only one given filter needs to match.
+	// A list of search filters defining which logs are considered high priority in
+	// this dataset. Filters are combined as OR statements so only one filter needs
+	// to match.
 	HighPriorityFilters []*Configv1LogSearchFilter `json:"high_priority_filters"`
 
-	// A list of search filters defining which logs are considered low priority in this dataset.
-	// The filters are ORed together so only one given filter needs to match.
+	// A list of search filters defining which logs are considered low priority in
+	// this dataset. Filters are combined as OR statements so only one filter needs
+	// to match.
 	LowPriorityFilters []*Configv1LogSearchFilter `json:"low_priority_filters"`
 }
 

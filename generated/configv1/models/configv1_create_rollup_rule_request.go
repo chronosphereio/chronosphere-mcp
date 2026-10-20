@@ -18,7 +18,7 @@ import (
 // swagger:model configv1CreateRollupRuleRequest
 type Configv1CreateRollupRuleRequest struct {
 
-	// If true, the RollupRule will not be created, and no response RollupRule will be returned. The response will return an error if the given RollupRule is invalid.
+	// If `true`, validates the specified configuration without creating the RollupRule. If the specified configuration is valid, the endpoint returns a partial response without the RollupRule. If the specified configuration is invalid, the endpoint returns an error.
 	DryRun bool `json:"dry_run,omitempty"`
 
 	// rollup rule

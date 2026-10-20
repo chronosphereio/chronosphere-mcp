@@ -27,13 +27,13 @@ type Configv1Dataset struct {
 	// Format: date-time
 	CreatedAt strfmt.DateTime `json:"created_at,omitempty"`
 
-	// Optional longer-form description of the dataset.
+	// Required. Description of the dataset.
 	Description string `json:"description,omitempty"`
 
-	// Required name of the Dataset. May be modified after the Dataset is created.
+	// The name of the Dataset. You can modify this value after the Dataset is created.
 	Name string `json:"name,omitempty"`
 
-	// Unique identifier of the Dataset. If slug is not provided, one will be generated based of the name field. Cannot be modified after the Dataset is created.
+	// The unique identifier of the Dataset. If a `slug` isn't provided, one is generated based on the `name` field. You can't modify this field after the Dataset is created.
 	Slug string `json:"slug,omitempty"`
 
 	// Timestamp of when the Dataset was last updated. Cannot be set by clients.

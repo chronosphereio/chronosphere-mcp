@@ -17,10 +17,10 @@ import (
 // swagger:model configv1RollupRuleStoragePolicy
 type Configv1RollupRuleStoragePolicy struct {
 
-	// Required resolution of the aggregated metrics.
+	// Resolution of the aggregated metrics.
 	Resolution string `json:"resolution,omitempty"`
 
-	// Required retention of the aggregated metrics.
+	// Retention of the aggregated metrics.
 	Retention string `json:"retention,omitempty"`
 }
 

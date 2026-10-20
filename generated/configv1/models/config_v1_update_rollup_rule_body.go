@@ -18,10 +18,10 @@ import (
 // swagger:model ConfigV1UpdateRollupRuleBody
 type ConfigV1UpdateRollupRuleBody struct {
 
-	// If true, the RollupRule will be created if it does not already exist, identified by slug. If false, an error will be returned if the RollupRule does not already exist.
+	// If `true`, the RollupRule will be created if it does not already exist, identified by `slug`. If `false`, an error will be returned if the RollupRule does not already exist.
 	CreateIfMissing bool `json:"create_if_missing,omitempty"`
 
-	// If true, the RollupRule will not be created nor updated, and no response RollupRule will be returned. The response will return an error if the given RollupRule is invalid.
+	// If `true`, validates the specified configuration without creating or updating the RollupRule. If the specified configuration is valid, the endpoint returns a partial response without the RollupRule. If the specified configuration is invalid, the endpoint returns an error.
 	DryRun bool `json:"dry_run,omitempty"`
 
 	// rollup rule

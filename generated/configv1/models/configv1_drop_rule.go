@@ -28,19 +28,25 @@ type Configv1DropRule struct {
 	// Format: date-time
 	CreatedAt strfmt.DateTime `json:"created_at,omitempty"`
 
-	// Drops datapoints if datapoint values are NaN.
+	// Drops data points if values are Not a Number (NaN). If set to true, Palo Alto Networks
+	// drops NaN data points, along with any published staleness markers. See the
+	// [drop rules
+	// documentation](https://docs.chronosphere.io/control/shaping/shape-metrics/rules/drop-rules#define-a-value-based-drop-rule)
+	// for more information.
 	DropNanValue bool `json:"drop_nan_value,omitempty"`
 
-	// Series that match this filter are dropped.
+	// Defines the conditions that determine whether to drop a metric. Drop rules can
+	// have multiple filter conditions on different labels, making it possible to drop
+	// a subset of the series matching a particular metric name.
 	Filters []*Configv1LabelFilter `json:"filters"`
 
 	// mode
 	Mode Configv1DropRuleMode `json:"mode,omitempty"`
 
-	// Required name of the DropRule. May be modified after the DropRule is created.
+	// The name of the DropRule. You can modify this value after the DropRule is created.
 	Name string `json:"name,omitempty"`
 
-	// Unique identifier of the DropRule. If slug is not provided, one will be generated based of the name field. Cannot be modified after the DropRule is created.
+	// The unique identifier of the DropRule. If a `slug` isn't provided, one is generated based on the `name` field. You can't modify this field after the DropRule is created.
 	Slug string `json:"slug,omitempty"`
 
 	// Timestamp of when the DropRule was last updated. Cannot be set by clients.

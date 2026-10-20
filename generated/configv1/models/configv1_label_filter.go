@@ -17,11 +17,11 @@ import (
 // swagger:model configv1LabelFilter
 type Configv1LabelFilter struct {
 
-	// Name of the label to match.
+	// The name of the label to match.
 	// Example: job
 	Name string `json:"name,omitempty"`
 
-	// Glob value of the label to match.
+	// The glob value of the label to match.
 	// Example: myservice*
 	ValueGlob string `json:"value_glob,omitempty"`
 }

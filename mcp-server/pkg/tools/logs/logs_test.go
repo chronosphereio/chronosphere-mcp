@@ -225,7 +225,7 @@ func TestQueryLogsRangeAPICall(t *testing.T) {
 	logger := zaptest.NewLogger(t)
 	linkBuilder := links.NewBuilder("https://test.chronosphere.io")
 
-	tools, err := NewTools(client, nil, logger, linkBuilder)
+	tools, err := NewTools(client, logger, linkBuilder)
 	require.NoError(t, err)
 
 	// Create query params
@@ -447,7 +447,7 @@ func newTestTools(t *testing.T, serverURL string) *Tools {
 		WithHost(serverURL[len("http://"):]).
 		WithSchemes([]string{"http"})
 	client := datav1.NewHTTPClientWithConfig(nil, transport)
-	tools, err := NewTools(client, nil, zaptest.NewLogger(t), links.NewBuilder("https://test.chronosphere.io"))
+	tools, err := NewTools(client, zaptest.NewLogger(t), links.NewBuilder("https://test.chronosphere.io"))
 	require.NoError(t, err)
 	return tools
 }

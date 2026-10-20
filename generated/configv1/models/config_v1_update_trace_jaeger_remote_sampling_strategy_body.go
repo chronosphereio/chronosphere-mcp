@@ -18,10 +18,10 @@ import (
 // swagger:model ConfigV1UpdateTraceJaegerRemoteSamplingStrategyBody
 type ConfigV1UpdateTraceJaegerRemoteSamplingStrategyBody struct {
 
-	// If true, the TraceJaegerRemoteSamplingStrategy will be created if it does not already exist, identified by slug. If false, an error will be returned if the TraceJaegerRemoteSamplingStrategy does not already exist.
+	// If `true`, the TraceJaegerRemoteSamplingStrategy will be created if it does not already exist, identified by `slug`. If `false`, an error will be returned if the TraceJaegerRemoteSamplingStrategy does not already exist.
 	CreateIfMissing bool `json:"create_if_missing,omitempty"`
 
-	// If true, the TraceJaegerRemoteSamplingStrategy will not be created nor updated, and no response TraceJaegerRemoteSamplingStrategy will be returned. The response will return an error if the given TraceJaegerRemoteSamplingStrategy is invalid.
+	// If `true`, validates the specified configuration without creating or updating the TraceJaegerRemoteSamplingStrategy. If the specified configuration is valid, the endpoint returns a partial response without the TraceJaegerRemoteSamplingStrategy. If the specified configuration is invalid, the endpoint returns an error.
 	DryRun bool `json:"dry_run,omitempty"`
 
 	// trace jaeger remote sampling strategy

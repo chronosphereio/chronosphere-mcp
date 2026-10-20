@@ -21,7 +21,7 @@ type Configv1TraceMetricsRuleGroupBy struct {
 	// key
 	Key *GroupByGroupByKey `json:"key,omitempty"`
 
-	// The label to use in the resultant metrics.
+	// The label to use in the resulting metrics.
 	Label string `json:"label,omitempty"`
 }
 

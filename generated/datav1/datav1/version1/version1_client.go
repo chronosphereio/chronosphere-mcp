@@ -56,11 +56,25 @@ type ClientOption func(*runtime.ClientOperation)
 type ClientService interface {
 	CreateEvent(params *CreateEventParams, opts ...ClientOption) (*CreateEventOK, error)
 
+	CreatePanelAnnotation(params *CreatePanelAnnotationParams, opts ...ClientOption) (*CreatePanelAnnotationOK, error)
+
+	DeletePanelAnnotation(params *DeletePanelAnnotationParams, opts ...ClientOption) (*DeletePanelAnnotationOK, error)
+
+	ListAlerts(params *ListAlertsParams, opts ...ClientOption) (*ListAlertsOK, error)
+
+	ListEventFieldValues(params *ListEventFieldValuesParams, opts ...ClientOption) (*ListEventFieldValuesOK, error)
+
 	ListEvents(params *ListEventsParams, opts ...ClientOption) (*ListEventsOK, error)
+
+	ListPanelAnnotations(params *ListPanelAnnotationsParams, opts ...ClientOption) (*ListPanelAnnotationsOK, error)
 
 	ListTraces(params *ListTracesParams, opts ...ClientOption) (*ListTracesOK, error)
 
+	PutPanelAnnotation(params *PutPanelAnnotationParams, opts ...ClientOption) (*PutPanelAnnotationOK, error)
+
 	QueryLogsRange(params *QueryLogsRangeParams, opts ...ClientOption) (*QueryLogsRangeOK, error)
+
+	ReadMetricMetadata(params *ReadMetricMetadataParams, opts ...ClientOption) (*ReadMetricMetadataOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
 }
@@ -103,6 +117,157 @@ func (a *Client) CreateEvent(params *CreateEventParams, opts ...ClientOption) (*
 }
 
 /*
+CreatePanelAnnotation create panel annotation API
+*/
+func (a *Client) CreatePanelAnnotation(params *CreatePanelAnnotationParams, opts ...ClientOption) (*CreatePanelAnnotationOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewCreatePanelAnnotationParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "CreatePanelAnnotation",
+		Method:             "POST",
+		PathPattern:        "/api/v1/data/panel_annotations",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &CreatePanelAnnotationReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*CreatePanelAnnotationOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	unexpectedSuccess := result.(*CreatePanelAnnotationDefault)
+	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
+}
+
+/*
+DeletePanelAnnotation delete panel annotation API
+*/
+func (a *Client) DeletePanelAnnotation(params *DeletePanelAnnotationParams, opts ...ClientOption) (*DeletePanelAnnotationOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewDeletePanelAnnotationParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "DeletePanelAnnotation",
+		Method:             "DELETE",
+		PathPattern:        "/api/v1/data/panel_annotations/{id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &DeletePanelAnnotationReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*DeletePanelAnnotationOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	unexpectedSuccess := result.(*DeletePanelAnnotationDefault)
+	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
+}
+
+/*
+	ListAlerts Lists the alerts that fired for this tenant, most recently triggered
+
+first. The trigger time window is always closed and defaults to the last
+hour.
+*/
+func (a *Client) ListAlerts(params *ListAlertsParams, opts ...ClientOption) (*ListAlertsOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewListAlertsParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "ListAlerts",
+		Method:             "POST",
+		PathPattern:        "/api/v1/data/alerts",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &ListAlertsReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*ListAlertsOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	unexpectedSuccess := result.(*ListAlertsDefault)
+	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
+}
+
+/*
+ListEventFieldValues Lists the known values of an event field, most frequent first.
+*/
+func (a *Client) ListEventFieldValues(params *ListEventFieldValuesParams, opts ...ClientOption) (*ListEventFieldValuesOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewListEventFieldValuesParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "ListEventFieldValues",
+		Method:             "GET",
+		PathPattern:        "/api/v1/data/events:field-values",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &ListEventFieldValuesReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*ListEventFieldValuesOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	unexpectedSuccess := result.(*ListEventFieldValuesDefault)
+	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
+}
+
+/*
 ListEvents list events API
 */
 func (a *Client) ListEvents(params *ListEventsParams, opts ...ClientOption) (*ListEventsOK, error) {
@@ -136,6 +301,43 @@ func (a *Client) ListEvents(params *ListEventsParams, opts ...ClientOption) (*Li
 	}
 	// unexpected success response
 	unexpectedSuccess := result.(*ListEventsDefault)
+	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
+}
+
+/*
+ListPanelAnnotations list panel annotations API
+*/
+func (a *Client) ListPanelAnnotations(params *ListPanelAnnotationsParams, opts ...ClientOption) (*ListPanelAnnotationsOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewListPanelAnnotationsParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "ListPanelAnnotations",
+		Method:             "GET",
+		PathPattern:        "/api/v1/data/panel_annotations",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &ListPanelAnnotationsReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*ListPanelAnnotationsOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	unexpectedSuccess := result.(*ListPanelAnnotationsDefault)
 	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
 }
 
@@ -177,6 +379,43 @@ func (a *Client) ListTraces(params *ListTracesParams, opts ...ClientOption) (*Li
 }
 
 /*
+PutPanelAnnotation put panel annotation API
+*/
+func (a *Client) PutPanelAnnotation(params *PutPanelAnnotationParams, opts ...ClientOption) (*PutPanelAnnotationOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPutPanelAnnotationParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "PutPanelAnnotation",
+		Method:             "PUT",
+		PathPattern:        "/api/v1/data/panel_annotations/{id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &PutPanelAnnotationReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PutPanelAnnotationOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	unexpectedSuccess := result.(*PutPanelAnnotationDefault)
+	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
+}
+
+/*
 QueryLogsRange Logging
 */
 func (a *Client) QueryLogsRange(params *QueryLogsRangeParams, opts ...ClientOption) (*QueryLogsRangeOK, error) {
@@ -210,6 +449,43 @@ func (a *Client) QueryLogsRange(params *QueryLogsRangeParams, opts ...ClientOpti
 	}
 	// unexpected success response
 	unexpectedSuccess := result.(*QueryLogsRangeDefault)
+	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
+}
+
+/*
+ReadMetricMetadata Metric Metadata
+*/
+func (a *Client) ReadMetricMetadata(params *ReadMetricMetadataParams, opts ...ClientOption) (*ReadMetricMetadataOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewReadMetricMetadataParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "ReadMetricMetadata",
+		Method:             "GET",
+		PathPattern:        "/api/v1/data/metrics:metadata/{metric_name}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &ReadMetricMetadataReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*ReadMetricMetadataOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	unexpectedSuccess := result.(*ReadMetricMetadataDefault)
 	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
 }
 

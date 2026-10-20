@@ -17,10 +17,10 @@ import (
 // swagger:model configv1MappingRuleStoragePolicy
 type Configv1MappingRuleStoragePolicy struct {
 
-	// Required resolution of the aggregated metrics.
+	// Deprecated: This parameter is no longer supported.
 	Resolution string `json:"resolution,omitempty"`
 
-	// Required retention of the aggregated metrics.
+	// Deprecated: This parameter is no longer supported.
 	Retention string `json:"retention,omitempty"`
 }
 

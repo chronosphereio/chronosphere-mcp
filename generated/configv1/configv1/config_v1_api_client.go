@@ -10,21 +10,29 @@ import (
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 
+	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/azure_metrics_integration"
 	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/bucket"
 	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/classic_dashboard"
+	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/cloud_integration"
 	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/collection"
+	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/command_center_group"
+	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/consumption_budget"
+	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/consumption_config"
 	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/dashboard"
 	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/dataset"
 	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/derived_label"
 	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/derived_metric"
 	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/drop_rule"
+	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/external_connection"
 	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/gcp_metrics_integration"
 	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/grafana_dashboard"
 	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/log_allocation_config"
+	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/log_control_config"
 	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/log_ingest_config"
-	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/log_scale_action"
-	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/log_scale_alert"
+	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/log_retention_config"
 	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/mapping_rule"
+	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/metric_name_active_series_limit"
+	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/metric_name_default_active_series_limit"
 	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/monitor"
 	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/muting_rule"
 	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/notification_policy"
@@ -36,12 +44,15 @@ import (
 	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/s_l_o"
 	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/service"
 	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/service_account"
+	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/service_attribute"
+	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/synthetic_test"
 	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/team"
 	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/trace_behavior"
 	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/trace_behavior_config"
 	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/trace_jaeger_remote_sampling_strategy"
 	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/trace_metrics_rule"
 	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/trace_tail_sampling_rules"
+	"github.com/chronosphereio/chronosphere-mcp/generated/configv1/configv1/version1"
 )
 
 // Default config v1 API HTTP client.
@@ -86,21 +97,29 @@ func New(transport runtime.ClientTransport, formats strfmt.Registry) *ConfigV1AP
 
 	cli := new(ConfigV1API)
 	cli.Transport = transport
+	cli.AzureMetricsIntegration = azure_metrics_integration.New(transport, formats)
 	cli.Bucket = bucket.New(transport, formats)
 	cli.ClassicDashboard = classic_dashboard.New(transport, formats)
+	cli.CloudIntegration = cloud_integration.New(transport, formats)
 	cli.Collection = collection.New(transport, formats)
+	cli.CommandCenterGroup = command_center_group.New(transport, formats)
+	cli.ConsumptionBudget = consumption_budget.New(transport, formats)
+	cli.ConsumptionConfig = consumption_config.New(transport, formats)
 	cli.Dashboard = dashboard.New(transport, formats)
 	cli.Dataset = dataset.New(transport, formats)
 	cli.DerivedLabel = derived_label.New(transport, formats)
 	cli.DerivedMetric = derived_metric.New(transport, formats)
 	cli.DropRule = drop_rule.New(transport, formats)
+	cli.ExternalConnection = external_connection.New(transport, formats)
 	cli.GcpMetricsIntegration = gcp_metrics_integration.New(transport, formats)
 	cli.GrafanaDashboard = grafana_dashboard.New(transport, formats)
 	cli.LogAllocationConfig = log_allocation_config.New(transport, formats)
+	cli.LogControlConfig = log_control_config.New(transport, formats)
 	cli.LogIngestConfig = log_ingest_config.New(transport, formats)
-	cli.LogScaleAction = log_scale_action.New(transport, formats)
-	cli.LogScaleAlert = log_scale_alert.New(transport, formats)
+	cli.LogRetentionConfig = log_retention_config.New(transport, formats)
 	cli.MappingRule = mapping_rule.New(transport, formats)
+	cli.MetricNameActiveSeriesLimit = metric_name_active_series_limit.New(transport, formats)
+	cli.MetricNameDefaultActiveSeriesLimit = metric_name_default_active_series_limit.New(transport, formats)
 	cli.Monitor = monitor.New(transport, formats)
 	cli.MutingRule = muting_rule.New(transport, formats)
 	cli.NotificationPolicy = notification_policy.New(transport, formats)
@@ -112,12 +131,15 @@ func New(transport runtime.ClientTransport, formats strfmt.Registry) *ConfigV1AP
 	cli.Slo = s_l_o.New(transport, formats)
 	cli.Service = service.New(transport, formats)
 	cli.ServiceAccount = service_account.New(transport, formats)
+	cli.ServiceAttribute = service_attribute.New(transport, formats)
+	cli.SyntheticTest = synthetic_test.New(transport, formats)
 	cli.Team = team.New(transport, formats)
 	cli.TraceBehavior = trace_behavior.New(transport, formats)
 	cli.TraceBehaviorConfig = trace_behavior_config.New(transport, formats)
 	cli.TraceJaegerRemoteSamplingStrategy = trace_jaeger_remote_sampling_strategy.New(transport, formats)
 	cli.TraceMetricsRule = trace_metrics_rule.New(transport, formats)
 	cli.TraceTailSamplingRules = trace_tail_sampling_rules.New(transport, formats)
+	cli.Version1 = version1.New(transport, formats)
 	return cli
 }
 
@@ -162,11 +184,21 @@ func (cfg *TransportConfig) WithSchemes(schemes []string) *TransportConfig {
 
 // ConfigV1API is a client for config v1 API
 type ConfigV1API struct {
+	AzureMetricsIntegration azure_metrics_integration.ClientService
+
 	Bucket bucket.ClientService
 
 	ClassicDashboard classic_dashboard.ClientService
 
+	CloudIntegration cloud_integration.ClientService
+
 	Collection collection.ClientService
+
+	CommandCenterGroup command_center_group.ClientService
+
+	ConsumptionBudget consumption_budget.ClientService
+
+	ConsumptionConfig consumption_config.ClientService
 
 	Dashboard dashboard.ClientService
 
@@ -178,19 +210,25 @@ type ConfigV1API struct {
 
 	DropRule drop_rule.ClientService
 
+	ExternalConnection external_connection.ClientService
+
 	GcpMetricsIntegration gcp_metrics_integration.ClientService
 
 	GrafanaDashboard grafana_dashboard.ClientService
 
 	LogAllocationConfig log_allocation_config.ClientService
 
+	LogControlConfig log_control_config.ClientService
+
 	LogIngestConfig log_ingest_config.ClientService
 
-	LogScaleAction log_scale_action.ClientService
-
-	LogScaleAlert log_scale_alert.ClientService
+	LogRetentionConfig log_retention_config.ClientService
 
 	MappingRule mapping_rule.ClientService
+
+	MetricNameActiveSeriesLimit metric_name_active_series_limit.ClientService
+
+	MetricNameDefaultActiveSeriesLimit metric_name_default_active_series_limit.ClientService
 
 	Monitor monitor.ClientService
 
@@ -214,6 +252,10 @@ type ConfigV1API struct {
 
 	ServiceAccount service_account.ClientService
 
+	ServiceAttribute service_attribute.ClientService
+
+	SyntheticTest synthetic_test.ClientService
+
 	Team team.ClientService
 
 	TraceBehavior trace_behavior.ClientService
@@ -226,27 +268,37 @@ type ConfigV1API struct {
 
 	TraceTailSamplingRules trace_tail_sampling_rules.ClientService
 
+	Version1 version1.ClientService
+
 	Transport runtime.ClientTransport
 }
 
 // SetTransport changes the transport on the client and all its subresources
 func (c *ConfigV1API) SetTransport(transport runtime.ClientTransport) {
 	c.Transport = transport
+	c.AzureMetricsIntegration.SetTransport(transport)
 	c.Bucket.SetTransport(transport)
 	c.ClassicDashboard.SetTransport(transport)
+	c.CloudIntegration.SetTransport(transport)
 	c.Collection.SetTransport(transport)
+	c.CommandCenterGroup.SetTransport(transport)
+	c.ConsumptionBudget.SetTransport(transport)
+	c.ConsumptionConfig.SetTransport(transport)
 	c.Dashboard.SetTransport(transport)
 	c.Dataset.SetTransport(transport)
 	c.DerivedLabel.SetTransport(transport)
 	c.DerivedMetric.SetTransport(transport)
 	c.DropRule.SetTransport(transport)
+	c.ExternalConnection.SetTransport(transport)
 	c.GcpMetricsIntegration.SetTransport(transport)
 	c.GrafanaDashboard.SetTransport(transport)
 	c.LogAllocationConfig.SetTransport(transport)
+	c.LogControlConfig.SetTransport(transport)
 	c.LogIngestConfig.SetTransport(transport)
-	c.LogScaleAction.SetTransport(transport)
-	c.LogScaleAlert.SetTransport(transport)
+	c.LogRetentionConfig.SetTransport(transport)
 	c.MappingRule.SetTransport(transport)
+	c.MetricNameActiveSeriesLimit.SetTransport(transport)
+	c.MetricNameDefaultActiveSeriesLimit.SetTransport(transport)
 	c.Monitor.SetTransport(transport)
 	c.MutingRule.SetTransport(transport)
 	c.NotificationPolicy.SetTransport(transport)
@@ -258,10 +310,13 @@ func (c *ConfigV1API) SetTransport(transport runtime.ClientTransport) {
 	c.Slo.SetTransport(transport)
 	c.Service.SetTransport(transport)
 	c.ServiceAccount.SetTransport(transport)
+	c.ServiceAttribute.SetTransport(transport)
+	c.SyntheticTest.SetTransport(transport)
 	c.Team.SetTransport(transport)
 	c.TraceBehavior.SetTransport(transport)
 	c.TraceBehaviorConfig.SetTransport(transport)
 	c.TraceJaegerRemoteSamplingStrategy.SetTransport(transport)
 	c.TraceMetricsRule.SetTransport(transport)
 	c.TraceTailSamplingRules.SetTransport(transport)
+	c.Version1.SetTransport(transport)
 }

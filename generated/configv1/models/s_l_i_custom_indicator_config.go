@@ -12,26 +12,26 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// SLICustomIndicatorConfig CustomIndicatorConfig is for SLIs that are not associated with Chronosphere
-// Lens supported SLO types. They are provided with several variables that can
-// be used in the template to generate the query:
-// - Window (required)
-// - GroupBy (required)
-// - LensService (optional)
+// SLICustomIndicatorConfig Configuration for error ratio SLIs. You can include these variables in PromQL
+// queries for SLIs:
+//   - `{{.Window}}`: Specifies the window of time that the PromQL query operates on.
+//   - `{{.GroupBy}}`: Specifies a comma-separated list of signal and dimension
+//     labels to group the results by.
+//   - `{{.AdditionalFilters}}`: Requires setting `additional_promql_filters`.
 //
 // swagger:model SLICustomIndicatorConfig
 type SLICustomIndicatorConfig struct {
 
 	// A PromQL query that measures the number of "bad" events for this SLI.
-	// Either this or the good_query_template must be set.
+	// Either this or `good_query_template` must be set.
 	BadQueryTemplate string `json:"bad_query_template,omitempty"`
 
 	// A PromQL query that measures the number of "good" events for this SLI.
-	// Either this or the bad_query_template must be set.
+	// Either this or `bad_query_template` must be set.
 	GoodQueryTemplate string `json:"good_query_template,omitempty"`
 
 	// A PromQL query that measures the total number of events for this SLI.
-	// This is required for all advanced SLIs.
+	// This is required for all error ratio SLOs.
 	TotalQueryTemplate string `json:"total_query_template,omitempty"`
 }
 

@@ -25,7 +25,7 @@ type Configv1TraceMetricsRule struct {
 	// Format: date-time
 	CreatedAt strfmt.DateTime `json:"created_at,omitempty"`
 
-	// Add labels to the resultant metrics based on these specified GroupBy messages.
+	// Add labels to the resultant metrics based on the specified key:value pairs.
 	GroupBy []*Configv1TraceMetricsRuleGroupBy `json:"group_by"`
 
 	// Histogram bucket values, in seconds, for generated duration metrics.
@@ -37,10 +37,13 @@ type Configv1TraceMetricsRule struct {
 	// The name of the generated trace metrics.
 	MetricName string `json:"metric_name,omitempty"`
 
-	// Required name of the TraceMetricsRule. May be modified after the TraceMetricsRule is created.
+	// The name of the TraceMetricsRule. You can modify this value after the TraceMetricsRule is created.
 	Name string `json:"name,omitempty"`
 
-	// Unique identifier of the TraceMetricsRule. If slug is not provided, one will be generated based of the name field. Cannot be modified after the TraceMetricsRule is created.
+	// scope filter
+	ScopeFilter *TraceSearchFilterScopeFilter `json:"scope_filter,omitempty"`
+
+	// The unique identifier of the TraceMetricsRule. If a `slug` isn't provided, one is generated based on the `name` field. You can't modify this field after the TraceMetricsRule is created.
 	Slug string `json:"slug,omitempty"`
 
 	// trace filter
@@ -61,6 +64,10 @@ func (m *Configv1TraceMetricsRule) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateGroupBy(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateScopeFilter(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -116,6 +123,25 @@ func (m *Configv1TraceMetricsRule) validateGroupBy(formats strfmt.Registry) erro
 	return nil
 }
 
+func (m *Configv1TraceMetricsRule) validateScopeFilter(formats strfmt.Registry) error {
+	if swag.IsZero(m.ScopeFilter) { // not required
+		return nil
+	}
+
+	if m.ScopeFilter != nil {
+		if err := m.ScopeFilter.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("scope_filter")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("scope_filter")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (m *Configv1TraceMetricsRule) validateTraceFilter(formats strfmt.Registry) error {
 	if swag.IsZero(m.TraceFilter) { // not required
 		return nil
@@ -156,6 +182,10 @@ func (m *Configv1TraceMetricsRule) ContextValidate(ctx context.Context, formats 
 	}
 
 	if err := m.contextValidateGroupBy(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateScopeFilter(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -202,6 +232,27 @@ func (m *Configv1TraceMetricsRule) contextValidateGroupBy(ctx context.Context, f
 			}
 		}
 
+	}
+
+	return nil
+}
+
+func (m *Configv1TraceMetricsRule) contextValidateScopeFilter(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.ScopeFilter != nil {
+
+		if swag.IsZero(m.ScopeFilter) { // not required
+			return nil
+		}
+
+		if err := m.ScopeFilter.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("scope_filter")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("scope_filter")
+			}
+			return err
+		}
 	}
 
 	return nil

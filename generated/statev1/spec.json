@@ -3,15 +3,31 @@
     "application/json"
   ],
   "definitions": {
-    "MetricUsageOrderBy": {
+    "LabelFilterLabelMatcher": {
+      "description": "One matcher, and which of the alert's two label sets it applies to.",
+      "properties": {
+        "filter_target": {
+          "$ref": "#/definitions/LabelMatcherFilterTarget"
+        },
+        "matcher": {
+          "$ref": "#/definitions/commonPromQLMatcher"
+        }
+      },
+      "type": "object"
+    },
+    "LabelFilterMatchStrategy": {
+      "description": "How closely an alert's labels must correspond to the matchers.\n\n - SUBSET_MATCH: EQUAL matchers require the labels to contain all the given labels, but\nthe alert may carry more. NOT_EQUAL excludes an alert when the labels\nmatch any matcher.\n - EXACT_MATCH: EQUAL matchers require exactly the provided labels, no more or less.\nNOT_EQUAL excludes an alert only when every NOT_EQUAL matcher applies.",
       "enum": [
-        "VALUABLE",
-        "DPPS",
-        "UTILITY",
-        "REFERENCES",
-        "EXECUTIONS",
-        "UNIQUE_VALUES",
-        "UNIQUE_USERS"
+        "SUBSET_MATCH",
+        "EXACT_MATCH"
+      ],
+      "type": "string"
+    },
+    "LabelMatcherFilterTarget": {
+      "description": "The label set a matcher reads. An alert carries the labels of the\nsignal that fired (`SIGNAL`) and the labels of the monitor or SLO\nthat raised it (`MONITOR`); the two are matched independently.",
+      "enum": [
+        "MONITOR",
+        "SIGNAL"
       ],
       "type": "string"
     },
@@ -78,19 +94,30 @@
       },
       "type": "object"
     },
-    "configv1PageParams": {
+    "commonPromQLMatcher": {
       "properties": {
-        "max_size": {
-          "description": "Sets the preferred number of items to return per page. If set to `0`, the\nserver will use its default value. Regardless of the value specified, clients\nmust never assume how many items will be returned.",
-          "format": "int64",
-          "type": "integer"
+        "type": {
+          "$ref": "#/definitions/commonPromQLMatcherType"
         },
-        "token": {
-          "description": "An opaque page token that identifies which page the client should request.\nAn empty value indicates the first page.",
+        "name": {
+          "description": "Prometheus label name for the matcher",
+          "type": "string"
+        },
+        "value": {
+          "description": "Prometheus label value for the matcher",
           "type": "string"
         }
       },
       "type": "object"
+    },
+    "commonPromQLMatcherType": {
+      "enum": [
+        "MatchEqual",
+        "MatchRegexp",
+        "MatchNotEqual",
+        "MatchNotRegexp"
+      ],
+      "type": "string"
     },
     "configv1PageResult": {
       "properties": {
@@ -101,18 +128,29 @@
       },
       "type": "object"
     },
-    "genericError": {
-      "additionalProperties": true,
-      "type": "object"
-    },
-    "protobufAny": {
-      "additionalProperties": {},
+    "datav1LabelFilter": {
+      "description": "A set of label matchers evaluated together as a single AND clause.",
       "properties": {
-        "@type": {
-          "type": "string"
+        "match_strategy": {
+          "$ref": "#/definitions/LabelFilterMatchStrategy"
+        },
+        "label_matchers": {
+          "description": "The matchers that make up this clause. An alert must satisfy all of\nthem. A filter with no matchers is ignored rather than matching\neverything.",
+          "items": {
+            "$ref": "#/definitions/LabelFilterLabelMatcher"
+          },
+          "type": "array"
         }
       },
       "type": "object"
+    },
+    "datav1Severity": {
+      "description": "The severity an alert fired at.",
+      "enum": [
+        "WARN",
+        "CRITICAL"
+      ],
+      "type": "string"
     },
     "statev1ListMetricUsagesByLabelNameResponse": {
       "properties": {
@@ -136,6 +174,58 @@
         "usages": {
           "items": {
             "$ref": "#/definitions/statev1MetricUsageByMetricName"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "statev1ListMonitorStatusesRequest": {
+      "properties": {
+        "monitor_slugs": {
+          "description": "Return only these monitors. When empty, returns every monitor with a firing\nalert.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "collection_slugs": {
+          "description": "Return only monitors owned by one of these collections.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "team_slugs": {
+          "description": "Return only monitors owned by one of these teams.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "label_filters": {
+          "description": "Each LabelFilter is one AND clause; the clauses are OR'ed together.\nApplied to alerts before they roll up into monitor statuses, with the same\nsemantics as ListAlerts.",
+          "items": {
+            "$ref": "#/definitions/datav1LabelFilter"
+          },
+          "type": "array"
+        },
+        "severity": {
+          "$ref": "#/definitions/datav1Severity"
+        },
+        "include_signals": {
+          "description": "Include each monitor's firing signals.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "statev1ListMonitorStatusesResponse": {
+      "properties": {
+        "monitor_statuses": {
+          "description": "One entry per monitor with at least one matching firing alert, ordered by\nmonitor slug. Monitors that are not firing are omitted.",
+          "items": {
+            "$ref": "#/definitions/statev1MonitorStatus"
           },
           "type": "array"
         }
@@ -222,13 +312,26 @@
       },
       "type": "object"
     },
-    "statev1MetricUsageOrder": {
+    "statev1MonitorStatus": {
+      "description": "The rolled-up state of every firing alert of one monitor.",
       "properties": {
-        "ascending": {
+        "monitor_slug": {
+          "description": "The slug of the monitor.",
+          "type": "string"
+        },
+        "muted": {
+          "description": "True when every firing alert is muted.",
           "type": "boolean"
         },
-        "by": {
-          "$ref": "#/definitions/MetricUsageOrderBy"
+        "severity": {
+          "$ref": "#/definitions/datav1Severity"
+        },
+        "signals": {
+          "description": "The monitor's firing signals, ordered by their labels. Set only with\n`include_signals`.",
+          "items": {
+            "$ref": "#/definitions/statev1SignalStatus"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -253,8 +356,52 @@
           "type": "integer"
         },
         "message": {
-          "description": "Detailed message related to rule evaluation issue. See \"Admin \u003e Evaluation failures\" in the Chronosphere documentation for more information.",
+          "description": "Detailed message related to rule evaluation issue. See \"Admin \u003e Evaluation failures\" in the Palo Alto Networks documentation for more information.",
           "type": "string"
+        },
+        "severity": {
+          "$ref": "#/definitions/statev1RuleEvaluationSeverity"
+        }
+      },
+      "type": "object"
+    },
+    "statev1RuleEvaluationSeverity": {
+      "description": "Severity of the rule evaluation issue.\n\n - SEVERITY_ERROR: A hard evaluation failure.\n - SEVERITY_WARNING: A non-fatal warning; the evaluation succeeded but something needs attention.",
+      "enum": [
+        "SEVERITY_ERROR",
+        "SEVERITY_WARNING"
+      ],
+      "type": "string"
+    },
+    "statev1SeverityStatus": {
+      "description": "The firing alert of one severity of a signal.",
+      "properties": {
+        "severity": {
+          "$ref": "#/definitions/datav1Severity"
+        },
+        "muted": {
+          "description": "Whether notifications for the alert are muted.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "statev1SignalStatus": {
+      "description": "One firing signal of a monitor.",
+      "properties": {
+        "signal_labels": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "The labels of the signal.",
+          "type": "object"
+        },
+        "severities": {
+          "description": "The signal's firing severities, most severe first.",
+          "items": {
+            "$ref": "#/definitions/statev1SeverityStatus"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -416,6 +563,39 @@
         ]
       }
     },
+    "/api/v1/state/monitor-statuses": {
+      "post": {
+        "description": "Lists monitors that have at least one firing alert, and how they are\nfiring. A read served by POST, because its label filters cannot be\nexpressed as query parameters.",
+        "operationId": "ListMonitorStatuses",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/statev1ListMonitorStatusesRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/statev1ListMonitorStatusesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/apiError"
+            }
+          }
+        },
+        "tags": [
+          "MonitorStatuses"
+        ]
+      }
+    },
     "/api/v1/state/rule-evaluations": {
       "get": {
         "operationId": "ListRuleEvaluations",
@@ -432,6 +612,12 @@
             "in": "query",
             "name": "page.token",
             "type": "string"
+          },
+          {
+            "description": "When false (default), only failures are returned. Set true to also include non-fatal warnings.",
+            "in": "query",
+            "name": "include_warnings",
+            "type": "boolean"
           }
         ],
         "responses": {

@@ -19,6 +19,7 @@ Feel free to update MEMORY.md with any useful information you find while working
 ### Generated Files
 - Do not manually edit generated artifacts in `generated/*` or `mcp-server/pkg/generated/*`.
 - Do not manually edit or delete Swagger specs (example `generated/statev1/spec.json`).
+- The specs `generated/configv1/spec.json`, `generated/datav1/spec.json` and `generated/statev1/spec.json` are copies of the monorepo's public API exports in `src/gateway/publicapiswagger/data/` (`v1_config_swagger.json`, `v1_data_swagger.json`, `v1_state_swagger.json`). Update them all at once with `make swagger-sync MONOREPO=<path to monorepo checkout>`, then run `make all-gen`. Unstable APIs are not synced.
 - If generated outputs need to change, regenerate with `make swagger-gen`, `make tools-gen`, or `make all-gen`.
 
 ### Testing

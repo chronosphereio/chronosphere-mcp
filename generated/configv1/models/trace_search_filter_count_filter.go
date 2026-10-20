@@ -17,10 +17,10 @@ import (
 // swagger:model TraceSearchFilterCountFilter
 type TraceSearchFilterCountFilter struct {
 
-	// Maximum number of spans that must match a SpanFilter (inclusive).
+	// Maximum number of spans that must match a span query, inclusive.
 	Max int32 `json:"max,omitempty"`
 
-	// Minimum number of spans that must match a SpanFilter (inclusive).
+	// Minimum number of spans that must match a span query, inclusive.
 	Min int32 `json:"min,omitempty"`
 }
 

@@ -19,8 +19,8 @@ import (
 // swagger:model NotificationPolicyRoutesOverride
 type NotificationPolicyRoutesOverride struct {
 
-	// Set of matchers on an alert's labels.
-	// If all labels match then the override notifiers apply.
+	// The alert labels to match against. If an alert matches all of these labels,
+	// the override notifier is applied to that alert.
 	AlertLabelMatchers []*Configv1LabelMatcher `json:"alert_label_matchers"`
 
 	// notifiers

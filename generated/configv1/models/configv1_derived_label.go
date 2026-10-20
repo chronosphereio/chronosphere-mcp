@@ -24,23 +24,26 @@ type Configv1DerivedLabel struct {
 	// Format: date-time
 	CreatedAt strfmt.DateTime `json:"created_at,omitempty"`
 
-	// Optional description of the derived label.
+	// Optional. Description of the derived label.
 	Description string `json:"description,omitempty"`
 
 	// existing label policy
 	ExistingLabelPolicy Configv1DerivedLabelLabelPolicy `json:"existing_label_policy,omitempty"`
 
-	// Name of the derived label. It needs to be unique across the system.
+	// Name of the derived label. Must be unique across the system.
 	LabelName string `json:"label_name,omitempty"`
 
 	// metric label
 	MetricLabel *DerivedLabelMetricLabel `json:"metric_label,omitempty"`
 
-	// Required name of the DerivedLabel. May be modified after the DerivedLabel is created.
+	// The name of the DerivedLabel. You can modify this value after the DerivedLabel is created.
 	Name string `json:"name,omitempty"`
 
-	// Unique identifier of the DerivedLabel. If slug is not provided, one will be generated based of the name field. Cannot be modified after the DerivedLabel is created.
+	// The unique identifier of the DerivedLabel. If a `slug` isn't provided, one is generated based on the `name` field. You can't modify this field after the DerivedLabel is created.
 	Slug string `json:"slug,omitempty"`
+
+	// span tag
+	SpanTag *DerivedLabelSpanTag `json:"span_tag,omitempty"`
 
 	// Timestamp of when the DerivedLabel was last updated. Cannot be set by clients.
 	// Read Only: true
@@ -61,6 +64,10 @@ func (m *Configv1DerivedLabel) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateMetricLabel(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateSpanTag(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -122,6 +129,25 @@ func (m *Configv1DerivedLabel) validateMetricLabel(formats strfmt.Registry) erro
 	return nil
 }
 
+func (m *Configv1DerivedLabel) validateSpanTag(formats strfmt.Registry) error {
+	if swag.IsZero(m.SpanTag) { // not required
+		return nil
+	}
+
+	if m.SpanTag != nil {
+		if err := m.SpanTag.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("span_tag")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("span_tag")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (m *Configv1DerivedLabel) validateUpdatedAt(formats strfmt.Registry) error {
 	if swag.IsZero(m.UpdatedAt) { // not required
 		return nil
@@ -147,6 +173,10 @@ func (m *Configv1DerivedLabel) ContextValidate(ctx context.Context, formats strf
 	}
 
 	if err := m.contextValidateMetricLabel(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateSpanTag(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -200,6 +230,27 @@ func (m *Configv1DerivedLabel) contextValidateMetricLabel(ctx context.Context, f
 				return ve.ValidateName("metric_label")
 			} else if ce, ok := err.(*errors.CompositeError); ok {
 				return ce.ValidateName("metric_label")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *Configv1DerivedLabel) contextValidateSpanTag(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.SpanTag != nil {
+
+		if swag.IsZero(m.SpanTag) { // not required
+			return nil
+		}
+
+		if err := m.SpanTag.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("span_tag")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("span_tag")
 			}
 			return err
 		}

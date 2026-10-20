@@ -63,7 +63,10 @@ CreateEventParams contains all the parameters to send to the API endpoint
 */
 type CreateEventParams struct {
 
-	// Body.
+	/* Body.
+
+	   Request to create an event.
+	*/
 	Body *models.Datav1CreateEventRequest
 
 	timeout    time.Duration

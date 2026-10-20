@@ -17,9 +17,9 @@ import (
 // swagger:model configv1LogSearchFilter
 type Configv1LogSearchFilter struct {
 
-	// Matches logs which match this query.
-	// Query may only include top level operations (no nested clauses).
-	// Only one type of operator AND/OR is allowed.
+	// Returns logs that match this query. The query can include only top-level
+	// operations. Nested clauses aren't supported. Only one type of `AND` or `OR`
+	// operator is allowed.
 	Query string `json:"query,omitempty"`
 }
 

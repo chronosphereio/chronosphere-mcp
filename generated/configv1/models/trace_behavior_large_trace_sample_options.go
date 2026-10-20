@@ -18,17 +18,18 @@ import (
 // swagger:model TraceBehaviorLargeTraceSampleOptions
 type TraceBehaviorLargeTraceSampleOptions struct {
 
-	// Whether or not to use these options.
+	// Determines whether or not to define options for large traces.
 	Enabled bool `json:"enabled,omitempty"`
 
-	// Sample rate.
+	// Defines the sample rate for traces during a specified duration.
 	SampleRate float64 `json:"sample_rate,omitempty"`
 
 	// sampling type
 	SamplingType TraceBehaviorSamplingType `json:"sampling_type,omitempty"`
 
-	// For N = number of spans in the trace, if N >= span_count_threshold, the trace is sampled according to the
-	// given sample rate.
+	// Defines the sampling rate for large traces. If the number of spans in the
+	// trace is grater than or equal to (`>=`) the `span_count_threshold`, the trace
+	// is sampled according to the given sample rate.
 	SpanCountThreshold int64 `json:"span_count_threshold,omitempty"`
 }
 

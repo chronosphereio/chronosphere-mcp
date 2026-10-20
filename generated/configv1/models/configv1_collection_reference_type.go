@@ -16,6 +16,8 @@ import (
 
 // Configv1CollectionReferenceType Type values must match entitiespb.Collection.CollectionType.
 //
+//   - USER: A user's personal collection. Only notebooks and dashboards can be owned by a user collection; other entity types, Grafana dashboards included, reject a USER owner with a 400.
+//
 // swagger:model configv1CollectionReferenceType
 type Configv1CollectionReferenceType string
 
@@ -35,6 +37,9 @@ const (
 
 	// Configv1CollectionReferenceTypeSERVICE captures enum value "SERVICE"
 	Configv1CollectionReferenceTypeSERVICE Configv1CollectionReferenceType = "SERVICE"
+
+	// Configv1CollectionReferenceTypeUSER captures enum value "USER"
+	Configv1CollectionReferenceTypeUSER Configv1CollectionReferenceType = "USER"
 )
 
 // for schema
@@ -42,7 +47,7 @@ var configv1CollectionReferenceTypeEnum []interface{}
 
 func init() {
 	var res []Configv1CollectionReferenceType
-	if err := json.Unmarshal([]byte(`["SIMPLE","SERVICE"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["SIMPLE","SERVICE","USER"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {

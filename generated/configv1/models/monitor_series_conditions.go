@@ -22,12 +22,12 @@ type MonitorSeriesConditions struct {
 	// defaults
 	Defaults *SeriesConditionsSeverityConditions `json:"defaults,omitempty"`
 
-	// Optional list of overrides to use for series having matching labels.
-	// Each override defines labels that potentially match a series' labels.
-	// If one or more overrides match a series, the severity conditions of the first matching
-	// override are used instead of the defaults.
+	// Optional. Specifies a list of overrides to use for series having matching
+	// labels. Each override defines labels that potentially match a series' labels.
+	// If one or more overrides match a series, the severity conditions of the first
+	// matching override are used instead of the defaults.
 	//
-	// Cannot be used if graphite_query is set.
+	// Cannot be used if `graphite_query` is set.
 	Overrides []*MonitorSeriesConditionsOverride `json:"overrides"`
 }
 

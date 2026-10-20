@@ -24,36 +24,34 @@ type Configv1ServiceAccount struct {
 	// Format: date-time
 	CreatedAt strfmt.DateTime `json:"created_at,omitempty"`
 
-	// email is the generated email address of the service account. Cannot be set
-	// by clients.
+	// The unique email user for this service account. Cannot be set by clients.
 	// Read Only: true
 	Email string `json:"email,omitempty"`
 
 	// metrics restriction
 	MetricsRestriction *ServiceAccountMetricsRestriction `json:"metrics_restriction,omitempty"`
 
-	// Required name of the ServiceAccount. May be modified after the ServiceAccount is created.
+	// The name of the ServiceAccount. You can modify this value after the ServiceAccount is created.
 	Name string `json:"name,omitempty"`
 
-	// Unique identifier of the ServiceAccount. If slug is not provided, one will be generated based of the name field. Cannot be modified after the ServiceAccount is created.
+	// The unique identifier of the ServiceAccount. If a `slug` isn't provided, one is generated based on the `name` field. You can't modify this field after the ServiceAccount is created.
 	Slug string `json:"slug,omitempty"`
 
-	// token is the generated API token of the service account. Cannot be set by
-	// clients.
+	// Generated API token of the service account. Cannot be set by clients.
 	//
-	// token is only set once by the server in the CreateServiceAccount response.
-	// ReadServiceAccount will always return an empty token. Therefore, when
-	// creating a service account, clients are responsible for securely storing
-	// the response token on their end, as they will not be able to read it
-	// again.
+	// The token is set only once by the server in the `CreateServiceAccount` response.
+	// The `ReadServiceAccount` response always returns an empty token. Therefore, when
+	// creating a service account, ensure you securely store the response token.
+	// If you lose the token, you must delete and recreate the service account to
+	// generate a new token.
 	// Read Only: true
 	Token string `json:"token,omitempty"`
 
-	// If set, grants the service account access to all Chronosphere APIs
-	// (including resource configuration and metric data) within the access
-	// controls defined by the service account's team membership.
+	// If set, grants the service account access to all Palo Alto Networks APIs, including
+	// resource configuration and metric data within the access controls defined by the
+	// service account's team membership.
 	//
-	// Exactly one of unrestricted or metrics_restriction must be set.
+	// Only one of `unrestricted` or `metrics_restriction` must be set.
 	Unrestricted bool `json:"unrestricted,omitempty"`
 
 	// Timestamp of when the ServiceAccount was last updated. Cannot be set by clients.

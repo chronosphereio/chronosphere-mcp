@@ -18,7 +18,7 @@ import (
 // swagger:model PerOperationSamplingStrategiesPerOperationSamplingStrategy
 type PerOperationSamplingStrategiesPerOperationSamplingStrategy struct {
 
-	// The operation to which this specific strategy should apply.
+	// The operation to which this specific strategy applies.
 	Operation string `json:"operation,omitempty"`
 
 	// probabilistic sampling strategy

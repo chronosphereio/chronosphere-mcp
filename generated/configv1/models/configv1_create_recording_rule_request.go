@@ -18,7 +18,7 @@ import (
 // swagger:model configv1CreateRecordingRuleRequest
 type Configv1CreateRecordingRuleRequest struct {
 
-	// If true, the RecordingRule will not be created, and no response RecordingRule will be returned. The response will return an error if the given RecordingRule is invalid.
+	// If `true`, validates the specified configuration without creating the RecordingRule. If the specified configuration is valid, the endpoint returns a partial response without the RecordingRule. If the specified configuration is invalid, the endpoint returns an error.
 	DryRun bool `json:"dry_run,omitempty"`
 
 	// recording rule

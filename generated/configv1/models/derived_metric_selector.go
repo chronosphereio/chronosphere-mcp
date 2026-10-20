@@ -19,8 +19,7 @@ import (
 // swagger:model DerivedMetricSelector
 type DerivedMetricSelector struct {
 
-	// Labels which must match in the derived metric usage for the selector to
-	// match.
+	// Labels that must match in the derived metric usage for the selector to match.
 	Labels []*Configv1DerivedMetricLabelMatcher `json:"labels"`
 }
 

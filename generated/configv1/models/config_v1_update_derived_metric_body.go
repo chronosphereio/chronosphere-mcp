@@ -18,13 +18,13 @@ import (
 // swagger:model ConfigV1UpdateDerivedMetricBody
 type ConfigV1UpdateDerivedMetricBody struct {
 
-	// If true, the DerivedMetric will be created if it does not already exist, identified by slug. If false, an error will be returned if the DerivedMetric does not already exist.
+	// If `true`, the DerivedMetric will be created if it does not already exist, identified by `slug`. If `false`, an error will be returned if the DerivedMetric does not already exist.
 	CreateIfMissing bool `json:"create_if_missing,omitempty"`
 
 	// derived metric
 	DerivedMetric *Configv1DerivedMetric `json:"derived_metric,omitempty"`
 
-	// If true, the DerivedMetric will not be created nor updated, and no response DerivedMetric will be returned. The response will return an error if the given DerivedMetric is invalid.
+	// If `true`, validates the specified configuration without creating or updating the DerivedMetric. If the specified configuration is valid, the endpoint returns a partial response without the DerivedMetric. If the specified configuration is invalid, the endpoint returns an error.
 	DryRun bool `json:"dry_run,omitempty"`
 }
 

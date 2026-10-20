@@ -22,7 +22,7 @@ type MonitorSchedule struct {
 	Timezone string `json:"timezone,omitempty"`
 
 	// weekly schedule
-	WeeklySchedule *ScheduleWeeklySchedule `json:"weekly_schedule,omitempty"`
+	WeeklySchedule *MonitorScheduleWeeklySchedule `json:"weekly_schedule,omitempty"`
 }
 
 // Validate validates this monitor schedule

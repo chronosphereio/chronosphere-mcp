@@ -19,15 +19,16 @@ import (
 // swagger:model SLODefinition
 type SLODefinition struct {
 
-	// Provides the burn rate alert configuration for the SLO. If not provided the
-	// default burn rates will be used. The configuration is only valid if the
-	// enable_burn_rate_alerting flag is set to true.
+	// Provides the burn rate alert configuration for the SLO. If not provided, the
+	// default burn rates are used. The configuration is only valid if the
+	// `enable_burn_rate_alerting` flag is set to `true`.
 	BurnRateAlertingConfig []*DefinitionBurnRateDefinition `json:"burn_rate_alerting_config"`
 
-	// If true enables burn rate alerting.
+	// If `true`, enables burn rate alerting.
 	EnableBurnRateAlerting bool `json:"enable_burn_rate_alerting,omitempty"`
 
-	// The SLO objective
+	// The SLO target percentage, which represents the availability of the SLO.
+	// Example: 99.9995
 	Objective float64 `json:"objective,omitempty"`
 
 	// time window

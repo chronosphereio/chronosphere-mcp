@@ -14,29 +14,37 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// Configv1SLI SLI is a service level indicator. The contents of this proto are intended to
-// be used to generate queries necessary to measure SLOs.
+// Configv1SLI configv1 s l i
 //
 // swagger:model configv1SLI
 type Configv1SLI struct {
 
-	// These are added to _every_ query and are intended to be used for things
-	// like `cluster!~"dev"`
-	AdditionalPromqlFilters []*Configv1PromQLMatcher `json:"additional_promql_filters"`
+	// Specifies additional PromQL filters, which are made available to the SLO queries.
+	// Use these filters to reduce the number of metrics used by the SLO.
+	// Example: cluster!~\"dev\
+	AdditionalPromqlFilters []*CommonPromQLMatcher `json:"additional_promql_filters"`
 
-	// Custom dimensions are used to configure additional labels to export from
-	// the underlying queries. This feature provides a logical budget to group
-	// unique combination of dimensions. For example, if you want to track a
-	// budget per endpoint, add the endpoint label as a dimension. These dimensions
-	// are provided on the top-level SLI so that SLOs will receive them
-	// in `.GroupBy`.
+	// Configures additional labels to export from the underlying queries. This feature
+	// provides a logical budget to group unique combinations of dimensions. For
+	// example, if you want to track a budget per endpoint, add the endpoint label as a
+	// dimension. These dimensions are provided on the top-level SLI so that SLOs will
+	// receive them in the `.GroupBy` variable.
 	CustomDimensionLabels []string `json:"custom_dimension_labels"`
 
 	// custom indicator
 	CustomIndicator *SLICustomIndicatorConfig `json:"custom_indicator,omitempty"`
 
-	// templated indicator
-	TemplatedIndicator *SLITemplatedIndicatorConfig `json:"templated_indicator,omitempty"`
+	// custom timeslice indicator
+	CustomTimesliceIndicator *SLICustomTimeSliceIndicatorConfig `json:"custom_timeslice_indicator,omitempty"`
+
+	// Optional. The latency that requests are measured against, in nanoseconds:
+	// 50000000 is the "50ms" in "P99 < 50ms". Required when `slo_type` is
+	// `LATENCY`, rejected otherwise.
+	// Example: 50000000
+	LatencyThresholdNanos string `json:"latency_threshold_nanos,omitempty"`
+
+	// slo type
+	SloType SLISLOType `json:"slo_type,omitempty"`
 }
 
 // Validate validates this configv1 s l i
@@ -51,7 +59,11 @@ func (m *Configv1SLI) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
-	if err := m.validateTemplatedIndicator(formats); err != nil {
+	if err := m.validateCustomTimesliceIndicator(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateSloType(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -106,20 +118,37 @@ func (m *Configv1SLI) validateCustomIndicator(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *Configv1SLI) validateTemplatedIndicator(formats strfmt.Registry) error {
-	if swag.IsZero(m.TemplatedIndicator) { // not required
+func (m *Configv1SLI) validateCustomTimesliceIndicator(formats strfmt.Registry) error {
+	if swag.IsZero(m.CustomTimesliceIndicator) { // not required
 		return nil
 	}
 
-	if m.TemplatedIndicator != nil {
-		if err := m.TemplatedIndicator.Validate(formats); err != nil {
+	if m.CustomTimesliceIndicator != nil {
+		if err := m.CustomTimesliceIndicator.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("templated_indicator")
+				return ve.ValidateName("custom_timeslice_indicator")
 			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("templated_indicator")
+				return ce.ValidateName("custom_timeslice_indicator")
 			}
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (m *Configv1SLI) validateSloType(formats strfmt.Registry) error {
+	if swag.IsZero(m.SloType) { // not required
+		return nil
+	}
+
+	if err := m.SloType.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("slo_type")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("slo_type")
+		}
+		return err
 	}
 
 	return nil
@@ -137,7 +166,11 @@ func (m *Configv1SLI) ContextValidate(ctx context.Context, formats strfmt.Regist
 		res = append(res, err)
 	}
 
-	if err := m.contextValidateTemplatedIndicator(ctx, formats); err != nil {
+	if err := m.contextValidateCustomTimesliceIndicator(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateSloType(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -193,22 +226,40 @@ func (m *Configv1SLI) contextValidateCustomIndicator(ctx context.Context, format
 	return nil
 }
 
-func (m *Configv1SLI) contextValidateTemplatedIndicator(ctx context.Context, formats strfmt.Registry) error {
+func (m *Configv1SLI) contextValidateCustomTimesliceIndicator(ctx context.Context, formats strfmt.Registry) error {
 
-	if m.TemplatedIndicator != nil {
+	if m.CustomTimesliceIndicator != nil {
 
-		if swag.IsZero(m.TemplatedIndicator) { // not required
+		if swag.IsZero(m.CustomTimesliceIndicator) { // not required
 			return nil
 		}
 
-		if err := m.TemplatedIndicator.ContextValidate(ctx, formats); err != nil {
+		if err := m.CustomTimesliceIndicator.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("templated_indicator")
+				return ve.ValidateName("custom_timeslice_indicator")
 			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("templated_indicator")
+				return ce.ValidateName("custom_timeslice_indicator")
 			}
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (m *Configv1SLI) contextValidateSloType(ctx context.Context, formats strfmt.Registry) error {
+
+	if swag.IsZero(m.SloType) { // not required
+		return nil
+	}
+
+	if err := m.SloType.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("slo_type")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("slo_type")
+		}
+		return err
 	}
 
 	return nil

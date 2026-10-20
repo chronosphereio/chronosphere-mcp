@@ -17,11 +17,12 @@ import (
 // swagger:model MappingLabelValueMapping
 type MappingLabelValueMapping struct {
 
-	// Defines the source label values that should be mapped into the given target_value.
+	// Defines the source label values that map into the given `target_value`.
 	SourceValueGlobs []string `json:"source_value_globs"`
 
-	// The value that source_value_globs are mapped into.
-	// For example, given this mapping:
+	// The value that `source_value_globs` are mapped into. For example, this
+	// mapping indicates that the target value `cat` maps to the source label's
+	// values of `Cat` and `CAT`.:
 	// ```yaml
 	// value_mappings:
 	//  - source_value_globs:
@@ -29,7 +30,6 @@ type MappingLabelValueMapping struct {
 	//      - CAT
 	//    target_value: cat
 	// ```
-	// This indicates that the target value `cat` maps to the source label's values `Cat` and `CAT`.
 	TargetValue string `json:"target_value,omitempty"`
 }
 

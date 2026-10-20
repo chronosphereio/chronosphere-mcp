@@ -18,8 +18,9 @@ import (
 // swagger:model OtelMetricsIngestionResourceAttributes
 type OtelMetricsIngestionResourceAttributes struct {
 
-	// Do not copy any resource attribute whose key exactly matches one of the
-	// strings in this list.
+	// Specifies resource attributes to exclude. If a resource attribute's key
+	// matches any of the strings in this array, that resource attribute is
+	// excluded.
 	ExcludeKeys []string `json:"exclude_keys"`
 
 	// filter mode
@@ -28,9 +29,10 @@ type OtelMetricsIngestionResourceAttributes struct {
 	// flatten mode
 	FlattenMode ResourceAttributesFlattenMode `json:"flatten_mode,omitempty"`
 
-	// Generate a target_info time series with labels derived from resource
-	// attributes. The filter_mode and exclude_keys settings apply in the same way as
-	// for the "flatten" operation. The default is false.
+	// If `true`, generates a `target_info` time series with labels derived from
+	// resource attributes. The `filter_mode` and `exclude_keys` settings apply
+	// in the same manner that they apply to the `flatten` operation. Default:
+	// `false`.
 	GenerateTargetInfo bool `json:"generate_target_info,omitempty"`
 }
 

@@ -14,9 +14,13 @@ import (
 	"github.com/go-openapi/validate"
 )
 
-// GroupByKeyGroupByKeyType  - SERVICE: Group by service.
-//   - OPERATION: Group by operation.
-//   - TAG: Group by span tag.
+// GroupByKeyGroupByKeyType  - SERVICE: The service to group by.
+//   - OPERATION: The operation to group by.
+//   - TAG: The span tag to group by.
+//   - PARENT_SERVICE: The parent service to group by.
+//   - PARENT_OPERATION: The parent operation to group by.
+//   - ROOT_SERVICE: The root service to group by.
+//   - ROOT_OPERATION: The root operation to group by.
 //
 // swagger:model GroupByKeyGroupByKeyType
 type GroupByKeyGroupByKeyType string
@@ -40,6 +44,18 @@ const (
 
 	// GroupByKeyGroupByKeyTypeTAG captures enum value "TAG"
 	GroupByKeyGroupByKeyTypeTAG GroupByKeyGroupByKeyType = "TAG"
+
+	// GroupByKeyGroupByKeyTypePARENTSERVICE captures enum value "PARENT_SERVICE"
+	GroupByKeyGroupByKeyTypePARENTSERVICE GroupByKeyGroupByKeyType = "PARENT_SERVICE"
+
+	// GroupByKeyGroupByKeyTypePARENTOPERATION captures enum value "PARENT_OPERATION"
+	GroupByKeyGroupByKeyTypePARENTOPERATION GroupByKeyGroupByKeyType = "PARENT_OPERATION"
+
+	// GroupByKeyGroupByKeyTypeROOTSERVICE captures enum value "ROOT_SERVICE"
+	GroupByKeyGroupByKeyTypeROOTSERVICE GroupByKeyGroupByKeyType = "ROOT_SERVICE"
+
+	// GroupByKeyGroupByKeyTypeROOTOPERATION captures enum value "ROOT_OPERATION"
+	GroupByKeyGroupByKeyTypeROOTOPERATION GroupByKeyGroupByKeyType = "ROOT_OPERATION"
 )
 
 // for schema
@@ -47,7 +63,7 @@ var groupByKeyGroupByKeyTypeEnum []interface{}
 
 func init() {
 	var res []GroupByKeyGroupByKeyType
-	if err := json.Unmarshal([]byte(`["SERVICE","OPERATION","TAG"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["SERVICE","OPERATION","TAG","PARENT_SERVICE","PARENT_OPERATION","ROOT_SERVICE","ROOT_OPERATION"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {

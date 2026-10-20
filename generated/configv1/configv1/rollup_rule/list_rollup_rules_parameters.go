@@ -64,21 +64,35 @@ type ListRollupRulesParams struct {
 
 	/* BucketSlugs.
 
-	   Filters results by bucket_slug, where any RollupRule with a matching bucket_slug in the given list (and matches all other filters) is returned.
+	   Filters results by bucket_slug, where any RollupRule with a matching bucket_slug in the given list (and matches all other filters) will be returned.
 	*/
 	BucketSlugs []string
 
+	/* MatchesSeries.
+
+	     Restricts the returned rollup rules to those whose `filters` would accept
+	a series carrying these labels. Each entry is `name=value`, for example
+	`__name__=http_requests_total`. A rule matches when every supplied label
+	satisfies the rule's glob filter for that label, so a rule with no filter
+	on a label accepts any value of it. Filters on labels not supplied here
+	are ignored. Values are concrete: a value containing glob characters such
+	as `*` or `{a,b}` is rejected. Currently only the metric name may be
+	supplied, as a single `__name__=<metric>` entry; other labels are
+	rejected.
+	*/
+	MatchesSeries []string
+
 	/* Names.
 
-	   Filters results by name, where any RollupRule with a matching name in the given list (and matches all other filters) is returned.
+	   Filters results by name, where any RollupRule with a matching name in the given list (and matches all other filters) will be returned.
 	*/
 	Names []string
 
 	/* PageMaxSize.
 
-	     Page size preference (i.e. how many items are returned in the next
-	page). If zero, the server will use a default. Regardless of what size
-	is given, clients must never assume how many items will be returned.
+	     Sets the preferred number of items to return per page. If set to `0`, the
+	server will use its default value. Regardless of the value specified, clients
+	must never assume how many items will be returned.
 
 	     Format: int64
 	*/
@@ -86,14 +100,14 @@ type ListRollupRulesParams struct {
 
 	/* PageToken.
 
-	     Opaque page token identifying which page to request. An empty token
-	identifies the first page.
+	     An opaque page token that identifies which page the client should request.
+	An empty value indicates the first page.
 	*/
 	PageToken *string
 
 	/* Slugs.
 
-	   Filters results by slug, where any RollupRule with a matching slug in the given list (and matches all other filters) is returned.
+	   Filters results by slug, where any RollupRule with a matching slug in the given list (and matches all other filters) will be returned.
 	*/
 	Slugs []string
 
@@ -161,6 +175,17 @@ func (o *ListRollupRulesParams) SetBucketSlugs(bucketSlugs []string) {
 	o.BucketSlugs = bucketSlugs
 }
 
+// WithMatchesSeries adds the matchesSeries to the list rollup rules params
+func (o *ListRollupRulesParams) WithMatchesSeries(matchesSeries []string) *ListRollupRulesParams {
+	o.SetMatchesSeries(matchesSeries)
+	return o
+}
+
+// SetMatchesSeries adds the matchesSeries to the list rollup rules params
+func (o *ListRollupRulesParams) SetMatchesSeries(matchesSeries []string) {
+	o.MatchesSeries = matchesSeries
+}
+
 // WithNames adds the names to the list rollup rules params
 func (o *ListRollupRulesParams) WithNames(names []string) *ListRollupRulesParams {
 	o.SetNames(names)
@@ -220,6 +245,17 @@ func (o *ListRollupRulesParams) WriteToRequest(r runtime.ClientRequest, reg strf
 
 		// query array param bucket_slugs
 		if err := r.SetQueryParam("bucket_slugs", joinedBucketSlugs...); err != nil {
+			return err
+		}
+	}
+
+	if o.MatchesSeries != nil {
+
+		// binding items for matches_series
+		joinedMatchesSeries := o.bindParamMatchesSeries(reg)
+
+		// query array param matches_series
+		if err := r.SetQueryParam("matches_series", joinedMatchesSeries...); err != nil {
 			return err
 		}
 	}
@@ -301,6 +337,23 @@ func (o *ListRollupRulesParams) bindParamBucketSlugs(formats strfmt.Registry) []
 	bucketSlugsIS := swag.JoinByFormat(bucketSlugsIC, "multi")
 
 	return bucketSlugsIS
+}
+
+// bindParamListRollupRules binds the parameter matches_series
+func (o *ListRollupRulesParams) bindParamMatchesSeries(formats strfmt.Registry) []string {
+	matchesSeriesIR := o.MatchesSeries
+
+	var matchesSeriesIC []string
+	for _, matchesSeriesIIR := range matchesSeriesIR { // explode []string
+
+		matchesSeriesIIV := matchesSeriesIIR // string as string
+		matchesSeriesIC = append(matchesSeriesIC, matchesSeriesIIV)
+	}
+
+	// items.CollectionFormat: "multi"
+	matchesSeriesIS := swag.JoinByFormat(matchesSeriesIC, "multi")
+
+	return matchesSeriesIS
 }
 
 // bindParamListRollupRules binds the parameter names

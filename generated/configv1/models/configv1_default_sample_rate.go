@@ -17,10 +17,11 @@ import (
 // swagger:model configv1DefaultSampleRate
 type Configv1DefaultSampleRate struct {
 
-	// Whether to override the default sample rate
+	// Determines whether to override the default sample rate.
 	Enabled bool `json:"enabled,omitempty"`
 
-	// A fraction of traces to keep, which should be a number between 0 and 1, inclusive
+	// Specifies the percentage of traces to keep, which must be a number between `0`
+	// and `1`, inclusive, where `1` equates to 100 percent.
 	SampleRate float64 `json:"sample_rate,omitempty"`
 }
 

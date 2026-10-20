@@ -18,10 +18,10 @@ import (
 // swagger:model configv1UpdateLogIngestConfigRequest
 type Configv1UpdateLogIngestConfigRequest struct {
 
-	// If true, the LogIngestConfig will be created if it does not already exist. If false, an error will be returned if the LogIngestConfig does not already exist.
+	// If `true`, the LogIngestConfig will be created if it does not already exist. If `false`, an error will be returned if the LogIngestConfig does not already exist.
 	CreateIfMissing bool `json:"create_if_missing,omitempty"`
 
-	// If true, the LogIngestConfig will not be created nor updated, and no response LogIngestConfig will be returned. The response will return an error if the given LogIngestConfig is invalid.
+	// If `true`, validates the specified configuration without creating or updating the LogIngestConfig. If the specified configuration is valid, the endpoint returns a partial response without the LogIngestConfig. If the specified configuration is invalid, the endpoint returns an error.
 	DryRun bool `json:"dry_run,omitempty"`
 
 	// log ingest config

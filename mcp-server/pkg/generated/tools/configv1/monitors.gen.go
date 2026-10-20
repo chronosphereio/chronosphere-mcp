@@ -53,27 +53,35 @@ func ListMonitors(api *configv1.ConfigV1API, logger *zap.Logger) tools.MCPTool {
 			mcp.WithDescription("List monitors resources"),
 
 			params.WithStringArray("bucket_slugs",
-				mcp.Description("Filters results by bucket_slug, where any Monitor with a matching bucket_slug in the given list (and matches all other filters) is returned."),
+				mcp.Description("Filters results by bucket_slug, where any Monitor with a matching bucket_slug in the given list (and matches all other filters) will be returned."),
 			),
 
 			params.WithStringArray("collection_slugs",
-				mcp.Description("Filters results by collection_slug, where any Monitor with a matching collection_slug in the given list (and matches all other filters) is returned."),
+				mcp.Description("Filters results by collection_slug, where any Monitor with a matching collection_slug in the given list (and matches all other filters) will be returned."),
+			),
+
+			params.WithStringArray("label_matchers",
+				mcp.Description("Filter returned monitors by their labels. Each entry is `name=value` or `name!=value`, for example `team=payments` or `team!=payments`; the value may be double-quoted. `=~` and `!~` are not accepted. A monitor is returned only if every entry holds for it: `name=value` requires the monitor to carry that label with that value (it may carry other labels too), and `name!=value` excludes monitors whose label has that value. With an empty value, `name=` matches monitors that do not have the label and `name!=` matches monitors that have it with any value. Unlike the other list filters, whose values are OR'd, entries here are AND'd."),
+			),
+
+			mcp.WithString("name_contains",
+				mcp.Description("Filter that returns monitors whose name contains this string. The filter is not case sensitive."),
 			),
 
 			params.WithStringArray("names",
-				mcp.Description("Filters results by name, where any Monitor with a matching name in the given list (and matches all other filters) is returned."),
+				mcp.Description("Filters results by name, where any Monitor with a matching name in the given list (and matches all other filters) will be returned."),
 			),
 
 			mcp.WithNumber("page_max_size",
-				mcp.Description("Page size preference (i.e. how many items are returned in the next page). If zero, the server will use a default. Regardless of what size is given, clients must never assume how many items will be returned."),
+				mcp.Description("Sets the preferred number of items to return per page. If set to `0`, the server will use its default value. Regardless of the value specified, clients must never assume how many items will be returned."),
 			),
 
 			mcp.WithString("page_token",
-				mcp.Description("Opaque page token identifying which page to request. An empty token identifies the first page."),
+				mcp.Description("An opaque page token that identifies which page the client should request. An empty value indicates the first page."),
 			),
 
 			params.WithStringArray("slugs",
-				mcp.Description("Filters results by slug, where any Monitor with a matching slug in the given list (and matches all other filters) is returned."),
+				mcp.Description("Filters results by slug, where any Monitor with a matching slug in the given list (and matches all other filters) will be returned."),
 			),
 
 			params.WithStringArray("team_slugs",
@@ -87,6 +95,16 @@ func ListMonitors(api *configv1.ConfigV1API, logger *zap.Logger) tools.MCPTool {
 			}
 
 			collectionSlugs, err := params.StringArray(request, "collection_slugs", false, nil)
+			if err != nil {
+				return nil, err
+			}
+
+			labelMatchers, err := params.StringArray(request, "label_matchers", false, nil)
+			if err != nil {
+				return nil, err
+			}
+
+			nameContains, err := params.String(request, "name_contains", false, "")
 			if err != nil {
 				return nil, err
 			}
@@ -122,6 +140,10 @@ func ListMonitors(api *configv1.ConfigV1API, logger *zap.Logger) tools.MCPTool {
 				BucketSlugs: bucketSlugs,
 
 				CollectionSlugs: collectionSlugs,
+
+				LabelMatchers: labelMatchers,
+
+				NameContains: ptr.To(nameContains),
 
 				Names: names,
 

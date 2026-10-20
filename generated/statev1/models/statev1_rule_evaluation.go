@@ -27,7 +27,7 @@ type Statev1RuleEvaluation struct {
 	// Format: date-time
 	DetectedAt strfmt.DateTime `json:"detected_at,omitempty"`
 
-	// Detailed message related to rule evaluation issue. See "Admin > Evaluation failures" in the Chronosphere documentation for more information.
+	// Detailed message related to rule evaluation issue. See "Admin > Evaluation failures" in the Palo Alto Networks documentation for more information.
 	Message string `json:"message,omitempty"`
 
 	// Unique identifier of the rule.
@@ -35,6 +35,9 @@ type Statev1RuleEvaluation struct {
 
 	// rule type
 	RuleType RuleEvaluationRuleType `json:"rule_type,omitempty"`
+
+	// severity
+	Severity Statev1RuleEvaluationSeverity `json:"severity,omitempty"`
 }
 
 // Validate validates this statev1 rule evaluation
@@ -46,6 +49,10 @@ func (m *Statev1RuleEvaluation) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateRuleType(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateSeverity(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -84,11 +91,32 @@ func (m *Statev1RuleEvaluation) validateRuleType(formats strfmt.Registry) error 
 	return nil
 }
 
+func (m *Statev1RuleEvaluation) validateSeverity(formats strfmt.Registry) error {
+	if swag.IsZero(m.Severity) { // not required
+		return nil
+	}
+
+	if err := m.Severity.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("severity")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("severity")
+		}
+		return err
+	}
+
+	return nil
+}
+
 // ContextValidate validate this statev1 rule evaluation based on the context it is used
 func (m *Statev1RuleEvaluation) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.contextValidateRuleType(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateSeverity(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -109,6 +137,24 @@ func (m *Statev1RuleEvaluation) contextValidateRuleType(ctx context.Context, for
 			return ve.ValidateName("rule_type")
 		} else if ce, ok := err.(*errors.CompositeError); ok {
 			return ce.ValidateName("rule_type")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *Statev1RuleEvaluation) contextValidateSeverity(ctx context.Context, formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Severity) { // not required
+		return nil
+	}
+
+	if err := m.Severity.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("severity")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("severity")
 		}
 		return err
 	}

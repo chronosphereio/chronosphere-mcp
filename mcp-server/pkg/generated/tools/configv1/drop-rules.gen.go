@@ -52,23 +52,32 @@ func ListDropRules(api *configv1.ConfigV1API, logger *zap.Logger) tools.MCPTool 
 		Metadata: tools.NewMetadata("list_drop_rules",
 			mcp.WithDescription("List drop-rules resources"),
 
+			params.WithStringArray("matches_series",
+				mcp.Description("Restricts the returned drop rules to those whose `filters` would accept a series carrying these labels. Each entry is `name=value`, for example `__name__=http_requests_total`. A rule matches when every supplied label satisfies the rule's glob filter for that label, so a rule with no filter on a label accepts any value of it. Filters on labels not supplied here are ignored. Values are concrete: a value containing glob characters such as `*` or `{a,b}` is rejected. Currently only the metric name may be supplied, as a single `__name__=<metric>` entry; other labels are rejected."),
+			),
+
 			params.WithStringArray("names",
-				mcp.Description("Filters results by name, where any DropRule with a matching name in the given list (and matches all other filters) is returned."),
+				mcp.Description("Filters results by name, where any DropRule with a matching name in the given list (and matches all other filters) will be returned."),
 			),
 
 			mcp.WithNumber("page_max_size",
-				mcp.Description("Page size preference (i.e. how many items are returned in the next page). If zero, the server will use a default. Regardless of what size is given, clients must never assume how many items will be returned."),
+				mcp.Description("Sets the preferred number of items to return per page. If set to `0`, the server will use its default value. Regardless of the value specified, clients must never assume how many items will be returned."),
 			),
 
 			mcp.WithString("page_token",
-				mcp.Description("Opaque page token identifying which page to request. An empty token identifies the first page."),
+				mcp.Description("An opaque page token that identifies which page the client should request. An empty value indicates the first page."),
 			),
 
 			params.WithStringArray("slugs",
-				mcp.Description("Filters results by slug, where any DropRule with a matching slug in the given list (and matches all other filters) is returned."),
+				mcp.Description("Filters results by slug, where any DropRule with a matching slug in the given list (and matches all other filters) will be returned."),
 			),
 		),
 		Handler: func(ctx context.Context, request mcp.CallToolRequest) (*tools.Result, error) {
+			matchesSeries, err := params.StringArray(request, "matches_series", false, nil)
+			if err != nil {
+				return nil, err
+			}
+
 			names, err := params.StringArray(request, "names", false, nil)
 			if err != nil {
 				return nil, err
@@ -91,6 +100,8 @@ func ListDropRules(api *configv1.ConfigV1API, logger *zap.Logger) tools.MCPTool 
 
 			queryParams := &drop_rule.ListDropRulesParams{
 				Context: ctx,
+
+				MatchesSeries: matchesSeries,
 
 				Names: names,
 

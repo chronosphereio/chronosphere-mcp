@@ -66,7 +66,10 @@ type UpdateGcpMetricsIntegrationParams struct {
 	// Body.
 	Body *models.ConfigV1UpdateGcpMetricsIntegrationBody
 
-	// Slug.
+	/* Slug.
+
+	   The unique slug that identifies the GcpMetricsIntegration to update.
+	*/
 	Slug string
 
 	timeout    time.Duration

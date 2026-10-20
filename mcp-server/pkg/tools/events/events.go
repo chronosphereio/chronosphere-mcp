@@ -23,9 +23,6 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 	"go.uber.org/zap"
 
-	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/dataunstable"
-	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/dataunstable/data_unstable"
-	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/models"
 	"github.com/chronosphereio/chronosphere-mcp/generated/datav1/datav1"
 	"github.com/chronosphereio/chronosphere-mcp/generated/datav1/datav1/version1"
 	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools"
@@ -36,27 +33,46 @@ import (
 
 var _ tools.MCPTools = (*Tools)(nil)
 
+// Values of the field parameter of ListEventFieldValues.
+const (
+	eventFieldCategory    = "CATEGORY"
+	eventFieldType        = "TYPE"
+	eventFieldSource      = "SOURCE"
+	eventFieldLabelName   = "LABEL_NAME"
+	eventFieldLabelValue  = "LABEL_VALUE"
+	eventFieldLensService = "LENS_SERVICE"
+)
+
 type Tools struct {
-	logger          *zap.Logger
-	dataV1API       *datav1.DataV1API
-	dataUnstableAPI *dataunstable.DataUnstableAPI
-	linkBuilder     *links.Builder
+	logger      *zap.Logger
+	dataV1API   *datav1.DataV1API
+	linkBuilder *links.Builder
 }
 
+// NewTools builds the events tools.
 func NewTools(
 	dataV1API *datav1.DataV1API,
-	dataUnstableAPI *dataunstable.DataUnstableAPI,
 	logger *zap.Logger,
 	linkBuilder *links.Builder,
 ) (*Tools, error) {
 	logger.Info("events tool configured")
 
 	return &Tools{
-		logger:          logger,
-		dataV1API:       dataV1API,
-		dataUnstableAPI: dataUnstableAPI,
-		linkBuilder:     linkBuilder,
+		logger:      logger,
+		dataV1API:   dataV1API,
+		linkBuilder: linkBuilder,
 	}, nil
+}
+
+func (t *Tools) listEventFieldValues(ctx context.Context, field string) ([]string, error) {
+	resp, err := t.dataV1API.Version1.ListEventFieldValues(&version1.ListEventFieldValuesParams{
+		Context: ctx,
+		Field:   ptr.To(field),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return resp.Payload.Values, nil
 }
 
 func (t *Tools) GroupName() string {
@@ -109,11 +125,6 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 				mcp.WithDescription("List properties you can query on events"),
 			),
 			Handler: func(ctx context.Context, _ mcp.CallToolRequest) (*tools.Result, error) {
-				resp, err := t.dataUnstableAPI.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
-					Context: ctx,
-					Field:   ptr.To(string(models.DataunstableEventFieldCATEGORYEVENTFIELD)),
-				})
-
 				eventsMetadata := struct {
 					Categories       []string `json:"categories"`
 					Sources          []string `json:"sources"`
@@ -122,60 +133,27 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					LensServiceNames []string `json:"lens_service_names"`
 				}{}
 
+				var err error
+				eventsMetadata.Categories, err = t.listEventFieldValues(ctx, eventFieldCategory)
 				if err != nil {
 					return nil, fmt.Errorf("failed to get categories for events: %s", err)
 				}
-				eventsMetadata.Categories = resp.Payload.Values
-
-				resp, err = t.dataUnstableAPI.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
-					Context: ctx,
-					Field:   ptr.To(string(models.DataunstableEventFieldLABELNAMEEVENTFIELD)),
-				})
+				eventsMetadata.LabelNames, err = t.listEventFieldValues(ctx, eventFieldLabelName)
 				if err != nil {
 					return nil, fmt.Errorf("failed to get label names for events: %s", err)
 				}
-
-				eventsMetadata.LabelNames = resp.Payload.Values
-
-				resp, err = t.dataUnstableAPI.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
-					Context: ctx,
-					Field:   ptr.To(string(models.DataunstableEventFieldSOURCEEVENTFIELD)),
-				})
+				eventsMetadata.Sources, err = t.listEventFieldValues(ctx, eventFieldSource)
 				if err != nil {
 					return nil, fmt.Errorf("failed to get sources for events: %s", err)
 				}
-
-				eventsMetadata.Sources = resp.Payload.Values
-
-				resp, err = t.dataUnstableAPI.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
-					Context: ctx,
-					Field:   ptr.To(string(models.DataunstableEventFieldTYPEEVENTFIELD)),
-				})
+				eventsMetadata.Types, err = t.listEventFieldValues(ctx, eventFieldType)
 				if err != nil {
 					return nil, fmt.Errorf("failed to get types for events: %s", err)
 				}
-
-				eventsMetadata.Types = resp.Payload.Values
-
-				resp, err = t.dataUnstableAPI.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
-					Context: ctx,
-					Field:   ptr.To(string(models.DataunstableEventFieldLABELNAMEEVENTFIELD)),
-				})
-				if err != nil {
-					return nil, fmt.Errorf("failed to get label names for events: %s", err)
-				}
-
-				eventsMetadata.LabelNames = resp.Payload.Values
-
-				resp, err = t.dataUnstableAPI.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
-					Context: ctx,
-					Field:   ptr.To(string(models.DataunstableEventFieldLENSSERVICEEVENTFIELD)),
-				})
+				eventsMetadata.LensServiceNames, err = t.listEventFieldValues(ctx, eventFieldLensService)
 				if err != nil {
 					return nil, fmt.Errorf("failed to get lens service names for events: %s", err)
 				}
-
-				eventsMetadata.LensServiceNames = resp.Payload.Values
 				return &tools.Result{
 					JSONContent:      eventsMetadata,
 					ChronosphereLink: t.linkBuilder.EventExplorer().String(),
@@ -195,18 +173,18 @@ func (t *Tools) MCPTools() []tools.MCPTool {
 					return nil, err
 				}
 
-				resp, err := t.dataUnstableAPI.DataUnstable.ListEventFieldValues(&data_unstable.ListEventFieldValuesParams{
+				resp, err := t.dataV1API.Version1.ListEventFieldValues(&version1.ListEventFieldValuesParams{
 					Context:   ctx,
 					LabelName: ptr.To(labelName),
-					Field:     ptr.To(string(models.DataunstableEventFieldLABELVALUEEVENTFIELD)),
+					Field:     ptr.To(eventFieldLabelValue),
 				})
 				if err != nil {
 					return nil, fmt.Errorf("failed to list label values for events: %s", err)
 				}
 				return &tools.Result{
 					JSONContent: resp,
-					ChronosphereLink: t.linkBuilder.Custom("/api/unstable/data/events:field-values").
-						WithParam("field", "LABEL_VALUE_EVENT_FIELD").WithParam("label_name", labelName).String(),
+					ChronosphereLink: t.linkBuilder.Custom("/api/v1/data/events:field-values").
+						WithParam("field", eventFieldLabelValue).WithParam("label_name", labelName).String(),
 				}, nil
 			},
 		},

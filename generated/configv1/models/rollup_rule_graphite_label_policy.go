@@ -19,9 +19,8 @@ import (
 // swagger:model RollupRuleGraphiteLabelPolicy
 type RollupRuleGraphiteLabelPolicy struct {
 
-	// Required list of labels to replace. Useful for discarding
-	// high-cardinality values while still preserving the original positions of
-	// the Graphite metric.
+	// List of labels to replace. Use to discard high-cardinality values while still
+	// preserving the original positions of the Graphite metric.
 	Replace []*GraphiteLabelPolicyReplace `json:"replace"`
 }
 

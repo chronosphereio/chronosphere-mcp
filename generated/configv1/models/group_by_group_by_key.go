@@ -18,7 +18,8 @@ import (
 // swagger:model GroupByGroupByKey
 type GroupByGroupByKey struct {
 
-	// For named KeyTypes (e.g. span tags), the name of the key to group by.
+	// For named key types, such as span tags, indicates the name of the key to
+	// group by.
 	NamedKey string `json:"named_key,omitempty"`
 
 	// type

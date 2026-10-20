@@ -17,17 +17,21 @@ package logs
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
 
+	"github.com/chronosphereio/chronosphere-mcp/generated/dataunstable/dataunstable"
 	"github.com/chronosphereio/chronosphere-mcp/generated/datav1/datav1"
 	"github.com/chronosphereio/chronosphere-mcp/generated/datav1/datav1/version1"
 	"github.com/chronosphereio/chronosphere-mcp/generated/datav1/models"
+	"github.com/chronosphereio/chronosphere-mcp/mcp-server/pkg/tools/pkg/params"
 	"github.com/chronosphereio/chronosphere-mcp/pkg/links"
 )
 
@@ -164,6 +168,33 @@ func TestTrimLogEntries(t *testing.T) {
 			},
 		},
 		{
+			name: "neither grid nor time series data",
+			payload: &models.Datav1QueryLogsRangeResponse{
+				Metadata: &models.QueryLogsRangeResponseMetadata{},
+			},
+			limit:       5,
+			offset:      0,
+			wantTrimmed: 0,
+			validateFunc: func(t *testing.T, result *models.Datav1QueryLogsRangeResponse) {
+				assert.Nil(t, result.GridData)
+				assert.Nil(t, result.TimeSeriesData)
+				assert.NotNil(t, result.Metadata)
+			},
+		},
+		{
+			name: "empty time series data",
+			payload: &models.Datav1QueryLogsRangeResponse{
+				TimeSeriesData: &models.QueryLogsRangeResponseTimeSeriesData{},
+			},
+			limit:       5,
+			offset:      1,
+			wantTrimmed: 0,
+			validateFunc: func(t *testing.T, result *models.Datav1QueryLogsRangeResponse) {
+				require.NotNil(t, result.TimeSeriesData)
+				assert.Empty(t, result.TimeSeriesData.Series)
+			},
+		},
+		{
 			name: "preserve metadata",
 			payload: &models.Datav1QueryLogsRangeResponse{
 				Metadata: &models.QueryLogsRangeResponseMetadata{
@@ -244,4 +275,112 @@ func TestQueryLogsRangeAPICall(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotNil(t, resp)
 	assert.NotNil(t, resp.Payload)
+}
+
+// newTestTools returns Tools whose v1 and unstable clients both talk to a test
+// server that answers logs:range with rangeBody and 404s everything else.
+func newTestTools(t *testing.T, rangeBody string) *Tools {
+	t.Helper()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasSuffix(r.URL.Path, "logs:range") {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, err := w.Write([]byte(rangeBody))
+		assert.NoError(t, err)
+	}))
+	t.Cleanup(server.Close)
+
+	host := strings.TrimPrefix(server.URL, "http://")
+	dataV1 := datav1.NewHTTPClientWithConfig(nil, datav1.DefaultTransportConfig().WithHost(host).WithSchemes([]string{"http"}))
+	dataUnstable := dataunstable.NewHTTPClientWithConfig(nil, dataunstable.DefaultTransportConfig().WithHost(host).WithSchemes([]string{"http"}))
+
+	tools, err := NewTools(dataV1, dataUnstable, zaptest.NewLogger(t), links.NewBuilder("https://test.chronosphere.io"))
+	require.NoError(t, err)
+	return tools
+}
+
+func TestCreateCompactSummaryNoData(t *testing.T) {
+	tests := []struct {
+		name string
+		resp *models.Datav1QueryLogsRangeResponse
+	}{
+		{
+			name: "nil response",
+			resp: nil,
+		},
+		{
+			name: "neither grid nor time series data",
+			resp: &models.Datav1QueryLogsRangeResponse{
+				Metadata: &models.QueryLogsRangeResponseMetadata{},
+			},
+		},
+		{
+			name: "no metadata",
+			resp: &models.Datav1QueryLogsRangeResponse{},
+		},
+		{
+			name: "empty time series data",
+			resp: &models.Datav1QueryLogsRangeResponse{
+				Metadata:       &models.QueryLogsRangeResponseMetadata{},
+				TimeSeriesData: &models.QueryLogsRangeResponseTimeSeriesData{},
+			},
+		},
+	}
+
+	tools := newTestTools(t, `{}`)
+	now := time.Now()
+	timeRange := &params.TimeRange{Start: now.Add(-time.Hour), End: now}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			trimmed, _ := trimLogEntries(tt.resp, 10, 0)
+			summary := tools.createCompactSummary(t.Context(), "test", timeRange, trimmed)
+			assert.Equal(t, "No log data returned", summary.Summary)
+			assert.Equal(t, 0, summary.TotalLogs)
+		})
+	}
+}
+
+// TestQueryLogsRangeEmptyMakeSeries covers the response the logs API returns
+// for a make-series query that matches no logs. With a limit or offset, the
+// tool used to drop time_series_data while trimming and then panic.
+func TestQueryLogsRangeEmptyMakeSeries(t *testing.T) {
+	tests := []struct {
+		name string
+		args map[string]any
+	}{
+		{
+			name: "no limit",
+			args: map[string]any{},
+		},
+		{
+			name: "limit",
+			args: map[string]any{"limit": float64(10)},
+		},
+		{
+			name: "offset",
+			args: map[string]any{"offset": float64(1)},
+		},
+	}
+
+	tools := newTestTools(t, `{"metadata":{"page":{}},"time_series_data":{}}`)
+	handler := tools.MCPTools()[0].Handler
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			args := map[string]any{"query": `"nonexistent" | make-series count() step 5m`}
+			for k, v := range tt.args {
+				args[k] = v
+			}
+			result, err := handler(t.Context(), mcp.CallToolRequest{
+				Params: mcp.CallToolParams{Name: "query_logs_range", Arguments: args},
+			})
+			require.NoError(t, err)
+			summary, ok := result.JSONContent.(*CompactLogSummary)
+			require.True(t, ok)
+			assert.Equal(t, "No log data returned", summary.Summary)
+		})
+	}
 }

@@ -72,22 +72,26 @@ func ToolMetricsMiddleware(mp metric.MeterProvider) server.ToolHandlerMiddleware
 
 	return func(next server.ToolHandlerFunc) server.ToolHandlerFunc {
 		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+			// status stays "panic" if next panics; the deferred Add still runs
+			// while the panic unwinds to the caller's recovery.
+			status := "panic"
+			defer func() {
+				toolCallCounter.Add(ctx, 1,
+					metric.WithAttributes(
+						attribute.String("service", "chrono-mcp"),
+						attribute.String("name", request.Params.Name),
+						attribute.String("status", status),
+					),
+				)
+			}()
+
 			result, err := next(ctx, request)
 
-			// Determine status based on error
-			status := "success"
-			if err != nil {
+			// Tool handler errors come back as an IsError result with a nil error.
+			status = "success"
+			if err != nil || (result != nil && result.IsError) {
 				status = "error"
 			}
-
-			// Record the metric with labels
-			toolCallCounter.Add(ctx, 1,
-				metric.WithAttributes(
-					attribute.String("service", "chrono-mcp"),
-					attribute.String("name", request.Params.Name),
-					attribute.String("status", status),
-				),
-			)
 
 			return result, err
 		}

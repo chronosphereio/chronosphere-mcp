@@ -373,7 +373,7 @@ func trimLogEntries(payload *models.Datav1QueryLogsRangeResponse, limit int, off
 			trimmed.GridData.Rows = payload.GridData.Rows[offset:end]
 			totalTrimmed = offset + (totalRows - end)
 		}
-	} else if payload.TimeSeriesData.GroupByDimensionNames != nil || payload.TimeSeriesData.Series != nil {
+	} else if payload.TimeSeriesData != nil {
 		trimmed.TimeSeriesData = &models.QueryLogsRangeResponseTimeSeriesData{
 			GroupByDimensionNames: payload.TimeSeriesData.GroupByDimensionNames,
 			Series:                make([]*models.TimeSeriesDataTimeSeries, len(payload.TimeSeriesData.Series)),
@@ -412,10 +412,17 @@ func trimLogEntries(payload *models.Datav1QueryLogsRangeResponse, limit int, off
 func (t *Tools) createCompactSummary(ctx context.Context, query string, timeRange *params.TimeRange, resp *models.Datav1QueryLogsRangeResponse) *CompactLogSummary {
 	summary := &CompactLogSummary{}
 
+	if resp == nil {
+		summary.Summary = "No log data returned"
+		return summary
+	}
+
 	// Extract metadata
-	summary.Metadata = &models.QueryLogsRangeResponseMetadata{
-		LimitEnforced: resp.Metadata.LimitEnforced,
-		Page:          resp.Metadata.Page,
+	if resp.Metadata != nil {
+		summary.Metadata = &models.QueryLogsRangeResponseMetadata{
+			LimitEnforced: resp.Metadata.LimitEnforced,
+			Page:          resp.Metadata.Page,
+		}
 	}
 
 	// Fetch available field names to help with query refinement
@@ -496,7 +503,7 @@ func (t *Tools) createCompactSummary(ctx context.Context, query string, timeRang
 			summaryParts = append(summaryParts, fmt.Sprintf("%d additional fields available", len(summary.AvailableFields)-len(columnNames)))
 		}
 		summary.Summary = strings.Join(summaryParts, ". ")
-	} else if resp.TimeSeriesData.GroupByDimensionNames != nil || resp.TimeSeriesData.Series != nil {
+	} else if resp.TimeSeriesData != nil && (len(resp.TimeSeriesData.GroupByDimensionNames) > 0 || len(resp.TimeSeriesData.Series) > 0) {
 		// Include full time series data since it's typically not verbose
 		summary.TimeSeriesData = resp.TimeSeriesData
 		summary.TotalLogs = 0

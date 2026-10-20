@@ -168,6 +168,33 @@ func TestTrimLogEntries(t *testing.T) {
 			},
 		},
 		{
+			name: "neither grid nor time series data",
+			payload: &models.Datav1QueryLogsRangeResponse{
+				Metadata: &models.QueryLogsRangeResponseMetadata{},
+			},
+			limit:       5,
+			offset:      0,
+			wantTrimmed: 0,
+			validateFunc: func(t *testing.T, result *models.Datav1QueryLogsRangeResponse) {
+				assert.Nil(t, result.GridData)
+				assert.Nil(t, result.TimeSeriesData)
+				assert.NotNil(t, result.Metadata)
+			},
+		},
+		{
+			name: "empty time series data",
+			payload: &models.Datav1QueryLogsRangeResponse{
+				TimeSeriesData: &models.QueryLogsRangeResponseTimeSeriesData{},
+			},
+			limit:       5,
+			offset:      1,
+			wantTrimmed: 0,
+			validateFunc: func(t *testing.T, result *models.Datav1QueryLogsRangeResponse) {
+				require.NotNil(t, result.TimeSeriesData)
+				assert.Empty(t, result.TimeSeriesData.Series)
+			},
+		},
+		{
 			name: "preserve metadata",
 			payload: &models.Datav1QueryLogsRangeResponse{
 				Metadata: &models.QueryLogsRangeResponseMetadata{
@@ -708,4 +735,82 @@ func TestCreateCompactSummary(t *testing.T) {
 	encoded := toJSON(t, got)
 	assert.NotContains(t, encoded, "available_fields")
 	assert.NotContains(t, encoded, "field_suggestion")
+}
+
+func TestCreateCompactSummaryNoData(t *testing.T) {
+	tests := []struct {
+		name string
+		resp *models.Datav1QueryLogsRangeResponse
+	}{
+		{
+			name: "nil response",
+			resp: nil,
+		},
+		{
+			name: "neither grid nor time series data",
+			resp: &models.Datav1QueryLogsRangeResponse{
+				Metadata: &models.QueryLogsRangeResponseMetadata{},
+			},
+		},
+		{
+			name: "no metadata",
+			resp: &models.Datav1QueryLogsRangeResponse{},
+		},
+		{
+			name: "empty time series data",
+			resp: &models.Datav1QueryLogsRangeResponse{
+				Metadata:       &models.QueryLogsRangeResponseMetadata{},
+				TimeSeriesData: &models.QueryLogsRangeResponseTimeSeriesData{},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			trimmed, _ := trimLogEntries(tt.resp, 10, 0)
+			summary := createCompactSummary(trimmed)
+			assert.Equal(t, "No log data returned", summary.Summary)
+			assert.Equal(t, 0, summary.TotalLogs)
+		})
+	}
+}
+
+// TestQueryLogsRangeEmptyMakeSeries covers the response the logs API returns
+// for a make-series query that matches no logs. With a limit or offset, the
+// tool used to drop time_series_data while trimming and then panic.
+func TestQueryLogsRangeEmptyMakeSeries(t *testing.T) {
+	tests := []struct {
+		name string
+		args map[string]any
+	}{
+		{
+			name: "no limit",
+			args: map[string]any{},
+		},
+		{
+			name: "limit",
+			args: map[string]any{"limit": float64(10)},
+		},
+		{
+			name: "offset",
+			args: map[string]any{"offset": float64(1)},
+		},
+	}
+
+	server := newFakeLogsServer(t, `{"metadata":{"page":{}},"time_series_data":{}}`)
+	tools := newTestTools(t, server.URL)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			args := map[string]any{"query": `"nonexistent" | make-series count() step 5m`}
+			for k, v := range tt.args {
+				args[k] = v
+			}
+			got, err := callTool(t, tools, "query_logs_range", args)
+			require.NoError(t, err)
+			summary, ok := got.(*CompactLogSummary)
+			require.True(t, ok)
+			assert.Equal(t, "No log data returned", summary.Summary)
+		})
+	}
 }

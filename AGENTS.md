@@ -8,7 +8,7 @@ Feel free to update MEMORY.md with any useful information you find while working
 ## Development Commands
 
 ### Environment Setup
-- Go version check: `make go-version-check` (requires Go 1.25.1)
+- Go version check: `make go-version-check` (requires Go 1.26.x)
 - Install tools: `make install-tools`
 
 ### Building

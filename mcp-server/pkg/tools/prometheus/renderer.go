@@ -195,7 +195,7 @@ func (r *Renderer) Render(ctx context.Context, w io.Writer, query string, start,
 	if err != nil {
 		return err
 	}
-	resp, _, err := api.QueryRange(ctx, query, v1.Range{
+	resp, _, _, err := api.QueryRange(ctx, query, v1.Range{
 		Start: start,
 		End:   end,
 		Step:  60 * time.Second,

@@ -61,7 +61,7 @@ func (t *Tools) listPrometheusSeries(ctx context.Context, request mcp.CallToolRe
 	if err != nil {
 		return nil, err
 	}
-	resp, warnings, err := api.Series(ctx, selectors, timeRange.Start, timeRange.End)
+	resp, warnings, infos, err := api.Series(ctx, selectors, timeRange.Start, timeRange.End)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get series: %s", err)
 	}
@@ -101,9 +101,12 @@ func (t *Tools) listPrometheusSeries(ctx context.Context, request mcp.CallToolRe
 		},
 	}
 
-	// Add warnings if present
+	// Add warnings and infos if present
 	if len(warnings) > 0 {
 		result.Meta["warnings"] = warnings
+	}
+	if len(infos) > 0 {
+		result.Meta["infos"] = infos
 	}
 
 	return result, nil
@@ -141,7 +144,7 @@ func (t *Tools) queryPrometheusRange(ctx context.Context, request mcp.CallToolRe
 	if err != nil {
 		return nil, err
 	}
-	resp, warnings, err := api.QueryRange(ctx, query, v1.Range{
+	resp, warnings, infos, err := api.QueryRange(ctx, query, v1.Range{
 		Start: timeRange.Start,
 		End:   timeRange.End,
 		Step:  step,
@@ -185,9 +188,12 @@ func (t *Tools) queryPrometheusRange(ctx context.Context, request mcp.CallToolRe
 		},
 	}
 
-	// Add warnings if present
+	// Add warnings and infos if present
 	if len(warnings) > 0 {
 		result.Meta["warnings"] = warnings
+	}
+	if len(infos) > 0 {
+		result.Meta["infos"] = infos
 	}
 
 	return result, nil
@@ -212,7 +218,7 @@ func (t *Tools) renderPrometheusRangeQuery(ctx context.Context, request mcp.Call
 	if err != nil {
 		return nil, err
 	}
-	resp, _, err := api.QueryRange(ctx, query, v1.Range{
+	resp, _, _, err := api.QueryRange(ctx, query, v1.Range{
 		Start: timeRange.Start,
 		End:   timeRange.End,
 		Step:  time.Duration(step) * time.Second,
@@ -260,12 +266,12 @@ func (t *Tools) queryPrometheusInstant(ctx context.Context, request mcp.CallTool
 	if err != nil {
 		return nil, err
 	}
-	resp, warnings, err := api.Query(ctx, query, evalTime)
+	resp, warnings, infos, err := api.Query(ctx, query, evalTime)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query prometheus: %s", err)
 	}
 
-	result := promJSONResponse(resp, warnings)
+	result := promJSONResponse(resp, warnings, infos)
 
 	result.ChronosphereLink = t.linkBuilder.MetricExplorer().WithQuery(query).WithEndTime(evalTime).String()
 	return result, nil
@@ -297,7 +303,7 @@ func (t *Tools) listPrometheusLabelValues(ctx context.Context, request mcp.CallT
 	if err != nil {
 		return nil, err
 	}
-	resp, warnings, err := api.LabelValues(ctx, labelName, selectors, timeRange.Start, timeRange.End)
+	resp, warnings, infos, err := api.LabelValues(ctx, labelName, selectors, timeRange.Start, timeRange.End)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get label names: %s", err)
 	}
@@ -319,7 +325,7 @@ func (t *Tools) listPrometheusLabelValues(ctx context.Context, request mcp.CallT
 		paginatedResp = resp
 	}
 
-	result := promJSONResponse(paginatedResp, warnings)
+	result := promJSONResponse(paginatedResp, warnings, infos)
 	result.ChronosphereLink = t.linkBuilder.Custom("/data/m3/api/v1/label/"+labelName+"/values").
 		WithTimeSec("start", timeRange.Start).
 		WithTimeSec("end", timeRange.End).
@@ -354,11 +360,11 @@ func (t *Tools) listPrometheusLabelNames(ctx context.Context, request mcp.CallTo
 		return nil, err
 	}
 	// TODO: should we set a limit?
-	resp, warnings, err := api.LabelNames(ctx, selectors, timeRange.End, timeRange.End)
+	resp, warnings, infos, err := api.LabelNames(ctx, selectors, timeRange.End, timeRange.End)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get label names: %s", err)
 	}
-	result := promJSONResponse(resp, warnings)
+	result := promJSONResponse(resp, warnings, infos)
 	result.ChronosphereLink = t.linkBuilder.Custom("/data/m3/api/v1/labels").
 		WithTimeSec("start", timeRange.Start).
 		WithTimeSec("end", timeRange.End).
@@ -395,7 +401,7 @@ func (t *Tools) listPrometheusSeriesMetadata(ctx context.Context, request mcp.Ca
 	}, nil
 }
 
-func promJSONResponse(resp any, warnings []string) *tools.Result {
+func promJSONResponse(resp any, warnings, infos []string) *tools.Result {
 	result := &tools.Result{
 		JSONContent: map[string]any{
 			"result": resp,
@@ -404,6 +410,11 @@ func promJSONResponse(resp any, warnings []string) *tools.Result {
 	if len(warnings) > 0 {
 		result.Meta = map[string]any{
 			"warnings": warnings,
+		}
+	}
+	if len(infos) > 0 {
+		result.Meta = map[string]any{
+			"infos": infos,
 		}
 	}
 	return result

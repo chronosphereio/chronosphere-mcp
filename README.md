@@ -6,7 +6,10 @@ changes may occur for minor version bumps.
 
 ## MCP config with popular hosts (claude desktop, cursor)
 ### Remote Server
-The easiest way to use the MCP server is using our remote hosted server:
+The easiest way to use the MCP server is using our remote hosted server at `https://<org name>.chronosphere.io/api/mcp/mcp`.
+Its [authentication](https://docs-xcor.paloaltonetworks.com/integrate/mcp-server/authenticate), available tools and
+supported headers are documented in the [MCP server documentation](https://docs-xcor.paloaltonetworks.com/integrate/mcp-server/resources).
+The remote server's tools and headers can differ from those of the server built from this repository.
 
 ### Auth
 You can use either a [Chronosphere API token](https://docs.chronosphere.io/tooling/api-info#create-an-api-token) or OAuth
@@ -22,20 +25,16 @@ Chronosphere support in slack with the following information:
 Some MCP hosts let you attach custom HTTP headers to requests sent to the MCP server. The Chronosphere MCP server supports
 the following user-facing headers.
 
+Write tools are hidden by default. To enable them on the remote hosted server, see
+[Enable write access](https://docs-xcor.paloaltonetworks.com/integrate/mcp-server/resources#enable-write-access). For a
+server built from this repository, see [Enable writes](#enable-writes-x-chrono-mcp-enable-writes).
+
 #### Disable tools (`X-Chrono-MCP-Disable-Tools`)
 Use this header to hide specific tools from the tool list exposed to your MCP client.
 
 - **Format**: comma-separated list of MCP tool names (the **Tool Name** column in the [Available Tools](#available-tools) table)
 - **Example value**: `query_logs_range,render_prometheus_range_query`
 - **Notes**: whitespace is ignored; unknown tool names are ignored
-
-#### Enable writes (`X-Chrono-MCP-Enable-Writes`)
-Write tools are hidden and cannot be called by default. The server operator must first permit writes with
-`server.tools.enableWrites: true`. HTTP and SSE clients must additionally set this header to `true`; the header cannot
-override a disabled server setting. Other values do not enable writes.
-
-Stdio has no request headers, so the server setting alone enables writes for that transport. The Chronosphere credentials
-used by the server must still authorize the underlying API operation.
 
 #### Cursor/VSCode
 ```json
@@ -120,6 +119,14 @@ make chronomcp
 }
 ```
 
+#### Enable writes (`X-Chrono-MCP-Enable-Writes`)
+Write tools are hidden and cannot be called by default. The server operator must first permit writes with
+`server.tools.enableWrites: true`. HTTP and SSE clients must additionally set this header to `true`; the header cannot
+override a disabled server setting. Other values do not enable writes.
+
+Stdio has no request headers, so the server setting alone enables writes for that transport. The Chronosphere credentials
+used by the server must still authorize the underlying API operation.
+
 ## Developing
 ### Running the server
 #### Authentication to Chronosphere
@@ -148,6 +155,9 @@ The MCP project provides an inspector useful for directly calling tools APIs. To
 1. Open http://localhost:6274/#resources , fill in `http://0.0.0.0:8081/mcp` in the URL, with transport type Streamable HTTP.
 
 ## Available Tools
+
+These are the tools this repository's server provides. For the tools on the remote hosted server, see the
+[MCP server documentation](https://docs-xcor.paloaltonetworks.com/integrate/mcp-server/resources).
 
 | Group | Tool Name | Description |
 |-------|-----------|-------------|
